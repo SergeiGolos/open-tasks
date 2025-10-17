@@ -1,6 +1,6 @@
 - CMD with verbs to express different properties.  verb routes to a named class for async processes execution that writes sub process to the command output
-- async operations execute cmd tools and synt the output to both files and the screen for user observation.
-- the outcome of the asyn operations is a refernce to the output files and can be used as input to other async process.
+- async operations execute cmd tools and sync the output to both files and the screen for user observation.
+- the outcome of the async operations is a reference to the output files and can be used as input to other async process.
 - Some async process are just transformers will create a new memory reference with the transformations.
 - User feedback on the CMD should some formatting and color coding to identify the different elements of what is going on.
 - Common format is text and markdown files.
