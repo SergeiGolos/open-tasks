@@ -141,7 +141,7 @@ abstract class CommandHandler {
 class AiCliCommand extends CommandHandler {
   private config: AiCliConfig; // Loaded from .open-tasks/ai-config.json
   
-  async execute(args: string[], refs: Map<...>) {
+  async execute(args: string[], refs: Map<string, ReferenceHandle>) {
     // 1. Resolve context file references
     // 2. Build CLI command with context files as args
     // 3. Execute subprocess

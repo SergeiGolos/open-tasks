@@ -66,4 +66,4 @@ None (initial implementation)
 
 ## References
 
-- Requirements: `x:\open-tasks\open-tasks-wiki\Requirements.md`
+- Requirements: `../../../open-tasks-wiki/Requirements.md`

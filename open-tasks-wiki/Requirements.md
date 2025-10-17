@@ -1,4 +1,4 @@
-- CMD with verbs to express different properties.  verb routes to a named class for async processes execution that writes sub process to the command output
+- CMD with verbs to express different properties.  verb routes to a named class for async processes execution that writes sub-process to the command output
 - async operations execute cmd tools and sync the output to both files and the screen for user observation.
 - the outcome of the async operations is a reference to the output files and can be used as input to other async process.
 - Some async process are just transformers will create a new memory reference with the transformations.
@@ -25,4 +25,4 @@ var extract = extract(response, regex)
 
 the goal is to pre-define a bunch of PowerShell calls and then use those values as context for a ai cli call to do something.
 
-i should be able to quickly ad a new command module to the directory i am working in under .open-task/command-verb  to enable it as a verb on the cli.
+i should be able to quickly add a new command module to the directory i am working in under .open-task/command-verb  to enable it as a verb on the cli.

@@ -346,7 +346,7 @@ abstract class CommandHandler {
 
 ```typescript
 // .open-tasks/commands/uppercase.ts
-import { CommandHandler, ReferenceHandle, ExecutionContext } from 'open-tasks-cli';
+import { CommandHandler, ReferenceHandle, ExecutionContext, generateUUID } from 'open-tasks-cli';
 
 export default class UppercaseCommand extends CommandHandler {
   static description = 'Convert text to uppercase';
@@ -360,6 +360,8 @@ export default class UppercaseCommand extends CommandHandler {
     refs: Map<string, ReferenceHandle>,
     context: ExecutionContext
   ): Promise<ReferenceHandle> {
+    const startTime = Date.now();
+    
     // Get input from args or first reference
     let input: string;
     if (args.length > 0) {
@@ -388,7 +390,7 @@ export default class UppercaseCommand extends CommandHandler {
       metadata: {
         commandName: 'uppercase',
         args,
-        duration: 0,
+        duration: Date.now() - startTime,
       },
     };
   }
