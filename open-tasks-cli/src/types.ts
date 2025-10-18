@@ -1,4 +1,5 @@
 import { DirectoryOutputContext } from './workflow/index.js';
+import { createOutputBuilder as createOutputBuilderFactory } from './output-builders.js';
 
 /**
  * Verbosity levels for command output
@@ -291,8 +292,7 @@ export abstract class CommandHandler {
    * Create appropriate output builder based on verbosity level
    */
   protected createOutputBuilder(context: ExecutionContext): IOutputBuilder {
-    const { createOutputBuilder } = require('./output-builders.js');
-    return createOutputBuilder(context.verbosity || 'summary');
+    return createOutputBuilderFactory(context.verbosity || 'summary');
   }
 
   /**

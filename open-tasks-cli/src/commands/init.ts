@@ -3,9 +3,11 @@ import path from 'path';
 import fse from 'fs-extra';
 import { CommandHandler, ExecutionContext, ReferenceHandle } from '../types.js';
 import { getDefaultConfig } from '../config-loader.js';
+import { addProcessingDetails } from '../output-utils.js';
 
 /**
  * Init command - initializes a new open-tasks project
+ * Now supports enhanced output control (quiet, summary, verbose, stream)
  */
 export default class InitCommand extends CommandHandler {
   name = 'init';
@@ -13,9 +15,10 @@ export default class InitCommand extends CommandHandler {
   examples = [
     'open-tasks init',
     'open-tasks init --force',
+    'open-tasks init --verbose',
   ];
 
-  async execute(
+  protected async executeCommand(
     args: string[],
     refs: Map<string, ReferenceHandle>,
     context: ExecutionContext
@@ -26,7 +29,11 @@ export default class InitCommand extends CommandHandler {
     const outputsDir = path.join(openTasksDir, 'outputs');
     const configPath = path.join(openTasksDir, 'config.json');
 
+    // Get output builder for progress reporting
+    const builder = this.createOutputBuilder(context);
+
     // Check if .open-tasks already exists
+    builder.addProgress('Checking for existing project...');
     const exists = await fse.pathExists(openTasksDir);
     if (exists && !force) {
       throw new Error(
@@ -37,13 +44,16 @@ export default class InitCommand extends CommandHandler {
     const results: string[] = [];
 
     // Create directory structure
+    builder.addProgress('Creating .open-tasks/commands/ directory...');
     await fse.ensureDir(commandsDir);
     results.push('Created .open-tasks/commands/');
 
+    builder.addProgress('Creating .open-tasks/outputs/ directory...');
     await fse.ensureDir(outputsDir);
     results.push('Created .open-tasks/outputs/');
 
     // Create config.json
+    builder.addProgress('Creating configuration file...');
     const config = getDefaultConfig();
     await fs.writeFile(
       configPath,
@@ -53,6 +63,7 @@ export default class InitCommand extends CommandHandler {
     results.push('Created .open-tasks/config.json');
 
     // Check if package.json exists in .open-tasks directory (for custom commands)
+    builder.addProgress('Checking for .open-tasks/package.json...');
     const commandsPackageJsonPath = path.join(openTasksDir, 'package.json');
     const commandsPackageJsonExists = await fse.pathExists(commandsPackageJsonPath);
 
@@ -71,10 +82,12 @@ export default class InitCommand extends CommandHandler {
     }
 
     // Check if package.json exists in root
+    builder.addProgress('Checking for root package.json...');
     const packageJsonPath = path.join(context.cwd, 'package.json');
     const packageJsonExists = await fse.pathExists(packageJsonPath);
 
     if (!packageJsonExists) {
+      builder.addProgress('Creating root package.json...');
       // Create basic package.json
       const packageJson = {
         name: path.basename(context.cwd),
@@ -92,6 +105,20 @@ export default class InitCommand extends CommandHandler {
         'utf-8'
       );
       results.push('Created package.json');
+    }
+
+    builder.addProgress('Initialization complete!');
+
+    // Add verbose details about what was created
+    if (context.verbosity === 'verbose' || context.verbosity === 'stream') {
+      addProcessingDetails(builder, {
+        'Project Directory': context.cwd,
+        'Open Tasks Directory': openTasksDir,
+        'Files Created': results.length,
+        'Force Mode': force,
+      });
+      
+      builder.addSection('📋 Created Files', results.join('\n'));
     }
 
     const message = [

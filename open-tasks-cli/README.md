@@ -21,7 +21,7 @@ For comprehensive documentation, visit the [Open Tasks Wiki](../open-tasks-wiki/
 - 🔌 **Extensible**: Add custom commands in `.open-tasks/commands/` that are auto-discovered
 - 🌊 **Workflow Context**: Internal `IWorkflowContext` API for orchestrating multi-step workflows
 - 📁 **File Output**: Automatically saves outputs to `.open-tasks/outputs/{timestamp}-{command}/` with per-execution isolation
-- 🎨 **Formatted Output**: Color-coded terminal output with progress indicators (via chalk and ora)
+- 🎨 **Output Control**: Four verbosity levels (quiet, summary, verbose, stream) with flexible routing (screen, logs, custom files)
 - 🎯 **Decorators**: Transform MemoryRef objects before file creation (tokens, filenames, metadata)
 - ⚡ **TypeScript**: Fully typed for excellent IDE support
 
@@ -85,6 +85,87 @@ open-tasks store "Contact: support@example.com" --token contact
 open-tasks extract "[a-z]+@[a-z.]+" --ref contact --token email
 ```
 
+## Output Control
+
+Open-tasks-cli provides flexible control over command output verbosity and routing.
+
+### Verbosity Levels
+
+Control how much detail commands output:
+
+```bash
+# Quiet mode - minimal output (good for scripts)
+open-tasks store "data" --quiet
+✓ store completed in 45ms
+
+# Summary mode - default, clean readable output
+open-tasks store "data"
+✓ store completed in 45ms
+📁 Saved to: .open-tasks/outputs/20241018-130145-store/output.txt
+🔗 Reference: @mytoken
+
+# Verbose mode - detailed information (good for debugging)
+open-tasks store "data" --verbose
+(shows processing details, file info, metadata)
+
+# Stream mode - real-time progress (good for long operations)
+open-tasks init --stream
+[0ms] ⏳ Creating .open-tasks directory...
+[15ms] ⏳ Writing config...
+[45ms] 📊 Summary
+```
+
+**Flags:**
+- `--quiet` or `-q` - Minimal single-line output
+- `--summary` or `-s` - Default, brief formatted summary
+- `--verbose` or `-v` - Detailed sections and metadata
+- `--stream` - Real-time progress with timestamps
+
+### Output Targets
+
+Control where command output is written:
+
+```bash
+# Both (default) - output to screen AND log files
+open-tasks store "data"
+
+# Screen only - no log files created
+open-tasks store "data" --screen-only
+
+# Log only - silent terminal, writes to files
+open-tasks store "data" --log-only
+
+# Custom file - write to specific path
+open-tasks store "data" --file /path/to/output.log
+```
+
+**Flags:**
+- `--both` - Output to screen and logs (default)
+- `--screen-only` - Terminal only, no files
+- `--log-only` - Files only, silent terminal
+- `--file <path>` - Custom output file path
+
+### Combining Flags
+
+Verbosity and output targets work together:
+
+```bash
+# Quiet output, no files (fastest)
+open-tasks store "data" --quiet --screen-only
+
+# Verbose logs, clean terminal
+open-tasks store "data" --verbose --log-only
+
+# Stream progress to custom file
+open-tasks long-operation --stream --file progress.log
+```
+
+### Documentation
+
+- **[Verbosity Levels Guide](docs/Verbosity-Levels.md)** - Detailed guide to each level
+- **[Output Targets Guide](docs/Output-Targets.md)** - Output routing explained
+- **[Output Control API](docs/Output-Control-API.md)** - API reference for developers
+
 ## Built-in Commands
 
 ### `store` - Store Values
@@ -92,7 +173,7 @@ open-tasks extract "[a-z]+@[a-z.]+" --ref contact --token email
 Store a value and create a reference for use in other commands.
 
 ```bash
-open-tasks store <value> [--token <name>]
+open-tasks store <value> [--token <name>] [verbosity flags] [output flags]
 ```
 
 **Examples:**
@@ -100,8 +181,11 @@ open-tasks store <value> [--token <name>]
 # Store a simple string
 open-tasks store "Hello World"
 
-# Store with a named token
-open-tasks store "API response data" --token api-result
+# Store with a named token, quiet mode
+open-tasks store "API response data" --token api-result --quiet
+
+# Store with verbose output
+open-tasks store "data" --token mydata --verbose
 
 # Store multi-line content
 open-tasks store "Line 1

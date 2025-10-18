@@ -186,54 +186,54 @@
 
 ### Phase 6: Command Migration and Examples
 
-- [ ] **Task 6.1: Create output builder utilities**
+- [x] **Task 6.1: Create output builder utilities**
   - Create helper functions for common summary formatting
   - Add utilities for progress messages
   - Add utilities for error formatting
   - Export from shared module
-  - **Validation:** Utilities produce consistent output
+  - **Validation:** Utilities produce consistent output ✓
   - **Dependency:** Phase 2 complete
 
-- [ ] **Task 6.2: Migrate init command**
+- [x] **Task 6.2: Migrate init command**
   - Update to use executeCommand() pattern if needed
   - Add progress messages for verbose mode
   - Use output builder for summary
   - Test with all verbosity levels
-  - **Validation:** init works with all output modes
+  - **Validation:** init works with all output modes ✓
   - **Dependency:** Phase 4 complete
 
-- [ ] **Task 6.3: Migrate store command**
+- [x] **Task 6.3: Migrate store command**
   - Update to use new output pattern
   - Add metadata for verbose mode (size, format)
   - Support streaming for large data
   - Test with all output targets
-  - **Validation:** store works with all output modes
+  - **Validation:** store works with all output modes ✓
   - **Dependency:** Task 6.2
 
-- [ ] **Task 6.4: Migrate load command**
+- [x] **Task 6.4: Migrate load command**
   - Update to use new output pattern
   - Show file size in verbose mode
   - Add progress for large files
   - Test error handling with new format
-  - **Validation:** load works with all output modes
+  - **Validation:** load works with all output modes ✓
   - **Dependency:** Task 6.2
 
-- [ ] **Task 6.5: Update command template in create command**
+- [x] **Task 6.5: Update command template in create command**
   - Modify template to show new output pattern
   - Include example of using output builder
   - Show how to add progress messages
   - Add comments explaining verbosity handling
-  - **Validation:** Generated commands use new pattern
+  - **Validation:** Generated commands use new pattern ✓
   - **Dependency:** Phase 4 complete
 
 ### Phase 7: Testing
 
-- [ ] **Task 7.1: Write unit tests for OutputBuilders**
+- [x] **Task 7.1: Write unit tests for OutputBuilders**
   - Test each builder implementation individually
   - Test addSection, addSummary, addProgress, addError methods
   - Test build() output format
   - Test edge cases (empty output, very long content)
-  - **Validation:** All builder tests pass
+  - **Validation:** All builder tests pass ✓
   - **Dependency:** Phase 2 complete
 
 - [ ] **Task 7.2: Write unit tests for verbosity resolution**
@@ -279,35 +279,40 @@
 
 ### Phase 8: Documentation
 
-- [ ] **Task 8.1: Document IOutputBuilder interface**
+- [x] **Task 8.1: Document IOutputBuilder interface**
   - Write API documentation with examples
   - Show how to use each method
   - Explain when to use each builder type
   - Include TypeScript examples
-  - **Validation:** Documentation is clear and complete
+  - **Validation:** Documentation is clear and complete ✓
 
-- [ ] **Task 8.2: Document verbosity levels**
+- [x] **Task 8.2: Document verbosity levels**
   - Explain each verbosity level
   - Show CLI flag usage
   - Provide examples of output for each level
   - Explain when to use each level
-  - **Validation:** Users understand verbosity options
+  - **Validation:** Users understand verbosity options ✓
 
-- [ ] **Task 8.3: Document output targets**
+- [x] **Task 8.3: Document output targets**
   - Explain each output target option
   - Show CLI flag usage
   - Provide use cases for each target
   - Document custom file path usage
-  - **Validation:** Users understand output routing
+  - **Validation:** Users understand output routing ✓
 
-- [ ] **Task 8.4: Create migration guide**
+- [x] **Task 8.4: Create migration guide**
   - Document how to update existing commands
   - Show before/after examples
   - Explain executeCommand() pattern
   - Provide code snippets
-  - **Validation:** Developers can migrate commands
+  - **Validation:** Developers can migrate commands ✓
 
-- [ ] **Task 8.5: Update README and getting started docs**
+- [x] **Task 8.5: Update README and getting started docs**
+  - Add output control section to README
+  - Document verbosity flags
+  - Document output target flags
+  - Link to detailed guides
+  - **Validation:** README covers new features ✓
   - Add output control section to README
   - Update examples with new flags
   - Add troubleshooting section
