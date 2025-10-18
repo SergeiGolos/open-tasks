@@ -2,154 +2,189 @@
 
 ## Project Overview
 
-**Open Tasks CLI** is a flexible command-line tool designed for composable workflow automation. It enables users to chain asynchronous command operations with explicit context passing, making it ideal for building multi-step workflows where each command's output becomes input for subsequent commands.
+**Open Tasks CLI** is a flexible command-line tool designed for composable workflow automation. It enables users to build custom tasks that compose commands together, making it ideal for multi-step workflows where commands pass data through MemoryRef references.
 
 ### Vision
 
 The tool bridges the gap between shell scripting and complex automation by providing:
 
-- **Three-Layer Architecture**: Clear separation between Context API (internal), CLI Commands (user-facing), and Process Commands (extensible)
-- **Composable Commands**: Chain operations together with explicit reference passing
-- **Context Management**: Store and reuse command outputs using tokens or UUIDs
-- **Extensibility**: Add custom process commands specific to your workflow
-- **AI Integration**: Seamlessly integrate AI CLI tools with pre-defined context
-- **Observable Execution**: Color-coded terminal feedback and persistent file outputs
+- **Task-Command Architecture**: Clear separation where tasks (files) compose commands (ICommand implementations)
+- **Pre-built Command Library**: Rich set of commands (PowershellCommand, ClaudeCommand, RegexCommand, etc.)
+- **Command Composition**: Chain operations together via MemoryRef[] passing
+- **Context Management**: IWorkflowContext API for storing and running commands
+- **Extensibility**: Create custom tasks and commands specific to your workflow
+- **AI Integration**: ClaudeCommand for seamless AI processing
+- **Observable Execution**: TaskOutcome with logs and errors for full transparency
 
-### Command Types
+### Architecture Components
 
-**System Commands** - Project management
-- `init` - Initialize project structure and dependencies
-- `create` - Scaffold new process command templates
+**Tasks** - Workflow orchestration files in `.open-tasks/tasks/`
+- Files extending TaskHandler
+- Compose pre-built and custom commands
+- Auto-discovered and integrated as CLI commands
+- Return TaskOutcome with logs and errors
 
-**Built-in CLI Commands** - Core operations (6 commands)
-- `store` - Save values to memory and files
-- `load` - Load file content into references
-- `replace` - Template-based string substitution
-- `powershell` - Execute PowerShell scripts
-- `ai-cli` - Integrate AI CLI tools with context
-- `extract` - Extract data using regular expressions
+**Pre-built Commands** - Library of ICommand implementations
+- PowershellCommand - Execute shell commands
+- ClaudeCommand - AI processing
+- RegexCommand - Pattern matching
+- TemplateCommand - Variable substitution
+- FileCommand - File operations
+- And more...
 
-**Process Commands** - User-defined extensibility
-- Created in `.open-tasks/commands/`
-- Auto-discovered and integrated seamlessly
-- Can use Context API internally
-- Full access to CLI framework services
+**Custom Commands** - User-defined ICommand implementations
+- Created within task files
+- Consume and produce MemoryRef[]
+- Composed with pre-built commands
 
-**Context API** - Internal implementation (NOT user-facing)
-- `context.store()`, `context.load()`, `context.transform()`, `context.run()`
-- Used by command implementations internally
-- NOT exposed as CLI commands to users
+**IWorkflowContext API** - Internal task interface
+- `context.store()` - Store values and get MemoryRef
+- `context.token()` - Generate unique tokens
+- `context.run()` - Execute commands
+- Used within tasks, not exposed as CLI commands
+
+**System Commands** - Framework management
+- `init` - Initialize project structure
+- `create` - Scaffold new task templates
 
 ## Project Goals
 
 ### Primary Goals
 
-1. **Composable Commands**: Enable verb-based commands that can be chained together with explicit reference passing between operations
+1. **Command Composition**: Enable tasks to compose commands that pass MemoryRef[] between operations
 
-2. **Extensibility**: Allow users to add custom command modules in `.open-tasks/commands/` that are auto-discovered and integrated seamlessly
+2. **Extensibility**: Allow users to create custom tasks in `.open-tasks/tasks/` that are auto-discovered and integrated seamlessly
 
-3. **Async Execution**: All commands execute asynchronously with visual progress feedback and non-blocking operation
+3. **Pre-built Library**: Provide rich command library (PowershellCommand, ClaudeCommand, RegexCommand, etc.) for common operations
 
-4. **Dual Output**: Write command outputs to both the terminal (with formatting/colors) and timestamped files for later reference
+4. **Transparent Execution**: TaskOutcome with complete logs and errors for observability
 
-5. **Reference Management**: Support memory references (tokens) that store command outputs for reuse across command chains
+5. **Memory Management**: MemoryRef system with decorators (TokenDecorator, TimestampDecorator) for flexible storage
 
-6. **Built-in Commands**: Provide core commands for storage, file I/O, string manipulation, shell execution, AI integration, and data extraction
+6. **AI-Powered Workflows**: ClaudeCommand for seamless AI integration in task workflows
 
 ### Use Cases
 
-**Workflow Automation**
+**Code Analysis Workflow**
 ```bash
-# Pre-process data, call AI, and extract results
-open-tasks load ./source-code.ts --token code
-open-tasks ai-cli "Review this code for bugs" --ref code --token review
-open-tasks extract "Bug: (.*)" --ref review --all > bugs.txt
+# Create task that reads code, analyzes with AI, and generates report
+open-tasks create analyze-code
+# Edit .open-tasks/tasks/analyze-code.ts to compose commands
+# Use PowershellCommand → ClaudeCommand → FileCommand
+open-tasks analyze-code ./src/app.ts
 ```
 
-**Context Building**
+**Multi-File Processing**
 ```bash
-# Gather context from multiple sources for AI analysis
-open-tasks powershell "Get-Content README.md" --token readme
-open-tasks load ./package.json --token config
-open-tasks ai-cli "Summarize this project" --ref readme --ref config
+# Task that processes multiple files with AI
+# Compose: PowershellCommand (read files) → ClaudeCommand (analyze) → FileCommand (write summary)
+open-tasks analyze-project ./src/
 ```
 
-**Template Processing**
+**Template Generation**
 ```bash
-# Dynamic template substitution
-open-tasks store "Production" --token env
-open-tasks store "myapp.azurewebsites.net" --token domain
-open-tasks replace "Deploy to {{env}} at {{domain}}" --ref env --ref domain
+# Task that generates config from templates
+# Compose: FileCommand (read template) → TemplateCommand (substitute) → FileCommand (write)
+open-tasks generate-config production
 ```
 
 ## Non-Goals
 
-- ❌ Building a full task management system (focus is on command orchestration)
+- ❌ Building a full task management system (focus is on command composition)
 - ❌ Providing a GUI or TUI interface (CLI-only in v1)
-- ❌ Managing authentication for external services (assumes pre-authenticated CLIs)
+- ❌ Managing authentication for external services (assumes pre-configured API keys)
 - ❌ Cross-platform shell support beyond PowerShell (future enhancement)
 
 ## Architecture Philosophy
 
-### Three-Layer Design
+### Task-Command Design
 
-**Layer 1: Context API (Internal)**
-- Programmatic workflow processing functions
-- Used by command implementations
-- NOT exposed to end users
+**Tasks = Files that compose commands**
+- Tasks are files in `.open-tasks/tasks/` extending TaskHandler
+- Tasks compose one or more commands to build workflows
+- Tasks are invoked as CLI commands by users
 
-**Layer 2: CLI Commands (User-Facing)**
-- System commands (init, create)
-- Built-in CLI commands (store, load, replace, etc.)
-- Process commands (.open-tasks/commands/)
+**Commands = ICommand implementations**
+- Commands consume MemoryRef[] and produce MemoryRef[]
+- Commands can be pre-built (library) or custom (user-defined)
+- Commands are chained together within tasks
 
-**Layer 3: Implementation Layer**
-- CommandHandler base class
-- Execution context and services
-- Framework internals
+**Memory References = Data flow**
+- MemoryRef tracks stored values with {id, token, fileName}
+- Commands pass MemoryRef[] between each other
+- Decorators enhance MemoryRef with metadata
+
+**IWorkflowContext Interface**
+- Three methods: store(), token(), run()
+- Used within tasks to manage workflow
+- Implementation determines where data is stored (in-memory, directory, remote)
+
+**Context Implementations**
+- InMemoryWorkflowContext - Testing and transient workflows
+- DirectoryOutputContext - Local file storage (default)
+- RemoteOutputContext - Cloud/remote storage (future)
 
 ### Command Pattern
-Each command is a self-contained handler that:
-- Accepts arguments and references
-- Executes asynchronously
-- Returns a reference to its output
-- Writes results to both terminal and file
 
-### Relationship
+Each command implements ICommand:
+- `execute(context: IWorkflowContext): Promise<MemoryRef[]>`
+- Consumes MemoryRef[] (via constructor or context)
+- Produces MemoryRef[] (return value)
+- Stateless and composable
+
+### Task Pattern
+
+Each task extends TaskHandler:
+- `execute(args: string[], context: IWorkflowContext): Promise<TaskOutcome>`
+- Composes multiple commands
+- Tracks execution in TaskOutcome.logs
+- Reports errors in TaskOutcome.errors
+- Auto-discovered from `.open-tasks/tasks/`
+
+### Data Flow
+
 ```
-User invokes:   open-tasks store "value"
+User invokes:   open-tasks analyze-code ./app.ts
                       ↓
-CLI Command:    StoreCommand.execute()
+Task:           AnalyzeCodeTask.execute()
                       ↓
-May use internally:  context.store() [Context API]
+Commands:       PowershellCommand → ClaudeCommand → FileCommand
+                      ↓
+Context:        context.run(command) executes each
+                      ↓
+Memory:         MemoryRef[] flows between commands
+                      ↓
+Outcome:        TaskOutcome with logs and errors
 ```
 
-### Explicit Context
-Unlike traditional piping, references are explicit:
-- Each output gets a unique identifier (token or UUID)
-- References are resolved before command execution
-- Context is never implicit or hidden
-- Files persist for reuse across sessions
+### Explicit References
 
-### Fail-Fast
-Errors stop execution immediately:
-- Clear error messages with context
-- Error files with full details
-- No partial or inconsistent state
-- Suggestions for recovery
+Unlike traditional piping, data flow is explicit:
+- MemoryRef tracks each value with {id, token, fileName}
+- Commands pass MemoryRef[] between each other
+- Files persist in `.open-tasks/outputs/`
+- References can be decorated with metadata
+
+### Fail-Safe
+
+Tasks don't throw errors:
+- Errors added to TaskOutcome.errors[]
+- Logs track successful operations
+- Partial results still captured
+- User sees full execution trace
 
 ## Technology Stack
 
 - **Runtime**: Node.js 18.x+
 - **Language**: TypeScript (compiled to JavaScript)
-- **CLI Framework**: Commander.js
+- **CLI Framework**: Commander.js or similar
 - **Output**: chalk (colors), ora (spinners)
 - **Testing**: Vitest
 - **Build**: tsup
 
 ## Project Status
 
-**Current Status**: Draft Specification  
+**Current Status**: Specification Phase  
 **Target Version**: 1.0.0  
 **Development Phase**: Pre-implementation
 
@@ -159,14 +194,13 @@ The project is currently in the specification phase. All capabilities have been 
 
 - [Installation Guide](Installation.md)
 - [Getting Started](Getting-Started.md)
-- [Process Functions](Process-Functions.md)
-- [Building Custom Commands](Building-Custom-Commands.md)
+- [Pre-built Commands](Process-Functions.md)
+- [Building Custom Tasks](Building-Custom-Tasks.md)
 - [Architecture Overview](Architecture.md)
-- [API Reference](API-Reference.md)
 
 ## Contributing
 
-Custom commands and extensions are encouraged! See [Building Custom Commands](Building-Custom-Commands.md) for details on extending the CLI for your specific needs.
+Custom tasks and commands are encouraged! See [Building Custom Tasks](Building-Custom-Tasks.md) for details on extending the CLI with your own tasks and commands.
 
 ## License
 

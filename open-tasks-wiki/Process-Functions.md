@@ -1,16 +1,18 @@
-# Commands in Open Tasks CLI
+# Pre-built Commands in Open Tasks CLI
 
 ## Overview
 
-Open Tasks CLI provides three types of commands that work together:
+Open Tasks CLI provides a rich library of **pre-built commands** that you can use to build custom tasks. These commands implement the `ICommand` interface and can be composed together within your task files.
 
-1. **System Commands** (`init`, `create`) - Manage project setup and scaffolding
-2. **Built-in CLI Commands** (6 commands) - Core operations packaged with the CLI
-3. **Process Commands** - Custom user-defined commands in `.open-tasks/commands/`
+**Architecture**:
+- **Tasks** = Files in `.open-tasks/tasks/` that extend TaskHandler
+- **Commands** = ICommand implementations that consume and produce MemoryRef[]
+- **Pre-built Commands** = Library of commands provided by the framework
+- **Custom Commands** = Commands you create within your task files
 
-This guide focuses on the **built-in CLI commands** that perform specific operations and can be chained together to build complex workflows.
+**How to Use**: You compose pre-built commands within your task files using `context.run(command)`. Commands work together by passing MemoryRef[] between them.
 
-**Important Note**: The Context API functions (`context.store()`, `context.load()`, `context.transform()`, `context.run()`) mentioned in other documentation are internal programmatic APIs used by command implementations. They are NOT exposed as CLI commands and users never invoke them directly. This guide documents the user-facing CLI commands only.
+**Important Note**: The IWorkflowContext API (`context.store()`, `context.token()`, `context.run()`) is used internally within tasks to execute commands and manage memory. It is not directly exposed as CLI commands.
 
 ## Working Directory Context
 
@@ -22,181 +24,453 @@ Open Tasks CLI operates in the current working directory (CWD) where you invoke 
 your-working-directory/
 ├── .open-tasks/
 │   ├── outputs/              # Command outputs (auto-created)
-│   ├── commands/             # Custom commands (optional)
+│   ├── tasks/                # Custom task files (optional)
 │   ├── config.json           # Configuration (optional)
 │   └── ai-config.json        # AI configuration (optional)
 ├── [your files]
 └── [your data]
 ```
 
-## Built-in CLI Commands
+## Pre-built Command Library
 
-Open Tasks CLI provides six built-in CLI commands that cover common operations. These are different from process commands (custom commands you create) and from the internal Context API:
+Open Tasks CLI provides a comprehensive library of pre-built commands that cover common operations. Use these commands within your tasks by importing and running them with `context.run()`.
 
-### 1. store - Save Values
-
-Store a value in memory and create a reference for later use.
-
-**Syntax:**
-```bash
-open-tasks store <value> [--token <name>]
-```
-
-**Examples:**
-
-```bash
-# Store with auto-generated UUID
-open-tasks store "Hello World"
-# Output: ✓ Stored reference: a3f2c9d1-9b8e-4f6a-8b9c-1d2e3f4a5b6c
-# File: .open-tasks/outputs/20251017-143000-001-a3f2c9d1-9b8e-4f6a-8b9c-1d2e3f4a5b6c.txt
-
-# Store with memorable token
-open-tasks store "Hello World" --token greeting
-# Output: ✓ Stored reference: greeting
-# File: .open-tasks/outputs/20251017-143000-001-greeting.txt
-
-# Store multiline text
-open-tasks store "Line 1
-Line 2
-Line 3" --token multiline
-```
-
-**Use Cases:**
-- Save configuration values
-- Store intermediate results
-- Create reusable constants
-- Build up context for AI prompts
-
----
-
-### 2. load - Load Files
-
-Read content from a file and create a reference.
-
-**Syntax:**
-```bash
-open-tasks load <filepath> [--token <name>]
-```
-
-**Examples:**
-
-```bash
-# Load file with auto-generated UUID
-open-tasks load ./data.txt
-
-# Load file with token
-open-tasks load ./README.md --token readme
-open-tasks load ./package.json --token config
-
-# Load from parent directory
-open-tasks load ../shared/template.txt --token template
-
-# Load binary file
-open-tasks load ./image.png --token logo
-```
-
-**Use Cases:**
-- Load source code for AI review
-- Read configuration files
-- Import templates
-- Load data files for processing
-
----
-
-### 3. replace - Template Substitution
-
-Perform string replacement using `{{token}}` template syntax.
-
-**Syntax:**
-```bash
-open-tasks replace <template> --ref <token> [--ref <token>...] [--token <name>]
-```
-
-**Examples:**
-
-```bash
-# Simple replacement
-open-tasks store "Production" --token env
-open-tasks replace "Environment: {{env}}" --ref env
-
-# Multiple replacements
-open-tasks store "Alice" --token name
-open-tasks store "Developer" --token role
-open-tasks replace "{{name}} is a {{role}}" --ref name --ref role
-
-# Complex template
-open-tasks store "myapp.com" --token domain
-open-tasks store "8080" --token port
-open-tasks replace "https://{{domain}}:{{port}}/api" --ref domain --ref port --token url
-```
-
-**Template Syntax:**
-- Use `{{tokenName}}` as placeholders
-- Token names must match reference tokens exactly
-- Multiple references are supported
-- Nested templates are not supported in v1
-
-**Use Cases:**
-- Generate configuration files
-- Build URLs dynamically
-- Create deployment scripts
-- Parameterize commands
-
----
-
-### 4. powershell - Execute Scripts
+### PowershellCommand - Execute Shell Commands
 
 Execute PowerShell commands and capture output.
 
-**Syntax:**
-```bash
-open-tasks powershell <script> [--ref <token>...] [--token <name>]
+**Constructor:**
+```typescript
+new PowershellCommand(command: string)
+```
+
+**Usage in Tasks:**
+
+```typescript
+import { PowershellCommand } from 'open-tasks-cli';
+
+// In your task's execute() method:
+const cmd = new PowershellCommand('Get-Content ./data.txt');
+const [outputRef] = await context.run(cmd);
 ```
 
 **Examples:**
 
-```bash
-# Simple command
-open-tasks powershell "Get-Date"
+```typescript
+// Read file content
+const readCmd = new PowershellCommand('Get-Content ./README.md');
+const [readmeRef] = await context.run(readCmd);
 
-# Get file listing
-open-tasks powershell "Get-ChildItem -Path . -Name" --token files
+// List directory
+const lsCmd = new PowershellCommand('Get-ChildItem');
+const [listRef] = await context.run(lsCmd);
 
-# With reference substitution
-open-tasks store "C:\Projects" --token path
-open-tasks powershell "Get-ChildItem {{path}}" --ref path
-
-# Multi-line script
-open-tasks powershell "$files = Get-ChildItem; $files.Count" --token filecount
-
-# Capture output for later use
-open-tasks powershell "git log --oneline -10" --token gitlog
+// Execute git command
+const gitCmd = new PowershellCommand('git log --oneline -5');
+const [logRef] = await context.run(gitCmd);
 ```
 
-**Features:**
-- Executes in PowerShell context
-- Captures stdout and stderr
-- Supports reference substitution in script
-- Returns exit code information
-
 **Use Cases:**
-- Execute system commands
+- File system operations
+- Execute git commands
+- Run build scripts
 - Query system information
-- Run deployment scripts
-- Gather context for AI analysis
 
 ---
 
-### 5. ai-cli - AI Integration
+### ClaudeCommand - AI Processing
 
-Execute AI CLI tools with context from references.
+Process inputs using Claude AI.
 
-**Syntax:**
-```bash
-open-tasks ai-cli <prompt> [--ref <token>...] [--token <name>] [--timeout <seconds>]
+**Constructor:**
+```typescript
+new ClaudeCommand(prompt: string, inputs: MemoryRef[])
 ```
 
-**Setup Required:**
+**Usage in Tasks:**
+
+```typescript
+import { ClaudeCommand } from 'open-tasks-cli';
+
+// In your task's execute() method:
+const codeRef = await context.store(code, [new TokenDecorator('code')]);
+const aiCmd = new ClaudeCommand(
+  "Review this code for bugs",
+  [codeRef]
+);
+const [reviewRef] = await context.run(aiCmd);
+```
+
+**Examples:**
+
+```typescript
+// Analyze code
+const codeRef = await context.store(sourceCode, [new TokenDecorator('code')]);
+const analyzeCmd = new ClaudeCommand(
+  "Analyze this code for security issues",
+  [codeRef]
+);
+const [analysisRef] = await context.run(analyzeCmd);
+
+// Generate documentation
+const apiRef = await context.store(apiSpec, [new TokenDecorator('api')]);
+const docCmd = new ClaudeCommand(
+  "Generate API documentation in Markdown",
+  [apiRef]
+);
+const [docsRef] = await context.run(docCmd);
+
+// Summarize multiple files
+const file1Ref = await context.store(content1, [new TokenDecorator('f1')]);
+const file2Ref = await context.store(content2, [new TokenDecorator('f2')]);
+const summaryCmd = new ClaudeCommand(
+  "Summarize these files",
+  [file1Ref, file2Ref]
+);
+const [summaryRef] = await context.run(summaryCmd);
+```
+
+**Use Cases:**
+- Code review and analysis
+- Generate documentation
+- Transform data formats
+- Summarize content
+
+---
+
+### RegexCommand - Pattern Matching
+
+Apply regex patterns to extract or transform text.
+
+**Constructor:**
+```typescript
+new RegexCommand(pattern: string, replacement: string, input: MemoryRef)
+```
+
+**Usage in Tasks:**
+
+```typescript
+import { RegexCommand } from 'open-tasks-cli';
+
+// In your task's execute() method:
+const textRef = await context.store(text, [new TokenDecorator('text')]);
+const regexCmd = new RegexCommand(
+  '/\\d{3}-\\d{4}/',
+  '***-****',
+  textRef
+);
+const [maskedRef] = await context.run(regexCmd);
+```
+
+**Examples:**
+
+```typescript
+// Extract email addresses
+const emailRegex = new RegexCommand(
+  '/[\\w.-]+@[\\w.-]+\\.\\w+/g',
+  '',
+  contentRef
+);
+const [emailsRef] = await context.run(emailRegex);
+
+// Mask sensitive data
+const maskCmd = new RegexCommand(
+  '/\\b\\d{4}-\\d{4}-\\d{4}-\\d{4}\\b/g',
+  'XXXX-XXXX-XXXX-XXXX',
+  dataRef
+);
+const [maskedRef] = await context.run(maskCmd);
+
+// Replace URLs
+const urlCmd = new RegexCommand(
+  '/https?:\\/\\/[^\\s]+/g',
+  '[LINK]',
+  htmlRef
+);
+const [cleanRef] = await context.run(urlCmd);
+```
+
+**Use Cases:**
+- Extract data patterns
+- Mask sensitive information
+- Clean up text
+- Parse structured content
+
+---
+
+### TemplateCommand - Text Substitution
+
+Perform template variable substitution.
+
+**Constructor:**
+```typescript
+new TemplateCommand(template: string, variables: Map<string, MemoryRef>)
+```
+
+**Usage in Tasks:**
+
+```typescript
+import { TemplateCommand } from 'open-tasks-cli';
+
+// In your task's execute() method:
+const nameRef = await context.store("Alice", [new TokenDecorator('name')]);
+const roleRef = await context.store("Developer", [new TokenDecorator('role')]);
+
+const variables = new Map([
+  ['name', nameRef],
+  ['role', roleRef]
+]);
+
+const templateCmd = new TemplateCommand(
+  "{{name}} is a {{role}}",
+  variables
+);
+const [resultRef] = await context.run(templateCmd);
+```
+
+**Examples:**
+
+```typescript
+// Generate configuration
+const domainRef = await context.store("example.com", [new TokenDecorator('domain')]);
+const portRef = await context.store("8080", [new TokenDecorator('port')]);
+
+const vars = new Map([
+  ['domain', domainRef],
+  ['port', portRef]
+]);
+
+const configCmd = new TemplateCommand(
+  "server: https://{{domain}}:{{port}}/api",
+  vars
+);
+const [configRef] = await context.run(configCmd);
+
+// Build deployment script
+const envRef = await context.store("production", [new TokenDecorator('env')]);
+const versionRef = await context.store("v1.2.3", [new TokenDecorator('version')]);
+
+const deployVars = new Map([
+  ['env', envRef],
+  ['version', versionRef]
+]);
+
+const deployCmd = new TemplateCommand(
+  "deploy --env={{env}} --version={{version}}",
+  deployVars
+);
+const [deployRef] = await context.run(deployCmd);
+```
+
+**Use Cases:**
+- Generate configuration files
+- Build dynamic commands
+- Create parameterized scripts
+- Interpolate variables
+
+---
+
+### FileCommand - File Operations
+
+Read and write files with various operations.
+
+**Constructor:**
+```typescript
+new FileCommand(operation: 'read' | 'write' | 'append', filePath: string, content?: MemoryRef)
+```
+
+**Usage in Tasks:**
+
+```typescript
+import { FileCommand } from 'open-tasks-cli';
+
+// Read file
+const readCmd = new FileCommand('read', './data.txt');
+const [contentRef] = await context.run(readCmd);
+
+// Write file
+const dataRef = await context.store("new content", [new TokenDecorator('data')]);
+const writeCmd = new FileCommand('write', './output.txt', dataRef);
+await context.run(writeCmd);
+
+// Append to file
+const appendCmd = new FileCommand('append', './log.txt', logRef);
+await context.run(appendCmd);
+```
+
+**Use Cases:**
+- Read configuration files
+- Write generated output
+- Append to logs
+- Manage file content
+
+---
+
+## Composing Commands in Tasks
+
+Commands are designed to be composed together within tasks. Each command consumes MemoryRef[] and produces MemoryRef[], allowing you to chain operations:
+
+```typescript
+export default class AnalyzeAndDocumentTask extends TaskHandler {
+  static name = 'analyze-docs';
+  
+  async execute(args: string[], context: IWorkflowContext): Promise<TaskOutcome> {
+    const outcome: TaskOutcome = {
+      id: generateId(),
+      name: 'analyze-docs',
+      logs: [],
+      errors: []
+    };
+    
+    try {
+      // 1. Read file with PowershellCommand
+      const readCmd = new PowershellCommand(`Get-Content ${args[0]}`);
+      const [codeRef] = await context.run(readCmd);
+      
+      // 2. Analyze with ClaudeCommand
+      const analyzeCmd = new ClaudeCommand(
+        "Analyze this code and identify issues",
+        [codeRef]
+      );
+      const [analysisRef] = await context.run(analyzeCmd);
+      
+      // 3. Generate docs with ClaudeCommand
+      const docCmd = new ClaudeCommand(
+        "Generate documentation based on this analysis",
+        [codeRef, analysisRef]
+      );
+      const [docsRef] = await context.run(docCmd);
+      
+      // 4. Write to file
+      const writeCmd = new FileCommand('write', './docs/analysis.md', docsRef);
+      await context.run(writeCmd);
+      
+      // Track all operations
+      outcome.logs.push(
+        { ...codeRef, command: 'PowershellCommand', args: [args[0]], start: new Date(), end: new Date() },
+        { ...analysisRef, command: 'ClaudeCommand', args: [], start: new Date(), end: new Date() },
+        { ...docsRef, command: 'ClaudeCommand', args: [], start: new Date(), end: new Date() }
+      );
+    } catch (error) {
+      outcome.errors.push(error.message);
+    }
+    
+    return outcome;
+  }
+}
+```
+
+## Memory Decorators
+
+Decorators enhance MemoryRef storage with additional metadata:
+
+### TokenDecorator
+
+Add a named token to a MemoryRef:
+
+```typescript
+const ref = await context.store(
+  value,
+  [new TokenDecorator('mytoken')]
+);
+```
+
+### TimestampDecorator
+
+Add timestamp metadata:
+
+```typescript
+const ref = await context.store(
+  value,
+  [new TimestampDecorator()]
+);
+```
+
+### MetadataDecorator
+
+Add custom metadata:
+
+```typescript
+const ref = await context.store(
+  value,
+  [new MetadataDecorator({ author: 'Alice', version: '1.0' })]
+);
+```
+
+## Best Practices
+
+### 1. Use Pre-built Commands First
+
+Before creating custom commands, check if a pre-built command meets your needs:
+
+```typescript
+// Good - use pre-built command
+const cmd = new PowershellCommand('Get-Content ./file.txt');
+const [contentRef] = await context.run(cmd);
+
+// Less ideal - custom file reading (unless you need special handling)
+class CustomFileReader implements ICommand {
+  async execute(context: IWorkflowContext): Promise<MemoryRef[]> {
+    // Custom file reading logic...
+  }
+}
+```
+
+### 2. Chain Commands for Complex Workflows
+
+Break complex tasks into command chains:
+
+```typescript
+// 1. Read
+const readCmd = new PowershellCommand('Get-Content ./data.txt');
+const [dataRef] = await context.run(readCmd);
+
+// 2. Transform
+const transformCmd = new RegexCommand('/old/g', 'new', dataRef);
+const [transformedRef] = await context.run(transformCmd);
+
+// 3. Process with AI
+const aiCmd = new ClaudeCommand("Improve this", [transformedRef]);
+const [improvedRef] = await context.run(aiCmd);
+
+// 4. Write
+const writeCmd = new FileCommand('write', './output.txt', improvedRef);
+await context.run(writeCmd);
+```
+
+### 3. Track All Operations
+
+Add TaskLog entries for transparency:
+
+```typescript
+outcome.logs.push({
+  ...resultRef,
+  command: 'PowershellCommand',
+  args: commandArgs,
+  start: startTime,
+  end: new Date()
+});
+```
+
+### 4. Handle Errors Properly
+
+Add errors to TaskOutcome:
+
+```typescript
+try {
+  const cmd = new PowershellCommand(script);
+  const [resultRef] = await context.run(cmd);
+  // ... success logic
+} catch (error) {
+  outcome.errors.push(`Command failed: ${error.message}`);
+}
+```
+
+## Next Steps
+
+- Read [Building Custom Tasks](Building-Custom-Tasks.md) to learn how to create custom commands
+- Review [Architecture Overview](Architecture.md) for deeper understanding
+- See OpenSpec specifications for complete API reference
 First, create `.open-tasks/ai-config.json`:
 
 ```json

@@ -39,12 +39,12 @@ open-tasks init
 This creates the `.open-tasks/` directory structure:
 ```
 .open-tasks/
-├── commands/     # Your custom process commands
+├── tasks/        # Your custom task files
 ├── outputs/      # Command output files
 └── config.json   # Configuration (optional)
 ```
 
-**Note**: The `init` command is a **system command** that sets up your project. It's not a process command and is distinct from the built-in CLI commands you'll use for operations.
+**Note**: The `init` command is a **system command** that sets up your project. Tasks you create will be stored in the `tasks/` directory and can be invoked via the CLI.
 
 ## Step 3: Your First CLI Command
 
@@ -450,84 +450,140 @@ open-tasks replace "{{mytoken}}" --ref mytoken
 
 **Solution:** Check file permissions or run with appropriate rights.
 
-## Creating Your First Process Command
+## Creating Your First Task
 
-**What are Process Commands?**
+**What are Tasks?**
 
-Process commands are custom user-defined commands you create in `.open-tasks/commands/` to extend the CLI with your own functionality. They're different from:
+Tasks are files in `.open-tasks/tasks/` that you create to build custom workflows. Each task is composed of one or more **Commands** (ICommand implementations) that work together to accomplish a goal.
+
+**Key Architecture**:
+- **Tasks** = Files in `.open-tasks/tasks/` that extend TaskHandler
+- **Commands** = ICommand implementations that consume and generate MemoryRef[]
+- **Pre-built Commands** = Library of commands you can use (PowershellCommand, ClaudeCommand, RegexCommand, etc.)
+- **Custom Commands** = Commands you create within your task files
+
+Tasks are different from:
 - **System Commands** (`init`, `create`) - manage project setup
-- **Built-in CLI Commands** (`store`, `load`, `replace`, etc.) - packaged operations
-- **Context API** (`context.store()`, `context.load()`, etc.) - internal programmatic API (not exposed as CLI commands)
+- **IWorkflowContext** (`context.store()`, `context.token()`, `context.run()`) - internal API (not exposed as CLI commands)
 
-### Step 1: Create a Process Command Template
+### Step 1: Create a Task Template
 
-Use the `create` system command to scaffold a new process command:
+Use the `create` system command to scaffold a new task:
 
 ```bash
-open-tasks create my-process
+open-tasks create my-task
 ```
 
-This creates `.open-tasks/commands/my-process.js` with a template:
+This creates `.open-tasks/tasks/my-task.ts` with a template:
 
-```javascript
-// .open-tasks/commands/my-process.js
-export default class MyProcess extends CommandHandler {
-  async execute(args, refs, context) {
-    // Your custom logic here
-    const value = args[0] || "default value";
+```typescript
+// .open-tasks/tasks/my-task.ts
+export default class MyTask extends TaskHandler {
+  static name = 'my-task';
+  static description = 'My custom task';
+  
+  async execute(args: string[], context: IWorkflowContext): Promise<TaskOutcome> {
+    // Compose commands to build your workflow
+    const outcome: TaskOutcome = {
+      id: generateId(),
+      name: 'my-task',
+      logs: [],
+      errors: []
+    };
     
-    // Use the Context API internally
-    return await context.store(value, "my-process-output");
+    try {
+      // Use pre-built commands
+      const cmd = new PowershellCommand("echo 'Hello from task'");
+      const results = await context.run(cmd);
+      
+      // Track in logs
+      outcome.logs.push({
+        ...results[0],
+        command: 'PowershellCommand',
+        args: [],
+        start: new Date(),
+        end: new Date()
+      });
+    } catch (error) {
+      outcome.errors.push(error.message);
+    }
+    
+    return outcome;
   }
 }
 ```
 
-### Step 2: Implement Your Logic
+### Step 2: Compose Commands in Your Task
 
-Edit the file to add your custom functionality:
+Edit the file to compose pre-built and custom commands:
 
-```javascript
-export default class MyProcess extends CommandHandler {
-  async execute(args, refs, context) {
-    // Get input from references
-    const input = refs.get('input')?.content || args[0];
+```typescript
+export default class MyTask extends TaskHandler {
+  static name = 'analyze-code';
+  
+  async execute(args: string[], context: IWorkflowContext): Promise<TaskOutcome> {
+    const outcome: TaskOutcome = {
+      id: generateId(),
+      name: 'analyze-code',
+      logs: [],
+      errors: []
+    };
     
-    // Do some processing
-    const processed = input.toUpperCase();
+    try {
+      // 1. Use pre-built PowershellCommand to read file
+      const readCmd = new PowershellCommand(`Get-Content ${args[0]}`);
+      const [codeRef] = await context.run(readCmd);
+      
+      // 2. Use pre-built ClaudeCommand to analyze
+      const analyzeCmd = new ClaudeCommand(
+        "Analyze this code for issues",
+        [codeRef]
+      );
+      const [analysisRef] = await context.run(analyzeCmd);
+      
+      // 3. Store final result
+      const finalRef = await context.store(
+        context.token('analysis'),
+        [new TokenDecorator('final-result')]
+      );
+      
+      // Track all operations in logs
+      outcome.logs.push(/* log entries */);
+    } catch (error) {
+      outcome.errors.push(error.message);
+    }
     
-    // Store the result using Context API
-    return await context.store(processed, args.token || 'processed');
+    return outcome;
   }
 }
 ```
 
-### Step 3: Use Your Process Command
+### Step 3: Use Your Task
 
 ```bash
-# Your custom command is now available!
-open-tasks my-process "hello world" --token result
-# Output: HELLO WORLD
+# Your task is now available as a CLI command!
+open-tasks analyze-code ./src/app.ts
 
-# Or with a reference
-open-tasks store "hello world" --token input
-open-tasks my-process --ref input --token result
+# Output shows TaskOutcome with logs and any errors
 ```
 
-### Key Points About Process Commands
+### Key Points About Tasks
 
-- **Location**: Must be in `.open-tasks/commands/` directory
-- **Naming**: Filename becomes command name (e.g., `my-process.js` → `my-process`)
-- **API Access**: Can use Context API internally (`context.store()`, `context.load()`, etc.)
-- **User Interface**: Invoked as CLI commands (`open-tasks my-process`)
+- **Location**: Must be in `.open-tasks/tasks/` directory
+- **Naming**: Filename or static name property becomes command name
+- **Composition**: Tasks compose Commands to build workflows
+- **Pre-built Commands**: Use PowershellCommand, ClaudeCommand, RegexCommand, etc.
+- **Custom Commands**: Create ICommand implementations in your task file
+- **API Access**: Use IWorkflowContext internally (`context.store()`, `context.token()`, `context.run()`)
 - **Auto-discovery**: CLI automatically finds and registers them at startup
 
 ## Next Steps
 
 Now that you're familiar with the basics:
 
-1. **Explore Built-in CLI Commands**: Read [Process Functions](Process-Functions.md) for detailed documentation on the six built-in commands
+1. **Explore Pre-built Commands**: Read [Process Functions](Process-Functions.md) for detailed documentation on the command library
 
-2. **Build Advanced Process Commands**: Learn to create complex custom commands in [Building Custom Commands](Building-Custom-Commands.md)
+2. **Build Advanced Tasks**: Learn to create complex custom tasks and commands in [Building Custom Tasks](Building-Custom-Tasks.md)
 
 3. **Understand Architecture**: Deep dive into the system architecture and the distinction between Context API, CLI Commands, and Process Commands in [Architecture Overview](Architecture.md)
 

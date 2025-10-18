@@ -1,239 +1,52 @@
 # Architecture Overview
 
-## Core Architectural Concepts
-
-Open Tasks CLI is built on a **task composition architecture** where:
-
-1. **Tasks** are files in the `.open-tasks/tasks/` directory
-2. **Tasks** are composed of one or more **Commands** 
-3. **Commands** implement the `ICommand` interface
-4. **Commands** consume `MemoryRef[]` inputs and generate `MemoryRef[]` outputs
-5. A **library of pre-built commands** is provided for users to compose tasks
-6. Users can **create custom commands** within their task files
-
-### The Task-Command Relationship
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  TASK (file in .open-tasks/tasks/)                         │
-│  └─ TaskHandler class                                       │
-│     └─ execute() method                                     │
-│        ├─ Creates Command instances                         │
-│        ├─ Runs commands via context.run(command)            │
-│        └─ Returns TaskOutcome with logs and results         │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  COMMANDS (ICommand implementations)                        │
-│                                                              │
-│  Pre-built Commands (library):                              │
-│  • PowershellCommand(script, args)                          │
-│  • CurlCommand(url, options)                                │
-│  • ClaudeCommand(prompt, contextRefs)                       │
-│  • RegexCommand(pattern, inputRef)                          │
-│  • TokenizeCommand(template, tokenMap)                      │
-│                                                              │
-│  Custom Commands (user-defined in task file):               │
-│  • class MyCustomCommand implements ICommand { ... }        │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  WORKFLOW CONTEXT (IWorkflowContext)                        │
-│                                                              │
-│  • store(value, decorators) → MemoryRef                     │
-│  • token(name) → string | undefined                         │
-│  • run(command) → MemoryRef[]                               │
-└─────────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│  MEMORY REFERENCES (MemoryRef)                              │
-│                                                              │
-│  { id, token, fileName }                                    │
-│  • Outputs from commands                                    │
-│  • Inputs to commands                                       │
-│  • Tracked in TaskLog entries                               │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Example Task Composition
-
-```typescript
-// .open-tasks/tasks/analyze-repo.ts
-export default class AnalyzeRepoTask extends TaskHandler {
-  static name = 'analyze-repo';
-  
-  async execute(args: string[], context: IWorkflowContext): Promise<TaskOutcome> {
-    // 1. Use pre-built PowershellCommand to get git log
-    const gitLogCmd = new PowershellCommand("git log --oneline -10");
-    const [logRef] = await context.run(gitLogCmd);
-    
-    // 2. Use pre-built PowershellCommand to get file count
-    const fileCountCmd = new PowershellCommand("git ls-files | wc -l");
-    const [countRef] = await context.run(fileCountCmd);
-    
-    // 3. Use pre-built ClaudeCommand with context
-    const analyzeCmd = new ClaudeCommand(
-      "Analyze this repository",
-      [logRef, countRef]
-    );
-    const [analysisRef] = await context.run(analyzeCmd);
-    
-    // 4. Store final result with custom decorator
-    const finalRef = await context.store(
-      context.token('analysis'), 
-      [new TokenDecorator('final-analysis')]
-    );
-    
-    return {
-      id: generateId(),
-      name: 'analyze-repo',
-      logs: [/* tracking info */],
-      errors: []
-    };
-  }
-}
-```
-
 ## Three-Layer Architecture
 
-Open Tasks CLI maintains a **three-layer architecture** for clarity and extensibility:
+Open Tasks CLI is built on a **three-layer architecture** that separates internal APIs, user-facing commands, and extensibility:
 
-### Layer 1: IWorkflowContext (Internal Programmatic API)
+### Layer 1: Context API (Internal Programmatic API)
 
-**Purpose**: Internal functions used by task and command implementations  
-**Visibility**: NOT exposed to end users directly  
+**Purpose**: Internal functions used by command implementations  
+**Visibility**: NOT exposed to end users  
 **Location**: Core framework code
 
-The IWorkflowContext provides programmatic functions for workflow processing:
+The Context API provides programmatic functions for workflow processing:
 
 ```typescript
-interface IWorkflowContext {
-  // Store a value and create a MemoryRef
-  store(value: string, transforms: IMemoryDecorator[]): Promise<MemoryRef>;
-  
-  // Look up the latest value for a token
-  token(name: string): string | undefined;
-  
+interface WorkflowContext {
+  // Store a value and create a file reference
+  store(value: string, propertyName: string): Promise<MemoryRef>;
+      
   // Execute a command implementation
-  run(command: ICommand): Promise<MemoryRef[]>;
+  run(command: IComman): Promise<MemoryRef[]>;  
 }
 ```
 
-**Key Point**: Users NEVER invoke `context.store()` directly from the CLI. These are implementation details used within tasks.
+**Key Point**: Users NEVER invoke `context.store()` directly. These are implementation details.
 
-### Layer 2: Tasks (User-Facing CLI Commands)
+### Layer 2: CLI Commands (User-Facing Interface)
 
-**Purpose**: Tasks users invoke via `open-tasks <task-name>`  
+**Purpose**: Commands users invoke via `open-tasks <command>`  
 **Visibility**: Public CLI interface  
 **Types**:
 
 1. **System Commands** - Project management
-   - `init` - Initialize project structure (creates `.open-tasks/tasks/` directory)
-   - `create` - Scaffold task templates
+   - `init` - Initialize project structure
+   - `create` - Scaffold process command templates
 
-2. **User Tasks** - Custom task definitions
-   - Located in `.open-tasks/tasks/`
-   - Extend TaskHandler abstract class
-   - Compose commands to build workflows
-   - Exposed as CLI commands via `open-tasks <task-name>`
+2. **Built-in CLI Commands** - Core operations (6 commands)
+   - `store` - Save values to memory/files
+   - `load` - Load file content  
+   - `replace` - Template substitution
+   - `powershell` - Execute PowerShell scripts
+   - `ai-cli` - AI tool integration
+   - `extract` - Regex extraction
 
-**Example**:
-```bash
-# User invokes their task
-open-tasks analyze-repo
-
-# Internally, the task uses:
-# - PowershellCommand to execute git commands
-# - ClaudeCommand to analyze results
-# - context.run() to execute commands
-# - context.store() to save results
-```
-
-### Layer 3: Command Library (Implementation Layer)
-
-**Purpose**: Reusable ICommand implementations for composing tasks  
-**Visibility**: API for task developers
-
-**Pre-built Command Library**:
-- `PowershellCommand` - Execute PowerShell scripts
-- `CurlCommand` - Make HTTP requests  
-- `ClaudeCommand` / `GeminiCommand` / `CodexCommand` - AI CLI integrations
-- `RegexCommand` - Extract with regex patterns
-- `TokenizeCommand` - Token replacement in templates
-- Custom commands users create in their task files
-
-```typescript
-// ICommand interface - all commands implement this
-interface ICommand {
-  execute(context: IWorkflowContext): Promise<MemoryRef[]>;
-}
-
-// Example pre-built command
-class PowershellCommand implements ICommand {
-  constructor(private script: string, private args: string[] = []) {}
-  
-  async execute(context: IWorkflowContext): Promise<MemoryRef[]> {
-    // Execute PowerShell, capture output
-    // Use context.store() to save results
-    // Return array of MemoryRefs
-  }
-}
-
-// Example custom command in task file
-class MyCustomCommand implements ICommand {
-  constructor(private input: string) {}
-  
-  async execute(context: IWorkflowContext): Promise<MemoryRef[]> {
-    // Custom logic here
-    const result = this.input.toUpperCase();
-    const ref = await context.store(result, []);
-    return [ref];
-  }
-}
-```
-
-**Relationship Between Layers**:
-
-```
-┌─────────────────────────────────────────────────────┐
-│  USER                                                │
-│  Invokes: open-tasks analyze-repo                   │
-└────────────────────┬────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│  LAYER 2: Tasks (CLI Commands)                      │
-│  • System Commands (init, create)                   │
-│  • User Tasks (.open-tasks/tasks/*.ts)              │
-│  • TaskHandler implementations                      │
-└────────────────────┬────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│  LAYER 3: Command Library                           │
-│  • Pre-built ICommand implementations               │
-│    - PowershellCommand                              │
-│    - ClaudeCommand                                  │
-│    - RegexCommand                                   │
-│    - TokenizeCommand                                │
-│  • Custom ICommand implementations                  │
-│    - User-defined in task files                     │
-└────────────────────┬────────────────────────────────┘
-                     │
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│  LAYER 1: IWorkflowContext (Internal)               │
-│  • context.store()                                  │
-│  • context.token()                                  │
-│  • context.run()                                    │
-│  (NOT exposed to users)                             │
-└─────────────────────────────────────────────────────┘
-```
-
----
+3. **Process Commands** - User-defined custom commands
+   - Located in `.open-tasks/commands/`
+   - Created with `open-tasks create <name>`
+   - Can use Context API internally
+   - Exposed as CLI commands
 
 **Example**:
 ```bash
@@ -272,7 +85,7 @@ abstract class CommandHandler {
 │  LAYER 2: CLI Commands                              │
 │  • System Commands (init, create)                   │
 │  • Built-in CLI Commands (store, load, etc.)        │
-│  • Process Commands (.open-tasks/tasks/*.js)     │
+│  • Process Commands (.open-tasks/commands/*.js)     │
 └────────────────────┬────────────────────────────────┘
                      │
                      ▼
@@ -318,7 +131,7 @@ Open Tasks CLI follows a command pattern architecture with explicit context pass
 │                                                      │
 │  • Discover system commands (init, create)           │
 │  • Discover built-in CLI commands (store, etc.)     │
-│  • Scan .open-tasks/tasks/ for process commands  │
+│  • Scan .open-tasks/commands/ for process commands  │
 │  • Route to appropriate CommandHandler               │
 │  • Resolve --ref tokens to ReferenceHandles         │
 └────────────────────┬────────────────────────────────┘
@@ -694,7 +507,7 @@ interface CommandRouter {
    * Discover and register all commands
    * - System commands (init, create)
    * - Built-in CLI commands (store, load, etc.)
-   * - Process commands from .open-tasks/tasks/
+   * - Process commands from .open-tasks/commands/
    */
   discoverCommands(): Promise<void>;
   
@@ -737,7 +550,7 @@ interface Configuration {
   
   /**
    * Directory for custom process commands
-   * @default ".open-tasks/tasks"
+   * @default ".open-tasks/commands"
    */
   customCommandsDir: string;
   
@@ -823,7 +636,7 @@ async function main() {
 
 **Responsibilities:**
 - Discover and register built-in commands
-- Scan `.open-tasks/tasks/` for custom commands
+- Scan `.open-tasks/commands/` for custom commands
 - Resolve `--ref` tokens to ReferenceHandles
 - Route to appropriate command handler
 - Handle unknown commands with suggestions
@@ -838,7 +651,7 @@ class CommandRouter {
     this.registerBuiltins();
 
     // 2. Scan for custom commands
-    const customDir = path.join(process.cwd(), '.open-tasks/tasks');
+    const customDir = path.join(process.cwd(), '.open-tasks/commands');
     if (await exists(customDir)) {
       const files = await fs.readdir(customDir);
       for (const file of files) {
@@ -1184,7 +997,7 @@ class CommandRouter {
     this.commands.set('extract', new ExtractCommand());
     
     // 3. Discover process commands
-    const commandsDir = path.join(this.context.cwd, '.open-tasks/tasks');
+    const commandsDir = path.join(this.context.cwd, '.open-tasks/commands');
     if (await fs.exists(commandsDir)) {
       const files = await fs.readdir(commandsDir);
       
@@ -1276,7 +1089,7 @@ class InitCommand extends CommandHandler {
     // 3. Create default config
     const defaultConfig = {
       outputDir: '.open-tasks/outputs',
-      customCommandsDir: '.open-tasks/tasks',
+      customCommandsDir: '.open-tasks/commands',
       timestampFormat: 'YYYYMMDD-HHmmss-SSS',
       defaultFileExtension: 'txt',
       colors: true,
@@ -1345,7 +1158,7 @@ class CreateCommand extends CommandHandler {
     
     // 2. Check if command already exists
     const ext = useTypeScript ? '.ts' : '.js';
-    const commandFile = path.join(context.cwd, '.open-tasks/tasks', `${commandName}${ext}`);
+    const commandFile = path.join(context.cwd, '.open-tasks/commands', `${commandName}${ext}`);
     if (await fs.exists(commandFile)) {
       throw new Error(`Command already exists: ${commandName}\n` +
                       `File: ${commandFile}`);

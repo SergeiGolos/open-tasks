@@ -41,13 +41,40 @@ jobs:
           rm -rf quartz-build/content/*
           # Copy our wiki content
           cp -r open-tasks-wiki/* quartz-build/content/
-          
+
+          # Move config file to correct location
+          if [ -f quartz-build/content/quartz.config.ts ]; then
+            mv quartz-build/content/quartz.config.ts quartz-build/
+            echo "Moved quartz.config.ts to root directory"
+          fi
+
+          # Move layout file to correct location
+          if [ -f quartz-build/content/quartz.layout.ts ]; then
+            mv quartz-build/content/quartz.layout.ts quartz-build/
+            echo "Moved quartz.layout.ts to root directory"
+          fi
+
+          # Create styles directory if it doesn't exist
+          mkdir -p quartz-build/quartz/styles
+
+          # Move custom styles to correct location
+          if [ -f quartz-build/content/quartz/styles/custom.scss ]; then
+            mv quartz-build/content/quartz/styles/custom.scss quartz-build/quartz/styles/
+            echo "Moved custom.scss to quartz/styles/"
+          fi
+
+          # Move index styles to correct location
+          if [ -f quartz-build/content/quartz/styles/index.scss ]; then
+            mv quartz-build/content/quartz/styles/index.scss quartz-build/quartz/styles/
+            echo "Moved index.scss to quartz/styles/"
+          fi
+
           # Use README.md as index.md if index doesn't exist
           if [ ! -f quartz-build/content/index.md ] && [ -f quartz-build/content/README.md ]; then
             cp quartz-build/content/README.md quartz-build/content/index.md
             echo "Using README.md as index.md"
           fi
-          
+
           # Create a basic index if still missing
           if [ ! -f quartz-build/content/index.md ]; then
             echo "---" > quartz-build/content/index.md
@@ -58,20 +85,33 @@ jobs:
             echo "" >> quartz-build/content/index.md
             echo "This is the documentation for the Open Tasks project." >> quartz-build/content/index.md
           fi
-          
+
           # List content for debugging
           echo "Content directory structure:"
           ls -la quartz-build/content/
+          echo "Quartz root directory:"
+          ls -la quartz-build/
+          echo "Styles directory:"
+          ls -la quartz-build/quartz/styles/ || echo "Styles directory not found"
 
       - name: Configure Quartz
         run: |
           cd quartz-build
-          # Update base URL in quartz.config.ts
-          sed -i "s|baseUrl: \"quartz.jzhao.xyz\"|baseUrl: \"${{ github.repository_owner }}.github.io/open-tasks\"|g" quartz.config.ts
-          
+
+          # Update base URL if custom config exists
+          if [ -f quartz.config.ts ]; then
+            echo "Using custom quartz.config.ts"
+            # Update base URL in custom config
+            sed -i "s|baseUrl: \"bitCoblers.github.io/open-tasks\"|baseUrl: \"${{ github.repository_owner }}.github.io/open-tasks\"|g" quartz.config.ts
+          else
+            echo "Using default Quartz config, updating base URL"
+            # Update base URL in default config
+            sed -i "s|baseUrl: \"quartz.jzhao.xyz\"|baseUrl: \"${{ github.repository_owner }}.github.io/open-tasks\"|g" quartz.config.ts
+          fi
+
           # Verify the configuration
           echo "Quartz configuration:"
-          grep -A 5 "baseUrl" quartz.config.ts || true
+          grep -A 5 "baseUrl" quartz.config.ts || echo "No baseUrl found in config"
 
       - name: Build Quartz site
         run: |

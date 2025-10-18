@@ -76,7 +76,7 @@ open-tasks init
 
 **What `init` does:**
 - Creates `.open-tasks/` directory structure
-- Creates `.open-tasks/commands/` for process commands
+- Creates `.open-tasks/tasks/` for custom task files
 - Creates `.open-tasks/outputs/` for command outputs
 - Generates default `config.json` with sensible defaults
 - Ensures `package.json` exists (creates if missing)
@@ -85,7 +85,7 @@ open-tasks init
 **Result:**
 ```
 .open-tasks/
-├── commands/     # Your process commands go here
+├── tasks/        # Your custom task files go here
 ├── outputs/      # Command output files
 └── config.json   # Configuration (optional customization)
 ```
@@ -109,7 +109,7 @@ Create a configuration file at `.open-tasks/config.json`:
 ```json
 {
   "outputDir": ".open-tasks/outputs",
-  "customCommandsDir": ".open-tasks/commands",
+  "customTasksDir": ".open-tasks/tasks",
   "timestampFormat": "YYYYMMDD-HHmmss-SSS",
   "defaultFileExtension": "txt",
   "colors": true
@@ -179,52 +179,36 @@ You should see a file like `20251017-143022-456-test.txt` containing "Hello Worl
 
 ## Next Steps
 
-### 1. Create Your First Process Command
+### 1. Create Your First Task
 
-Use the `create` system command to scaffold a custom command:
+Use the `create` system command to scaffold a custom task:
 
 ```bash
-open-tasks create my-first-command
+open-tasks create my-first-task
 ```
 
-This creates `.open-tasks/commands/my-first-command.js` with a complete template.
+This creates `.open-tasks/tasks/my-first-task.js` with a complete template.
 
 Edit the file and implement your logic, then use it:
 
 ```bash
-open-tasks my-first-command "test input"
+open-tasks my-first-task "test input"
 ```
 
 ### 2. Explore Built-in Commands
 
-Try the six built-in CLI commands:
+Try composing tasks using pre-built commands like PowershellCommand, RegexCommand, etc.:
 
 ```bash
-# Store values
-open-tasks store "Production" --token env
-
-# Load files
-open-tasks load ./README.md --token readme
-
-# Template substitution
-open-tasks replace "Deploying to {{env}}" --ref env
-
-# Execute PowerShell
-open-tasks powershell "Get-Date"
-
-# Extract with regex
-open-tasks extract "\d+" --ref data --all
-
-# AI integration (requires ai-config.json)
-open-tasks ai-cli "Summarize this" --ref readme
+# Your tasks can use these commands internally
+# See Building Custom Tasks guide for examples
 ```
 
 ### 3. Learn More
 
 - Read [Getting Started](Getting-Started.md) for complete workflows
-- See [Process Functions](Process-Functions.md) for command details
-- Review [Building Process Commands](Building-Custom-Commands.md) for advanced extensibility
-- Study [Architecture Overview](Architecture.md) for system design
+- See [Building Custom Tasks](Building-Custom-Tasks.md) for task development
+- Review [Architecture Overview](Architecture.md) for system design
 
 ---
 
@@ -236,7 +220,7 @@ After installation and first use, your workspace will have:
 your-project/
 ├── .open-tasks/
 │   ├── outputs/              # Command output files (auto-created)
-│   ├── commands/             # Custom commands (optional, create manually)
+│   ├── tasks/                # Custom task files (create with 'create' command)
 │   ├── config.json           # Configuration (optional)
 │   └── ai-config.json        # AI CLI config (optional)
 └── [your project files]
@@ -259,7 +243,7 @@ If no configuration file is found, these defaults are used:
 | Setting | Default Value | Description |
 |---------|---------------|-------------|
 | `outputDir` | `.open-tasks/outputs` | Where command outputs are saved |
-| `customCommandsDir` | `.open-tasks/commands` | Where custom commands are loaded from |
+| `customTasksDir` | `.open-tasks/tasks` | Where custom commands are loaded from |
 | `timestampFormat` | `YYYYMMDD-HHmmss-SSS` | Format for output file timestamps |
 | `defaultFileExtension` | `txt` | Default extension for output files |
 | `colors` | `true` | Enable terminal colors |
