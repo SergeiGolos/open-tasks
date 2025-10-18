@@ -6,46 +6,51 @@
 
 ## Overview
 
-The Command Extension capability enables users to create custom **process commands** that extend the CLI's functionality. Process commands are user-defined commands that are auto-discovered from the `.open-tasks/commands/` directory and integrated seamlessly with built-in CLI commands.
+The Command Extension capability enables users to create custom **Task Handlers** that extend the CLI's functionality. Task handlers are user-defined commands that are auto-discovered from the `.open-tasks/commands/` directory and integrated seamlessly with built-in CLI commands.
 
 **Terminology**: 
-- **Process Commands**: Custom user-defined commands stored in `.open-tasks/commands/` directory (formerly referred to as "processes" in `.open-tasks/process/` directory)
-- **Built-in CLI Commands**: The six packaged commands (store, load, replace, powershell, ai-cli, extract)
+- **Task Handlers**: Custom user-defined command implementations stored in `.open-tasks/commands/` directory (extends `TaskHandler` abstract class)
+- **Built-in CLI Commands**: Core operational commands packaged with the CLI
 - **System Commands**: Framework commands (init, create) that manage the project
-- **Context API**: Internal programmatic API (context.store(), context.load(), etc.) - NOT exposed as CLI commands
+- **IWorkflowContext**: Internal programmatic API (context.store(), context.token(), context.run()) - NOT exposed as CLI commands
 
-Process commands can use the Context API internally but are exposed to users as CLI commands via `open-tasks <command-name>`.
+Task handlers use the IWorkflowContext API internally and return TaskOutcome objects that track execution results, logs, and errors.
+
+**Key Types**:
+- **TaskHandler**: Abstract class for creating custom commands
+- **TaskOutcome**: Return type containing id, name, logs, and errors
+- **TaskLog**: Log entry tracking MemoryRef results, command details, and timestamps
 
 ---
 
 ## ADDED Requirements
 
-### Requirement: Process Command Discovery
+### Requirement: Task Handler Discovery
 
-The CLI MUST automatically discover and load process commands from the user's workspace.
+The CLI MUST automatically discover and load task handlers from the user's workspace.
 
 **Priority:** Critical  
 **Type:** Functional
 
-#### Scenario: Discover process commands in standard location
+#### Scenario: Discover task handlers in standard location
 
 **Given** the directory `.open-tasks/commands/` exists  
 **And** it contains `my-command.js`  
 **When** the CLI starts  
 **Then** the CLI should scan the directory  
 **And** discover `my-command.js`  
-**And** register it as process command "my-command"
+**And** register it as task handler "my-command"
 
-#### Scenario: Discover TypeScript process commands
+#### Scenario: Discover TypeScript task handlers
 
 **Given** the directory `.open-tasks/commands/` contains `my-command.ts`  
 **And** ts-node or tsx is available  
 **When** the CLI starts  
 **Then** the CLI should discover the TypeScript file  
-**And** register it as process command "my-command"  
+**And** register it as task handler "my-command"  
 **And** execute it using the TypeScript runtime
 
-#### Scenario: No process commands directory
+#### Scenario: No commands directory
 
 **Given** the directory `.open-tasks/commands/` does not exist  
 **When** the CLI starts  
@@ -53,51 +58,78 @@ The CLI MUST automatically discover and load process commands from the user's wo
 **And** only system commands and built-in CLI commands should be available  
 **And** the CLI should function normally
 
-#### Scenario: Empty process commands directory
+#### Scenario: Empty commands directory
 
 **Given** the directory `.open-tasks/commands/` exists but is empty  
 **When** the CLI starts  
 **Then** the CLI should scan the directory  
-**And** find no process commands  
+**And** find no task handlers  
 **And** only system commands and built-in CLI commands should be available
 
-#### Scenario: Multiple process commands
+#### Scenario: Multiple task handlers
 
 **Given** the directory contains `cmd1.js`, `cmd2.js`, and `cmd3.js`  
 **When** the CLI starts  
-**Then** all three process commands should be discovered  
+**Then** all three task handlers should be discovered  
 **And** registered as "cmd1", "cmd2", and "cmd3"  
 **And** all should be available for invocation alongside built-in commands
 
 ---
 
-### Requirement: Command Module Format
+### Requirement: Task Handler Module Format
 
-Custom command modules MUST follow a specific structure to be loaded successfully.
+Custom task handler modules MUST follow a specific structure to be loaded successfully.
 
 **Priority:** Critical  
 **Type:** Technical
 
-#### Scenario: Command exports default class
+#### Scenario: Task handler exports default class extending TaskHandler
 
-**Given** a custom command file exists  
-**When** the module exports a default class extending CommandHandler  
+**Given** a custom task handler file exists  
+**When** the module exports a default class extending TaskHandler  
 **Then** the CLI should load the class  
 **And** instantiate it for command execution  
 **And** call its execute method when invoked
 
-#### Scenario: Command with invalid export
+#### Scenario: Task handler with static name property
+
+**Given** a TaskHandler class is defined  
+**When** the class includes a static `name` property  
+**Then** the CLI should use this name for command registration  
+**And** users can invoke it with `open-tasks <name>`  
+**And** the name should override the filename-based default
+
+#### Scenario: Task handler with static description
+
+**Given** a TaskHandler class is defined  
+**When** the class includes a static `description` property  
+**Then** the CLI should display this description in help output  
+**And** the description should explain what the command does
+
+#### Scenario: Task handler with static examples
+
+**Given** a TaskHandler class is defined  
+**When** the class includes a static `examples` array  
+**Then** the CLI should display these examples in help output  
+**And** examples should show typical usage patterns
+
+#### Scenario: Task handler with invalid export
 
 **Given** a custom command file exists  
-**And** it does not export a default class  
+**And** it does not export a default class extending TaskHandler  
 **When** the CLI attempts to load it  
 **Then** a warning should be displayed  
 **And** the command should be skipped  
 **And** the CLI should continue loading other commands
 
-#### Scenario: Command with missing execute method
+#### Scenario: Task handler with missing execute method
 
-**Given** a custom command class exists  
+**Given** a custom task handler class exists  
+**And** it does not implement the execute method  
+**When** the CLI attempts to use the command  
+**Then** an error should be displayed  
+**And** indicate the missing execute method  
+**And** the command should not be available  
 **And** it does not implement the execute method  
 **When** the CLI attempts to use the command  
 **Then** an error should be displayed  
@@ -138,205 +170,290 @@ Command names MUST be derived from the filename in a consistent manner.
 
 ---
 
-### Requirement: Command Handler Interface
+### Requirement: TaskHandler Interface
 
-Custom commands MUST implement the CommandHandler interface.
+Custom task handlers MUST implement the TaskHandler abstract class.
 
 **Priority:** Critical  
 **Type:** Technical
 
-#### Scenario: Custom command receives arguments
+#### Scenario: TaskHandler abstract class definition
 
-**Given** a custom command is invoked  
+**Given** the TaskHandler abstract class is available  
+**When** a developer creates a custom task handler  
+**Then** the class must extend TaskHandler  
+**And** the class must implement `execute(args: string[], context: IWorkflowContext): Promise<TaskOutcome>`  
+**And** the class may define static `name`, `description`, and `examples` properties
+
+#### Scenario: Task handler receives arguments
+
+**Given** a task handler is invoked  
 **When** the user runs `open-tasks my-cmd arg1 arg2`  
 **Then** the execute method should receive `["arg1", "arg2"]`  
-**And** the command can process the arguments
+**And** the handler can process the arguments as needed
 
-#### Scenario: Custom command receives references
+#### Scenario: Task handler receives workflow context
 
-**Given** a custom command accepts references  
-**When** the user runs `open-tasks my-cmd --ref token1 --ref token2`  
-**Then** the execute method should receive a Map with resolved references  
-**And** the command can access reference content by token
-
-#### Scenario: Custom command receives execution context
-
-**Given** a custom command is invoked  
+**Given** a task handler is invoked  
 **When** the execute method is called  
-**Then** the execution context should be passed as the third parameter  
-**And** the context should include cwd, outputDir, and referenceManager  
-**And** the command can access shared resources
+**Then** an IWorkflowContext instance should be passed as the second parameter  
+**And** the handler can call `context.store()` to save values  
+**And** the handler can call `context.token()` to lookup values  
+**And** the handler can call `context.run()` to execute ICommand instances
 
-#### Scenario: Custom command returns reference
+#### Scenario: Task handler returns TaskOutcome
 
-**Given** a custom command executes successfully  
+**Given** a task handler executes successfully  
 **When** the execute method completes  
-**Then** it must return a Promise<ReferenceHandle>  
-**And** the reference should contain the command output  
-**And** the output should be written to a file automatically
+**Then** it must return a Promise<TaskOutcome>  
+**And** the TaskOutcome must contain a unique `id`  
+**And** the TaskOutcome must contain the task `name`  
+**And** the TaskOutcome must contain a `logs` array (may be empty)  
+**And** the TaskOutcome must contain an `errors` array (should be empty on success)
+
+#### Scenario: Task handler with execution errors
+
+**Given** a task handler encounters errors during execution  
+**When** the execute method completes  
+**Then** the TaskOutcome `errors` array should contain error messages  
+**And** the `logs` array may contain partial execution logs  
+**And** the CLI should recognize the task as failed
 
 ---
 
-### Requirement: Error Handling in Custom Commands
+### Requirement: TaskOutcome Structure
 
-Custom commands MUST handle errors gracefully, with support from the CLI framework.
+Task handlers MUST return TaskOutcome objects with standardized structure.
+
+**Priority:** Critical  
+**Type:** Technical
+
+#### Scenario: TaskOutcome required properties
+
+**Given** a task handler returns a TaskOutcome  
+**When** the outcome is created  
+**Then** it must contain `id` property (string - unique identifier or user token)  
+**And** it must contain `name` property (string - the task that was run)  
+**And** it must contain `logs` property (TaskLog[] - collection of command logs)  
+**And** it must contain `errors` property (string[] - collection of error messages)
+
+#### Scenario: TaskLog structure in logs array
+
+**Given** a task handler creates TaskLog entries  
+**When** commands are executed via `context.run()`  
+**Then** each TaskLog should include all MemoryRef properties (id, token, fileName)  
+**And** each TaskLog should include `command` property (string - type of command run)  
+**And** each TaskLog should include `args` property (MemoryRef[] - args passed to command)  
+**And** each TaskLog should include `start` property (DateTime - start time)  
+**And** each TaskLog should include `end` property (DateTime - end time)
+
+#### Scenario: Empty logs array for simple handlers
+
+**Given** a task handler doesn't execute any commands  
+**When** the handler completes  
+**Then** the TaskOutcome `logs` array may be empty  
+**And** this should be valid (e.g., for validation-only tasks)
+
+#### Scenario: Multiple logs for complex workflows
+
+**Given** a task handler executes multiple commands  
+**When** each command completes via `context.run()`  
+**Then** a TaskLog entry should be added to the logs array  
+**And** logs should be ordered chronologically  
+**And** all command executions should be tracked
+
+---
+
+### Requirement: Error Handling in Task Handlers
+
+Task handlers MUST handle errors gracefully and report them via TaskOutcome.
 
 **Priority:** High  
 **Type:** Functional
 
-#### Scenario: Custom command throws error
+#### Scenario: Task handler catches and reports errors
 
-**Given** a custom command encounters an error  
-**When** the execute method throws an exception  
-**Then** the CLI should catch the exception  
-**And** display a formatted error message  
+**Given** a task handler encounters an error during execution  
+**When** an ICommand throws an exception  
+**Then** the task handler should catch the exception  
+**And** add the error message to TaskOutcome.errors array  
+**And** optionally continue with remaining operations  
+**And** return the TaskOutcome with errors populated
+
+#### Scenario: Task handler validation error
+
+**Given** a task handler receives invalid arguments  
+**When** the handler validates the arguments  
+**And** finds them invalid  
+**Then** the handler should return TaskOutcome with validation errors in the errors array  
+**And** the logs array may be empty  
+**And** the CLI should display the errors to the user
+
+#### Scenario: Uncaught exception in task handler
+
+**Given** a task handler throws an uncaught exception  
+**When** the execute method throws an error  
+**Then** the CLI framework should catch the exception  
+**And** create a TaskOutcome with the error message  
 **And** write error details to an `.error` file  
 **And** exit with a non-zero code
 
-#### Scenario: Custom command validation error
+#### Scenario: Partial success with errors
 
-**Given** a custom command receives invalid arguments  
-**When** the command validates the arguments  
-**And** finds them invalid  
-**Then** the command should throw a validation error  
-**And** the CLI should display the error  
-**And** suggest correct usage
+**Given** a task handler executes multiple commands  
+**When** some commands succeed and others fail  
+**Then** the TaskOutcome should contain logs for successful operations  
+**And** the errors array should contain failures  
+**And** the CLI should report the task as failed but show partial progress
 
 ---
 
-### Requirement: Command Metadata
+### Requirement: Task Handler Metadata
 
-Custom commands MUST provide metadata for help and documentation.
+Task handlers SHOULD provide metadata for help and documentation via static properties.
 
 **Priority:** Medium  
 **Type:** Functional
 
-#### Scenario: Command with description
+#### Scenario: Task handler with static name
 
-**Given** a custom command class has a static `description` property  
+**Given** a TaskHandler class has a static `name` property set to "my-task"  
+**When** the task handler is registered  
+**Then** it should be invokable as `open-tasks my-task`  
+**And** the name should override the filename-based default
+
+#### Scenario: Task handler with description
+
+**Given** a TaskHandler class has a static `description` property  
 **When** the user runs `open-tasks --help`  
-**Then** the command should be listed  
+**Then** the task handler should be listed  
 **And** the description should be displayed next to the command name
 
-#### Scenario: Command with usage examples
+#### Scenario: Task handler with usage examples
 
-**Given** a custom command class has a static `examples` property  
-**When** the user runs `open-tasks my-cmd --help`  
+**Given** a TaskHandler class has a static `examples` array  
+**When** the user runs `open-tasks my-task --help`  
 **Then** the examples should be displayed  
-**And** formatted as usage examples
+**And** formatted as usage examples  
+**And** help users understand how to use the task
 
-#### Scenario: Command without metadata
+#### Scenario: Task handler without metadata
 
-**Given** a custom command has no metadata properties  
+**Given** a TaskHandler has no static metadata properties  
 **When** the user views help  
-**Then** the command should still be listed  
+**Then** the task handler should still be listed (using filename as name)  
 **And** a default description should be shown  
 **And** no examples should be displayed
 
 ---
 
-### Requirement: Access to Shared Services
+### Requirement: Access to Workflow Context
 
-Custom commands MUST have access to shared CLI services and utilities.
+Task handlers MUST have access to IWorkflowContext for orchestrating operations.
 
 **Priority:** High  
 **Type:** Technical
 
-#### Scenario: Custom command writes output file
+#### Scenario: Task handler stores output values
 
-**Given** a custom command produces output  
-**When** the command uses the execution context  
-**Then** it should access the output handler  
-**And** write files to the configured output directory  
-**And** follow the standard naming convention
+**Given** a task handler produces output  
+**When** the handler calls `context.store(value, decorators)`  
+**Then** a MemoryRef should be created and returned  
+**And** the value should be stored according to context implementation  
+**And** the MemoryRef can be added to TaskLog entries
 
-#### Scenario: Custom command creates reference
+#### Scenario: Task handler lookups token values
 
-**Given** a custom command produces output  
-**When** the command uses the reference manager  
-**Then** it can create a new reference  
-**And** the reference should be available to subsequent commands  
-**And** stored in memory for the session
+**Given** a task handler needs to reference previous values  
+**When** the handler calls `context.token(name)`  
+**Then** the value associated with the token should be returned  
+**And** undefined should be returned if token doesn't exist  
+**And** the lookup should be fast (synchronous)
 
-#### Scenario: Custom command reads configuration
+#### Scenario: Task handler executes commands
 
-**Given** a custom command needs configuration  
-**When** the command accesses the execution context  
-**Then** it can read the configuration object  
-**And** access both project-level and user-level config  
-**And** use configuration values in its logic
+**Given** a task handler needs to run a command  
+**When** the handler creates an ICommand instance and calls `context.run(command)`  
+**Then** the command should execute with the context  
+**And** MemoryRef[] should be returned  
+**And** the handler can track the results in TaskLog entries
 
 ---
 
 ### Requirement: Template and Documentation
 
-The CLI MUST provide templates and documentation for creating custom commands.
+The CLI MUST provide templates and documentation for creating task handlers.
 
 **Priority:** Medium  
 **Type:** Documentation
 
-#### Scenario: Template command available
+#### Scenario: Template task handler available
 
 **Given** the CLI package includes a template  
-**When** developers want to create a custom command  
-**Then** they can copy the template from `templates/example-command.ts`  
+**When** developers want to create a custom task handler  
+**Then** they can use `open-tasks create <task-name>` to scaffold  
 **And** the template should include all required boilerplate  
-**And** include comments explaining each part
+**And** include comments explaining each part  
+**And** show how to use IWorkflowContext
 
-#### Scenario: Documentation for custom commands
+#### Scenario: Documentation for task handlers
 
 **Given** developers want to extend the CLI  
 **When** they read the README or documentation  
-**Then** a section should explain custom commands  
+**Then** a section should explain task handlers  
 **And** show the file structure and conventions  
 **And** provide a complete example  
-**And** explain the CommandHandler interface
+**And** explain the TaskHandler abstract class and TaskOutcome structure
 
 ---
 
-### Requirement: Command Isolation
+### Requirement: Task Handler Isolation
 
-Custom commands MUST execute in isolation without affecting other commands or the CLI core.
+Task handlers MUST execute in isolation without affecting other tasks or the CLI core.
 
 **Priority:** High  
 **Type:** Technical
 
-#### Scenario: Custom command error does not crash CLI
+#### Scenario: Task handler error does not crash CLI
 
-**Given** a custom command has a bug  
-**When** the command throws an unexpected error  
+**Given** a task handler has a bug  
+**When** the handler throws an unexpected error  
 **Then** the CLI should catch the error  
 **And** the CLI should remain stable  
-**And** other commands should remain usable
+**And** other task handlers should remain usable  
+**And** a TaskOutcome with errors should be created
 
-#### Scenario: Custom command cannot modify core behavior
+#### Scenario: Task handler cannot modify core behavior
 
-**Given** a custom command attempts to modify CLI internals  
-**When** the command executes  
-**Then** it should only have access to the provided interfaces  
+**Given** a task handler attempts to modify CLI internals  
+**When** the handler executes  
+**Then** it should only have access to the provided interfaces (IWorkflowContext)  
 **And** should not be able to modify the command router  
-**And** should not be able to affect other command registrations
+**And** should not be able to affect other task handler registrations
 
 ---
 
-## Command Handler API
+## TaskHandler API
 
-### Base Class
+### Abstract Class Definition
 
 ```typescript
-abstract class CommandHandler {
+abstract class TaskHandler {
   /**
-   * Execute the command
-   * @param args - Positional arguments passed to the command
-   * @param refs - Map of resolved references (token -> ReferenceHandle)
-   * @param context - Execution context with shared resources
-   * @returns Promise resolving to a ReferenceHandle
+   * Execute the Task as defined in the execute class.
+   * @param args - Positional arguments passed to the command from the CLI
+   * @param context - Workflow context with IWorkflowContext interface
+   * @returns Promise resolving to a TaskOutcome
    */
   abstract execute(
     args: string[],
-    refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext
-  ): Promise<ReferenceHandle>;
+    context: IWorkflowContext
+  ): Promise<TaskOutcome>;
+
+  /**
+   * The Task name, used as the verb in the call to the open-tasks CLI command line.
+   */
+  static name: string;
 
   /**
    * Command description for help output (optional)
@@ -348,59 +465,108 @@ abstract class CommandHandler {
    */
   static examples?: string[];
 }
+
+/**
+ * TaskOutcome - Result of CLI command execution
+ */
+type TaskOutcome = {
+  /**
+   * Unique identifier (user token or auto-generated UUID)
+   */
+  id: string;
+
+  /**
+   * The task that was run.
+   */
+  name: string;
+
+  /**
+   * A collection of command-generated logs.
+   */
+  logs: TaskLog[];
+
+  /**
+   * A collection of errors that may have been caught. If not empty, the Task has failed.
+   */
+  errors: string[];
+}
+
+/**
+ * TaskLog - Log entry for a command execution
+ */
+type TaskLog = {
+  // ... MemoryRef properties
+  id: string;
+  token: string;
+  fileName: string;
+
+  // Process tracking properties
+  command: string;           // type of command being run
+  args: MemoryRef[];        // the args passed to the command
+  start: DateTime;          // start of the ICommand
+  end: DateTime;            // end of the ICommand
+}
 ```
 
-### Example Custom Command
+### Example Task Handler
 
 ```typescript
-// .open-tasks/commands/uppercase.ts
-import { CommandHandler, ReferenceHandle, ExecutionContext, generateUUID } from 'open-tasks-cli';
+// .open-tasks/commands/process-data.ts
+import { TaskHandler, TaskOutcome, IWorkflowContext, MemoryRef, ICommand } from 'open-tasks-cli';
 
-export default class UppercaseCommand extends CommandHandler {
-  static description = 'Convert text to uppercase';
+export default class ProcessDataHandler extends TaskHandler {
+  static name = 'process-data';
+  static description = 'Process data files and generate report';
   static examples = [
-    'open-tasks uppercase "hello world"',
-    'open-tasks uppercase --ref mytext',
+    'open-tasks process-data input.txt',
+    'open-tasks process-data file1.txt file2.txt',
   ];
 
   async execute(
     args: string[],
-    refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext
-  ): Promise<ReferenceHandle> {
-    const startTime = Date.now();
-    
-    // Get input from args or first reference
-    let input: string;
-    if (args.length > 0) {
-      input = args[0];
-    } else if (refs.size > 0) {
-      const firstRef = refs.values().next().value;
-      input = firstRef.content.toString();
-    } else {
-      throw new Error('No input provided. Provide text as argument or use --ref');
+    context: IWorkflowContext
+  ): Promise<TaskOutcome> {
+    const outcome: TaskOutcome = {
+      id: generateUUID(),
+      name: 'process-data',
+      logs: [],
+      errors: []
+    };
+
+    try {
+      // Store input files
+      for (const file of args) {
+        const ref = await context.store(
+          await readFile(file),
+          [new TokenDecorator(file), new TimestampDecorator()]
+        );
+        // Add to logs...
+      }
+
+      // Execute a command
+      const processCmd = new DataProcessCommand(args);
+      const results = await context.run(processCmd);
+      
+      // Track in logs
+      outcome.logs.push({
+        ...results[0],
+        command: 'DataProcessCommand',
+        args: [],
+        start: new Date(startTime),
+        end: new Date()
+      });
+
+      // Use token lookup
+      const previousResult = context.token('last-result');
+      if (previousResult) {
+        // Do something with it...
+      }
+
+    } catch (error) {
+      outcome.errors.push(error.message);
     }
 
-    // Transform to uppercase
-    const output = input.toUpperCase();
-
-    // Create reference using context services
-    const outputFile = await context.outputHandler.writeOutput(
-      output,
-      context.token || undefined
-    );
-
-    return {
-      id: context.token || generateUUID(),
-      content: output,
-      timestamp: new Date(),
-      outputFile,
-      metadata: {
-        commandName: 'uppercase',
-        args,
-        duration: Date.now() - startTime,
-      },
-    };
+    return outcome;
   }
 }
 ```
@@ -412,11 +578,14 @@ export default class UppercaseCommand extends CommandHandler {
 ```
 project-root/
 └── .open-tasks/
-    ├── commands/           # Custom command modules
-    │   ├── my-command.js   # JavaScript command
-    │   ├── another-cmd.ts  # TypeScript command
-    │   └── transform.js    # Another custom command
-    ├── outputs/            # Command output files
+    ├── commands/           # Task handler modules
+    │   ├── my-task.js      # JavaScript task handler
+    │   ├── another-task.ts # TypeScript task handler
+    │   └── transform.js    # Another custom task handler
+    ├── output/             # Output files (timestamped directories)
+    │   └── 20251017-120000/
+    │       ├── result1.txt
+    │       └── result2.txt
     └── config.json         # Optional configuration
 ```
 
@@ -424,27 +593,30 @@ project-root/
 
 ## Technical Constraints
 
-- Custom commands must be in `.open-tasks/commands/` (not subdirectories)
+- Task handlers must be in `.open-tasks/commands/` (not subdirectories)
 - Only `.js` and `.ts` files are scanned
-- Command names must be valid identifiers (alphanumeric, hyphens, underscores)
-- Commands cannot override built-in commands
-- Maximum 100 custom commands per workspace (performance consideration)
+- Task names must be valid identifiers (alphanumeric, hyphens, underscores)
+- Task handlers cannot override built-in commands or system commands
+- Maximum 100 custom task handlers per workspace (performance consideration)
+- TaskOutcome must be returned even on failure (with errors populated)
 
 ---
 
 ## Security Considerations
 
-- Custom commands execute with same privileges as the user
+- Task handlers execute with same privileges as the user
 - No sandboxing or permission system in v1
-- Users are responsible for vetting custom command code
-- Recommend code review before adding third-party commands
+- Users are responsible for vetting custom task handler code
+- Recommend code review before adding third-party task handlers
 - File operations should be limited to workspace directory
+- ICommand implementations should validate inputs
 
 ---
 
 ## Performance Requirements
 
-- Command discovery: < 100ms for 50 commands
-- Command loading: Lazy (only load when invoked)
+- Task handler discovery: < 100ms for 50 handlers
+- Task handler loading: Lazy (only load when invoked)
 - Module caching: Cache loaded modules for the session
+- Context operations (store, token) should be fast (< 10ms each)
 - Reload: No hot-reload in v1 (restart CLI to pick up changes)

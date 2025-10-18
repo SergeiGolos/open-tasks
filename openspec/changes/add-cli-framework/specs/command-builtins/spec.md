@@ -6,9 +6,11 @@
 
 ## Overview
 
-The Command Built-ins capability provides six essential **CLI commands** that are packaged with the CLI: store, load, replace, powershell, ai-cli, and extract. These commands cover common operations for data storage, file I/O, string manipulation, shell execution, AI integration, and data extraction.
+The Command Built-ins capability provides essential **CLI commands** that are packaged with the CLI. These commands cover common operations for data storage, file I/O, string manipulation, shell execution, AI integration, and data extraction.
 
-**Important Distinction**: These are user-facing CLI commands invoked as `open-tasks <command>`. They are NOT the internal Context API functions (`context.store()`, `context.load()`, `context.transform()`, `context.run()`) which are programmatic APIs used by command implementations. These CLI commands may internally use the Context API, but they provide a different interface and functionality tailored for CLI usage.
+**Important Distinction**: These are user-facing CLI commands invoked as `open-tasks <command>`. They are NOT the internal IWorkflowContext API methods (`context.store()`, `context.token()`, `context.run()`) which are programmatic APIs used within TaskHandler and ICommand implementations.
+
+**Implementation Note**: Built-in commands may be implemented as TaskHandler classes internally, using the IWorkflowContext API to perform their operations. The key difference is that built-in commands are packaged with the CLI, while custom task handlers are user-defined in `.open-tasks/commands/`.
 
 ---
 

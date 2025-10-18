@@ -6,78 +6,97 @@
 
 ## Summary
 
-Implement a workflow processing system that enables execution of different processes with context-based function execution and automatic file-based input/output recording. The system supports storing values as file references, loading from files, and applying transforms on memory elements with chainable operations.
+Implement a workflow processing system that provides the **IWorkflowContext** interface for context-based function execution with automatic file-based input/output recording. The system supports:
+
+1. **IWorkflowContext Interface**: Core API with `store()`, `token()`, and `run()` methods
+2. **MemoryRef**: Reference objects with id, token, and fileName properties for tracking stored values
+3. **ICommand Interface**: Executable commands that receive context and return MemoryRef arrays
+4. **IMemoryDecorator Interface**: Transformations applied to MemoryRefs during storage operations
+5. **Multiple Context Implementations**: InMemoryWorkflowContext, DirectoryOutputContext, and future RemoteOutputContext
+
+This is an **internal programmatic API** used by TaskHandler implementations and built-in commands - NOT exposed as CLI commands.
 
 ## Motivation
 
-Users need a flexible workflow processing system to:
-- Execute processes as single functions with shared context
-- Run asynchronous functions with automatic I/O recording to text files
-- Pass outputs as reference objects to subsequent functions
-- Store and retrieve values with automatic file naming and timestamping
-- Apply transforms on memory elements with configurable operations
-- Chain operations with file references serving as inputs and outputs
+Task handlers and built-in commands need a flexible workflow processing system to:
+- Store values with automatic reference creation and file recording (for file-based contexts)
+- Retrieve stored values quickly via token-based lookup
+- Execute command implementations (ICommand) that can be composed together
+- Apply transformations to memory references via decorators during storage
+- Support different storage backends (memory, filesystem, remote) via a common interface
+- Track execution history with MemoryRef objects that maintain metadata
 
 ## Goals
 
-1. **Context-Based Execution**: Provide a context object to all functions that manages storage, loading, and transforms
-2. **Automatic File Recording**: Store all inputs and outputs as timestamped text files with property-based naming
-3. **Reference Management**: Return file references from all operations that can be passed to other functions
-4. **Transform System**: Support a generic transform interface for string manipulation with multiple transform types
-5. **Asynchronous Operations**: All functions execute asynchronously with proper await handling
-6. **Storage Metadata**: Track transform history and properties in stored files
+1. **IWorkflowContext Interface**: Define standard interface for all context implementations
+2. **Store with Decorators**: Provide `store(value, decorators)` that creates MemoryRefs with transformations
+3. **Token Lookup**: Provide synchronous `token(name)` that returns latest value for a token
+4. **Command Execution**: Provide `run(command)` that executes ICommand instances with the context
+5. **MemoryRef Structure**: Define MemoryRef type with id, token, and fileName properties
+6. **ICommand Interface**: Define interface for executable commands that accept context and return MemoryRef[]
+7. **IMemoryDecorator Interface**: Define interface for MemoryRef transformations (naming, tokens, timestamps)
+8. **Multiple Implementations**: Support InMemoryWorkflowContext (dictionary lookup), DirectoryOutputContext (timestamped file directories), and future RemoteOutputContext (cloud storage)
 
 ## Non-Goals
 
-- Building a visual workflow designer (code-based only)
-- Providing a database backend (file-based storage only)
+- Building user-facing CLI commands (those are in `command-builtins` and `command-extension`)
+- Providing a visual workflow designer (code-based only)
 - Managing distributed execution (single-process only)
-- Supporting binary file formats (text files only)
+- Supporting binary file formats in initial version (text files only for file-based contexts)
 
 ## Affected Capabilities
 
 This change introduces the following new capability:
 
-- **workflow-processing**: Context-based workflow execution with storage, loading, transforms, and command running
+- **workflow-processing**: IWorkflowContext interface, MemoryRef type, ICommand interface, IMemoryDecorator interface, and context implementations
 
 ## What Changes
 
-- Add WorkflowContext class with store, load, transform, and run methods
-- Implement file-based storage with timestamp and property name conventions
-- Create file reference system for passing data between operations
-- Implement transform interface with token replacement, regex parsing, and extensibility
-- Add ICommand interface for executable command instances
-- Ensure all operations return file references for chaining
+- Add IWorkflowContext interface with store(), token(), and run() methods
+- Implement MemoryRef type with id, token, and fileName properties
+- Create ICommand interface for executable command instances
+- Create IMemoryDecorator interface for MemoryRef transformations
+- Implement InMemoryWorkflowContext with dictionary-based storage
+- Implement DirectoryOutputContext with timestamped file directories
+- Design future RemoteOutputContext for cloud storage integration
+- Ensure all operations are asynchronous (except token lookup)
 
 ## Impact
 
 - Affected specs: New capability `workflow-processing`
 - Affected code: New implementation in workflow processing module
 - **BREAKING**: None (new feature)
+- **Relationship**: Used internally by TaskHandler classes and built-in commands
 
 ## Open Questions
 
-1. Should transform history be stored in the same file or separate metadata files?
-2. What error handling strategy for failed operations in a workflow?
-3. Should there be a maximum file size limit for memory elements?
-4. Do we need support for concurrent workflow execution?
+1. Should MemoryRef track additional metadata (creation time, size, etc.)?
+2. What error handling strategy for failed context.run() operations?
+3. Should there be a way to clear or reset the context state?
+4. Do we need support for nested/hierarchical tokens?
+5. Should IMemoryDecorator have access to the full context for advanced scenarios?
 
 ## Success Criteria
 
-- [ ] Context object provides store, load, transform, and run methods
-- [ ] All operations automatically create timestamped files with property-based names
-- [ ] File references can be passed between operations
-- [ ] Transform system supports multiple transform types
-- [ ] Transform metadata is preserved in output files
-- [ ] ICommand interface can be implemented for custom commands
-- [ ] All operations are asynchronous and properly awaited
-- [ ] Documentation covers usage and extension patterns
+- [ ] IWorkflowContext interface is defined and implemented
+- [ ] InMemoryWorkflowContext stores values in memory dictionary
+- [ ] DirectoryOutputContext creates timestamped directories and files
+- [ ] MemoryRef type includes id, token, and fileName
+- [ ] `context.store()` accepts decorators and applies them before creating MemoryRef
+- [ ] `context.token()` returns latest value for a token (synchronous)
+- [ ] `context.run()` executes ICommand instances and returns MemoryRef[]
+- [ ] ICommand interface is defined and can be implemented
+- [ ] IMemoryDecorator interface is defined with example implementations
+- [ ] All operations are properly asynchronous (except token lookup)
+- [ ] TaskHandler classes can use IWorkflowContext effectively
+- [ ] Documentation covers all interfaces and usage patterns
 
 ## Related Changes
 
-- Complements `add-cli-framework` by providing workflow processing logic
-- Could be integrated with CLI commands for file-based workflows
+- Complements `add-cli-framework` by providing the internal workflow API used by TaskHandler and commands
+- TaskHandler classes (in `command-extension`) use IWorkflowContext
+- Built-in commands (in `command-builtins`) may use IWorkflowContext internally
 
 ## References
 
-- Original requirements: Issue description
+- Updated design document: `open-tasks-wiki/Updated Specs Reqs.md`
