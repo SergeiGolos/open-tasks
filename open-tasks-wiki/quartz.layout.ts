@@ -39,7 +39,7 @@ const options: LayoutOptions = {
 
 export const layout: PageLayout = {
   ...options,
-  // Custom branding for bitCoblers/open-tasks
+  // Custom branding for bitcobblers/open-tasks
   theme: {
     typography: {
       header: "Inter, system-ui, sans-serif",

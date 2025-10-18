@@ -1,6 +1,6 @@
 ---
 title: "Open Tasks CLI"
-description: "Flexible command-line tool for composable workflow automation by bitCoblers"
+description: "Flexible command-line tool for composable workflow automation by bitcobblers"
 ---
 
 # Open Tasks CLI
@@ -41,7 +41,7 @@ Color-coded terminal feedback and persistent file outputs for debugging and moni
 
 ```bash
 # Clone the repository
-git clone https://github.com/bitCoblers/open-tasks.git
+git clone https://github.com/bitcobblers/open-tasks.git
 cd open-tasks
 
 # Install dependencies
@@ -149,8 +149,8 @@ Custom commands and extensions are encouraged! Check out the [Building Custom Co
 
 <div style="text-align: center; opacity: 0.8; margin-top: 2rem;">
 
-**Built with ❤️ by [bitCoblers](https://github.com/bitCoblers)**
+**Built with ❤️ by [bitcobblers](https://github.com/bitcobblers)**
 
-[View on GitHub](https://github.com/bitCoblers/open-tasks) • [Report Issues](https://github.com/bitCoblers/open-tasks/issues)
+[View on GitHub](https://github.com/bitcobblers/open-tasks) • [Report Issues](https://github.com/bitcobblers/open-tasks/issues)
 
 </div>

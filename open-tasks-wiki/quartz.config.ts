@@ -2,10 +2,10 @@ import { QuartzConfig } from "./quartz/cfg"
 
 const config: QuartzConfig = {
   configuration: {
-    title: "Open Tasks CLI | bitCoblers/open-tasks",
-    baseUrl: "bitCoblers.github.io/open-tasks",
-    description: "Flexible command-line tool for composable workflow automation by bitCoblers",
-    author: "bitCoblers",
+    title: "Open Tasks CLI | bitcobblers/open-tasks",
+    baseUrl: "bitcobblers.github.io/open-tasks",
+    description: "Flexible command-line tool for composable workflow automation by bitcobblers",
+    author: "bitcobblers",
 
     // Enable features for better documentation
     enableSPA: true,
@@ -38,7 +38,7 @@ const config: QuartzConfig = {
     emitters: [
       // Generate RSS feed
       rss: {
-        siteUrl: "https://bitCoblers.github.io/open-tasks",
+        siteUrl: "https://bitcobblers.github.io/open-tasks",
         title: "Open Tasks CLI Documentation",
         description: "Documentation for the Open Tasks CLI workflow automation tool",
       },

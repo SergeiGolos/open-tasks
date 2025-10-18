@@ -102,7 +102,7 @@ jobs:
           if [ -f quartz.config.ts ]; then
             echo "Using custom quartz.config.ts"
             # Update base URL in custom config
-            sed -i "s|baseUrl: \"bitCoblers.github.io/open-tasks\"|baseUrl: \"${{ github.repository_owner }}.github.io/open-tasks\"|g" quartz.config.ts
+            sed -i "s|baseUrl: \"bitcobblers.github.io/open-tasks\"|baseUrl: \"${{ github.repository_owner }}.github.io/open-tasks\"|g" quartz.config.ts
           else
             echo "Using default Quartz config, updating base URL"
             # Update base URL in default config
