@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+*.log
+.DS_Store
+.env
+.open-tasks/outputs
+.open-tasks
+test*.txt
+data.txt

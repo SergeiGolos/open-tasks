@@ -1,7 +1,7 @@
 open-tasks-wiki/.obsidian/workspace.json
-open-tasks-cli/node_modules/
-open-tasks-cli/dist/
-open-tasks-cli/coverage/
-open-tasks-cli/pnpm-lock.yaml
+node_modules/
+dist/
+coverage/
 package-lock.json
 test-workspace/
+pnpm-lock.yaml
