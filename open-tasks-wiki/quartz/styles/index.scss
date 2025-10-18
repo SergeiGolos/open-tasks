@@ -1,9 +1,8 @@
-// Import custom styling for bitcobblers/open-tasks branding
+/* Import custom styling for bitcobblers/open-tasks branding */
 @import 'custom';
 
-// Additional Quartz-specific style overrides
+/* Additional Quartz-specific style overrides */
 .page {
-  // Better page layout
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
@@ -13,7 +12,7 @@
   }
 }
 
-// Enhanced typography
+/* Enhanced typography */
 h1, h2, h3, h4, h5, h6 {
   line-height: 1.25;
   margin-bottom: 0.5em;
@@ -24,7 +23,7 @@ p {
   margin-bottom: 1em;
 }
 
-// Better code blocks
+/* Better code blocks */
 pre {
   margin: 1.5rem 0;
 
@@ -34,7 +33,7 @@ pre {
   }
 }
 
-// Enhanced table styling
+/* Enhanced table styling */
 table {
   border-collapse: collapse;
   width: 100%;
@@ -52,7 +51,7 @@ table {
   }
 }
 
-// Better blockquotes
+/* Better blockquotes */
 blockquote {
   border-left: 4px solid var(--brand-primary);
   padding-left: 1.5rem;
@@ -61,7 +60,7 @@ blockquote {
   opacity: 0.9;
 }
 
-// Enhanced list styling
+/* Enhanced list styling */
 ul, ol {
   margin: 1rem 0;
   padding-left: 2rem;

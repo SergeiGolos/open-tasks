@@ -6,8 +6,6 @@ const config: QuartzConfig = {
     baseUrl: "bitcobblers.github.io/open-tasks",
     description: "Flexible command-line tool for composable workflow automation by bitcobblers",
     author: "bitcobblers",
-
-    // Enable features for better documentation
     enableSPA: true,
     enableLatex: false,
     enableCodeCopy: true,
@@ -16,34 +14,17 @@ const config: QuartzConfig = {
 
   plugins: {
     transformers: [
-      // Frontmatter processing
-      frontmatter: {},
-      // Markdown rendering
-      markdown: {},
-      // Syntax highlighting
-      syntax: {
-        theme: "github-dark",
-        wrap: true,
-      },
-      // Table of contents
-      toc: {
-        minDepth: 2,
-        maxDepth: 3,
-      },
+      "frontmatter",
+      "markdown",
+      "syntax",
+      "toc"
     ],
     filters: [
-      // Remove drafts
-      draft: {},
+      "draft"
     ],
     emitters: [
-      // Generate RSS feed
-      rss: {
-        siteUrl: "https://bitcobblers.github.io/open-tasks",
-        title: "Open Tasks CLI Documentation",
-        description: "Documentation for the Open Tasks CLI workflow automation tool",
-      },
-      // Generate sitemap
-      sitemap: {},
+      "rss",
+      "sitemap"
     ]
   }
 }

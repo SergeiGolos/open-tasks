@@ -48,12 +48,7 @@ jobs:
             echo "Moved quartz.config.ts to root directory"
           fi
 
-          # Move layout file to correct location
-          if [ -f quartz-build/content/quartz.layout.ts ]; then
-            mv quartz-build/content/quartz.layout.ts quartz-build/
-            echo "Moved quartz.layout.ts to root directory"
-          fi
-
+  
           # Create styles directory if it doesn't exist
           mkdir -p quartz-build/quartz/styles
 
