@@ -96,7 +96,7 @@ export class OutputHandler {
     fileName: string
   ): Promise<string> {
     const path = await import('path');
-    const fse = await import('fs-extra');
+    const fse = (await import('fs-extra')).default;
     
     const filePath = path.join(this.outputDir, fileName);
     await fse.ensureDir(this.outputDir);

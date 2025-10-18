@@ -52,7 +52,25 @@ export default class InitCommand extends CommandHandler {
     );
     results.push('Created .open-tasks/config.json');
 
-    // Check if package.json exists
+    // Check if package.json exists in .open-tasks directory (for custom commands)
+    const commandsPackageJsonPath = path.join(openTasksDir, 'package.json');
+    const commandsPackageJsonExists = await fse.pathExists(commandsPackageJsonPath);
+
+    if (!commandsPackageJsonExists) {
+      // Create package.json for custom commands (ES modules)
+      const commandsPackageJson = {
+        type: 'module',
+      };
+
+      await fs.writeFile(
+        commandsPackageJsonPath,
+        JSON.stringify(commandsPackageJson, null, 2),
+        'utf-8'
+      );
+      results.push('Created .open-tasks/package.json (for ES module support)');
+    }
+
+    // Check if package.json exists in root
     const packageJsonPath = path.join(context.cwd, 'package.json');
     const packageJsonExists = await fse.pathExists(packageJsonPath);
 
