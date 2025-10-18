@@ -6,60 +6,68 @@
 
 ## Overview
 
-The Command Extension capability enables users to create custom commands that extend the CLI's functionality. Custom commands are auto-discovered from the `.open-tasks/commands/` directory and integrated seamlessly with built-in commands.
+The Command Extension capability enables users to create custom **process commands** that extend the CLI's functionality. Process commands are user-defined commands that are auto-discovered from the `.open-tasks/commands/` directory and integrated seamlessly with built-in CLI commands.
+
+**Terminology**: 
+- **Process Commands**: Custom user-defined commands stored in `.open-tasks/commands/` directory (formerly referred to as "processes" in `.open-tasks/process/` directory)
+- **Built-in CLI Commands**: The six packaged commands (store, load, replace, powershell, ai-cli, extract)
+- **System Commands**: Framework commands (init, create) that manage the project
+- **Context API**: Internal programmatic API (context.store(), context.load(), etc.) - NOT exposed as CLI commands
+
+Process commands can use the Context API internally but are exposed to users as CLI commands via `open-tasks <command-name>`.
 
 ---
 
 ## ADDED Requirements
 
-### Requirement: Custom Command Discovery
+### Requirement: Process Command Discovery
 
-The CLI MUST automatically discover and load custom commands from the user's workspace.
+The CLI MUST automatically discover and load process commands from the user's workspace.
 
 **Priority:** Critical  
 **Type:** Functional
 
-#### Scenario: Discover commands in standard location
+#### Scenario: Discover process commands in standard location
 
 **Given** the directory `.open-tasks/commands/` exists  
 **And** it contains `my-command.js`  
 **When** the CLI starts  
 **Then** the CLI should scan the directory  
 **And** discover `my-command.js`  
-**And** register it as command "my-command"
+**And** register it as process command "my-command"
 
-#### Scenario: Discover TypeScript commands
+#### Scenario: Discover TypeScript process commands
 
 **Given** the directory `.open-tasks/commands/` contains `my-command.ts`  
 **And** ts-node or tsx is available  
 **When** the CLI starts  
 **Then** the CLI should discover the TypeScript file  
-**And** register it as command "my-command"  
+**And** register it as process command "my-command"  
 **And** execute it using the TypeScript runtime
 
-#### Scenario: No custom commands directory
+#### Scenario: No process commands directory
 
 **Given** the directory `.open-tasks/commands/` does not exist  
 **When** the CLI starts  
 **Then** the CLI should not error  
-**And** only built-in commands should be available  
+**And** only system commands and built-in CLI commands should be available  
 **And** the CLI should function normally
 
-#### Scenario: Empty custom commands directory
+#### Scenario: Empty process commands directory
 
 **Given** the directory `.open-tasks/commands/` exists but is empty  
 **When** the CLI starts  
 **Then** the CLI should scan the directory  
-**And** find no custom commands  
-**And** only built-in commands should be available
+**And** find no process commands  
+**And** only system commands and built-in CLI commands should be available
 
-#### Scenario: Multiple custom commands
+#### Scenario: Multiple process commands
 
 **Given** the directory contains `cmd1.js`, `cmd2.js`, and `cmd3.js`  
 **When** the CLI starts  
-**Then** all three commands should be discovered  
+**Then** all three process commands should be discovered  
 **And** registered as "cmd1", "cmd2", and "cmd3"  
-**And** all should be available for invocation
+**And** all should be available for invocation alongside built-in commands
 
 ---
 

@@ -27,7 +27,26 @@ open-tasks --version
 
 You should see the version number displayed.
 
-## Step 2: Your First Command
+## Step 2: Initialize Your Project
+
+Navigate to your project directory and initialize Open Tasks:
+
+```bash
+cd your-project-directory
+open-tasks init
+```
+
+This creates the `.open-tasks/` directory structure:
+```
+.open-tasks/
+├── commands/     # Your custom process commands
+├── outputs/      # Command output files
+└── config.json   # Configuration (optional)
+```
+
+**Note**: The `init` command is a **system command** that sets up your project. It's not a process command and is distinct from the built-in CLI commands you'll use for operations.
+
+## Step 3: Your First CLI Command
 
 Let's start with the simplest command - storing a value:
 
@@ -58,7 +77,7 @@ Get-Content .open-tasks/outputs/*-greeting.txt
 cat .open-tasks/outputs/*-greeting.txt
 ```
 
-## Step 3: Loading Files
+## Step 4: Loading Files
 
 Load content from a file:
 
@@ -72,7 +91,7 @@ open-tasks load ./sample.txt --token sample
 
 The file content is now stored in a reference called "sample".
 
-## Step 4: Chaining Commands
+## Step 5: Chaining Commands
 
 Now let's chain commands together:
 
@@ -431,15 +450,86 @@ open-tasks replace "{{mytoken}}" --ref mytoken
 
 **Solution:** Check file permissions or run with appropriate rights.
 
+## Creating Your First Process Command
+
+**What are Process Commands?**
+
+Process commands are custom user-defined commands you create in `.open-tasks/commands/` to extend the CLI with your own functionality. They're different from:
+- **System Commands** (`init`, `create`) - manage project setup
+- **Built-in CLI Commands** (`store`, `load`, `replace`, etc.) - packaged operations
+- **Context API** (`context.store()`, `context.load()`, etc.) - internal programmatic API (not exposed as CLI commands)
+
+### Step 1: Create a Process Command Template
+
+Use the `create` system command to scaffold a new process command:
+
+```bash
+open-tasks create my-process
+```
+
+This creates `.open-tasks/commands/my-process.js` with a template:
+
+```javascript
+// .open-tasks/commands/my-process.js
+export default class MyProcess extends CommandHandler {
+  async execute(args, refs, context) {
+    // Your custom logic here
+    const value = args[0] || "default value";
+    
+    // Use the Context API internally
+    return await context.store(value, "my-process-output");
+  }
+}
+```
+
+### Step 2: Implement Your Logic
+
+Edit the file to add your custom functionality:
+
+```javascript
+export default class MyProcess extends CommandHandler {
+  async execute(args, refs, context) {
+    // Get input from references
+    const input = refs.get('input')?.content || args[0];
+    
+    // Do some processing
+    const processed = input.toUpperCase();
+    
+    // Store the result using Context API
+    return await context.store(processed, args.token || 'processed');
+  }
+}
+```
+
+### Step 3: Use Your Process Command
+
+```bash
+# Your custom command is now available!
+open-tasks my-process "hello world" --token result
+# Output: HELLO WORLD
+
+# Or with a reference
+open-tasks store "hello world" --token input
+open-tasks my-process --ref input --token result
+```
+
+### Key Points About Process Commands
+
+- **Location**: Must be in `.open-tasks/commands/` directory
+- **Naming**: Filename becomes command name (e.g., `my-process.js` → `my-process`)
+- **API Access**: Can use Context API internally (`context.store()`, `context.load()`, etc.)
+- **User Interface**: Invoked as CLI commands (`open-tasks my-process`)
+- **Auto-discovery**: CLI automatically finds and registers them at startup
+
 ## Next Steps
 
 Now that you're familiar with the basics:
 
-1. **Explore Commands**: Read [Process Functions](Process-Functions.md) for detailed command documentation
+1. **Explore Built-in CLI Commands**: Read [Process Functions](Process-Functions.md) for detailed documentation on the six built-in commands
 
-2. **Build Custom Commands**: Learn to extend the CLI in [Building Custom Commands](Building-Custom-Commands.md)
+2. **Build Advanced Process Commands**: Learn to create complex custom commands in [Building Custom Commands](Building-Custom-Commands.md)
 
-3. **Understand Architecture**: Deep dive into the system in [Architecture Overview](Architecture.md)
+3. **Understand Architecture**: Deep dive into the system architecture and the distinction between Context API, CLI Commands, and Process Commands in [Architecture Overview](Architecture.md)
 
 4. **Review Examples**: Check out more complex workflows and patterns
 

@@ -5,6 +5,28 @@
 
 ## Architecture Overview
 
+### Three-Layer Architecture
+
+The open-tasks-cli framework has three distinct layers:
+
+1. **Context API Layer (Internal)**: Programmatic API for workflow processing
+   - Functions: `context.store()`, `context.load()`, `context.transform()`, `context.run()`
+   - Used internally by command implementations
+   - NOT exposed as CLI commands to end users
+   - Defined in the `workflow-processing` capability
+
+2. **CLI Commands Layer (User-Facing)**: Commands invoked via `open-tasks <command>`
+   - **System Commands**: `init`, `create` - manage project setup and scaffolding
+   - **Built-in CLI Commands**: `store`, `load`, `replace`, `powershell`, `ai-cli`, `extract` - packaged operations
+   - **Process Commands**: User-defined custom commands in `.open-tasks/commands/`
+
+3. **Command Handler Layer (Implementation)**: Base classes and interfaces
+   - `CommandHandler` abstract class
+   - Execution context and reference management
+   - Output formatting and file handling
+
+### Command Flow Architecture
+
 The CLI framework follows a command pattern architecture with:
 
 ```
@@ -29,21 +51,22 @@ The CLI framework follows a command pattern architecture with:
 │  • Output: ReferenceHandle                           │
 └────────────────────┬────────────────────────────────┘
                      │
-        ┌────────────┴────────────┐
-        ▼                         ▼
-┌──────────────┐          ┌──────────────┐
-│   Built-in   │          │   Custom     │
-│   Commands   │          │   Commands   │
-│              │          │              │
-│ • store      │          │ • User-      │
-│ • load       │          │   defined    │
-│ • replace    │          │   commands   │
-│ • powershell │          │   from       │
-│ • ai-cli     │          │   .open-     │
-│ • extract    │          │   tasks/     │
-└──────┬───────┘          └──────┬───────┘
-       │                         │
-       └────────┬────────────────┘
+        ┌────────────┴────────────┬────────────────┐
+        ▼                       ▼                ▼
+┌──────────────┐        ┌─────────────┐  ┌─────────────┐
+│   System     │        │  Built-in   │  │   Process   │
+│   Commands   │        │     CLI     │  │   Commands  │
+│              │        │   Commands  │  │             │
+│ • init       │        │             │  │ • User-     │
+│ • create     │        │ • store     │  │   defined   │
+│              │        │ • load      │  │   commands  │
+│              │        │ • replace   │  │   from      │
+│              │        │ • powershell│  │   .open-    │
+│              │        │ • ai-cli    │  │   tasks/    │
+│              │        │ • extract   │  │   commands/ │
+└──────┬───────┘        └──────┬──────┘  └──────┬──────┘
+       │                       │                │
+       └───────────────────────┴────────┬───────┘
                 ▼
 ┌─────────────────────────────────────────────────────┐
 │           Reference Manager                          │
@@ -111,7 +134,42 @@ interface ReferenceHandle {
 3. Dynamically import each module
 4. Register command name from filename (e.g., `my-command.js` → `my-command`)
 
-### 4. Async Execution Model
+### 4. Layer Separation: Context API vs CLI Commands
+
+**Critical Design Principle**: The Context API and CLI Commands serve different purposes and audiences:
+
+| Aspect | Context API | CLI Commands |
+|--------|-------------|--------------|
+| **Audience** | Command developers (internal) | End users (external) |
+| **Usage** | `context.store(value, "name")` | `open-tasks store "value" --token name` |
+| **Location** | Called within command code | Called from terminal |
+| **Purpose** | Programmatic workflow processing | User-facing operations |
+| **Examples** | `context.store()`, `context.load()`, `context.transform()`, `context.run()` | `store`, `load`, `replace`, `powershell`, `ai-cli`, `extract` |
+
+**Why the separation matters:**
+- CLI commands like `store` provide user-friendly argument parsing, help text, and formatted output
+- Context API functions provide low-level programmatic access for building complex workflows
+- Process commands can use Context API internally but expose a CLI interface to users
+- Users never directly call `context.store()` - they call `open-tasks store`
+
+**Example of the relationship:**
+```typescript
+// CLI Command (user-facing)
+class StoreCommand extends CommandHandler {
+  async execute(args: string[], refs: Map<string, ReferenceHandle>, context: ExecutionContext) {
+    const value = args[0];
+    const token = args.token || generateUUID();
+    
+    // Uses Context API internally
+    return await context.store(value, token);
+  }
+}
+
+// User invokes: open-tasks store "Hello" --token greeting
+// NOT: open-tasks context.store "Hello" "greeting"
+```
+
+### 5. Async Execution Model
 
 All commands return `Promise<ReferenceHandle>`:
 
@@ -128,12 +186,32 @@ abstract class CommandHandler {
 **Flow:**
 1. User invokes command with args and reference tokens
 2. Router resolves references from tokens
-3. Command executes asynchronously
+3. Command executes asynchronously (may use Context API internally)
 4. Output written to file
 5. Reference created and returned
 6. Terminal displays formatted result
 
-### 5. AI CLI Integration
+### 6. System Commands Design
+
+**Init Command:**
+- Creates project structure: `.open-tasks/commands/`, `.open-tasks/outputs/`
+- Generates default `config.json`
+- Ensures `package.json` exists (creates if missing)
+- Installs npm dependencies if needed
+- Idempotent: can be run multiple times safely
+
+**Create Command:**
+- Scaffolds new process command templates
+- Supports JavaScript and TypeScript
+- Template includes:
+  - CommandHandler class extension
+  - Example execute method
+  - Argument and reference handling examples
+  - Documentation comments
+- Validates command name (kebab-case, no special chars)
+- Prevents overwriting existing commands
+
+### 7. AI CLI Integration
 
 **Approach:** Generic subprocess execution pattern
 
@@ -161,7 +239,7 @@ class AiCliCommand extends CommandHandler {
 }
 ```
 
-### 6. Terminal Formatting
+### 8. Terminal Formatting
 
 **Color scheme:**
 - **Commands:** Cyan (user input echo)
@@ -173,7 +251,7 @@ class AiCliCommand extends CommandHandler {
 
 **Libraries:** Use `chalk` for cross-platform color support
 
-### 7. Error Handling
+### 9. Error Handling
 
 **Strategy:** Fail-fast with detailed error context
 

@@ -8,6 +8,13 @@
 
 The CLI Core capability provides the foundational framework for the open-tasks-cli tool, including command parsing, routing, and the execution engine that orchestrates command invocation.
 
+**Command Types**:
+1. **System Commands**: Built-in commands for project setup and scaffolding (`init`, `create`) - these are NOT process commands
+2. **Built-in CLI Commands**: Six core operational commands (`store`, `load`, `replace`, `powershell`, `ai-cli`, `extract`)
+3. **Process Commands**: User-defined custom commands discovered from `.open-tasks/commands/` directory
+
+**Not Exposed as CLI Commands**: The Context API functions (`context.store()`, `context.load()`, `context.transform()`, `context.run()`) are internal programmatic APIs used by command implementations. They are NOT user-facing CLI commands.
+
 ---
 
 ## ADDED Requirements
@@ -201,6 +208,107 @@ The CLI MUST provide an execution context to all commands with access to configu
 **When** any command is executed  
 **Then** the execution context should include loaded configuration  
 **And** commands can access configuration values
+
+---
+
+### Requirement: Init System Command
+
+The CLI MUST provide an `init` command to set up a new open-tasks project in the current directory.
+
+**Priority:** High  
+**Type:** Functional
+
+#### Scenario: Initialize project in empty directory
+
+**Given** the user is in a directory without `.open-tasks/` structure  
+**When** the user runs `open-tasks init`  
+**Then** the CLI should create `.open-tasks/` directory structure  
+**And** create `.open-tasks/commands/` directory  
+**And** create `.open-tasks/outputs/` directory  
+**And** create default `.open-tasks/config.json` file  
+**And** install any required npm dependencies in the current directory  
+**And** display success message with next steps
+
+#### Scenario: Initialize project with existing .open-tasks directory
+
+**Given** a `.open-tasks/` directory already exists  
+**When** the user runs `open-tasks init`  
+**Then** the CLI should display a warning  
+**And** ask for confirmation to overwrite  
+**And** only proceed if user confirms  
+**And** preserve existing custom commands if present
+
+#### Scenario: Initialize with package.json missing
+
+**Given** the current directory does not have a `package.json`  
+**When** the user runs `open-tasks init`  
+**Then** the CLI should create a basic `package.json`  
+**And** include open-tasks-cli as a dependency  
+**And** set up default npm scripts  
+**And** display message about package.json creation
+
+#### Scenario: Initialize with --force flag
+
+**Given** a `.open-tasks/` directory exists  
+**When** the user runs `open-tasks init --force`  
+**Then** the CLI should reinitialize without prompting  
+**And** preserve user-created process commands  
+**And** reset configuration to defaults  
+**And** display warning about reset
+
+---
+
+### Requirement: Create System Command
+
+The CLI MUST provide a `create` command to scaffold new process command templates.
+
+**Priority:** High  
+**Type:** Functional
+
+#### Scenario: Create new process command template
+
+**Given** the user has initialized an open-tasks project  
+**When** the user runs `open-tasks create my-command`  
+**Then** the CLI should create `.open-tasks/commands/my-command.js`  
+**And** the file should contain a template class extending CommandHandler  
+**And** include placeholder execute method with documentation  
+**And** include example argument handling  
+**And** include example reference usage  
+**And** display success message with file path
+
+#### Scenario: Create command with existing name
+
+**Given** a process command `.open-tasks/commands/existing.js` exists  
+**When** the user runs `open-tasks create existing`  
+**Then** the CLI should display an error  
+**And** indicate the command already exists  
+**And** suggest using a different name or removing the existing file  
+**And** not overwrite the existing file
+
+#### Scenario: Create command in uninitialized project
+
+**Given** the user has not run `open-tasks init`  
+**And** no `.open-tasks/commands/` directory exists  
+**When** the user runs `open-tasks create my-command`  
+**Then** the CLI should display an error  
+**And** suggest running `open-tasks init` first  
+**And** not create the command file
+
+#### Scenario: Create command with TypeScript template
+
+**Given** the user wants a TypeScript process command  
+**When** the user runs `open-tasks create my-command --typescript`  
+**Then** the CLI should create `.open-tasks/commands/my-command.ts`  
+**And** use TypeScript syntax in the template  
+**And** include proper type annotations  
+**And** configure TypeScript if not already configured
+
+#### Scenario: Create command with custom description
+
+**Given** the user wants to add metadata  
+**When** the user runs `open-tasks create my-command --description "My custom command"`  
+**Then** the template should include the description in comments  
+**And** the description should appear in help output when command is registered
 
 ---
 

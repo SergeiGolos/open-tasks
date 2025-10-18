@@ -65,6 +65,35 @@ npm run tasks -- --version
 
 ## Initial Setup
 
+### Using the `init` System Command (Recommended)
+
+After installation, initialize your project:
+
+```bash
+cd your-project-directory
+open-tasks init
+```
+
+**What `init` does:**
+- Creates `.open-tasks/` directory structure
+- Creates `.open-tasks/commands/` for process commands
+- Creates `.open-tasks/outputs/` for command outputs
+- Generates default `config.json` with sensible defaults
+- Ensures `package.json` exists (creates if missing)
+- Sets up npm dependencies
+
+**Result:**
+```
+.open-tasks/
+├── commands/     # Your process commands go here
+├── outputs/      # Command output files
+└── config.json   # Configuration (optional customization)
+```
+
+### Manual Setup (Alternative)
+
+If you prefer manual setup or need custom configuration:
+
 ### 1. Create Output Directory
 
 Open Tasks CLI automatically creates the output directory when needed, but you can create it manually:
@@ -130,9 +159,15 @@ Adjust the configuration based on your AI CLI tool:
 
 ## Verify Installation
 
-Run a simple test command:
+Run a simple test:
 
 ```bash
+# Test the CLI
+open-tasks --version
+
+# Initialize a project (creates .open-tasks/ structure)
+open-tasks init
+
 # Store a value
 open-tasks store "Hello World" --token test
 
@@ -141,6 +176,57 @@ ls .open-tasks/outputs
 ```
 
 You should see a file like `20251017-143022-456-test.txt` containing "Hello World".
+
+## Next Steps
+
+### 1. Create Your First Process Command
+
+Use the `create` system command to scaffold a custom command:
+
+```bash
+open-tasks create my-first-command
+```
+
+This creates `.open-tasks/commands/my-first-command.js` with a complete template.
+
+Edit the file and implement your logic, then use it:
+
+```bash
+open-tasks my-first-command "test input"
+```
+
+### 2. Explore Built-in Commands
+
+Try the six built-in CLI commands:
+
+```bash
+# Store values
+open-tasks store "Production" --token env
+
+# Load files
+open-tasks load ./README.md --token readme
+
+# Template substitution
+open-tasks replace "Deploying to {{env}}" --ref env
+
+# Execute PowerShell
+open-tasks powershell "Get-Date"
+
+# Extract with regex
+open-tasks extract "\d+" --ref data --all
+
+# AI integration (requires ai-config.json)
+open-tasks ai-cli "Summarize this" --ref readme
+```
+
+### 3. Learn More
+
+- Read [Getting Started](Getting-Started.md) for complete workflows
+- See [Process Functions](Process-Functions.md) for command details
+- Review [Building Process Commands](Building-Custom-Commands.md) for advanced extensibility
+- Study [Architecture Overview](Architecture.md) for system design
+
+---
 
 ## Directory Structure
 

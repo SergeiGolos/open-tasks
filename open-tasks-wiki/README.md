@@ -8,15 +8,20 @@
 
 The tool bridges the gap between shell scripting and complex automation by providing:
 
+- **Three-Layer Architecture**: Clear separation between Context API (internal), CLI Commands (user-facing), and Process Commands (extensible)
 - **Composable Commands**: Chain operations together with explicit reference passing
 - **Context Management**: Store and reuse command outputs using tokens or UUIDs
-- **Extensibility**: Add custom commands specific to your workflow
+- **Extensibility**: Add custom process commands specific to your workflow
 - **AI Integration**: Seamlessly integrate AI CLI tools with pre-defined context
 - **Observable Execution**: Color-coded terminal feedback and persistent file outputs
 
-### Key Features
+### Command Types
 
-✅ **Six Built-in Commands**
+**System Commands** - Project management
+- `init` - Initialize project structure and dependencies
+- `create` - Scaffold new process command templates
+
+**Built-in CLI Commands** - Core operations (6 commands)
 - `store` - Save values to memory and files
 - `load` - Load file content into references
 - `replace` - Template-based string substitution
@@ -24,22 +29,16 @@ The tool bridges the gap between shell scripting and complex automation by provi
 - `ai-cli` - Integrate AI CLI tools with context
 - `extract` - Extract data using regular expressions
 
-✅ **Reference Management**
-- Token-based references for human-readable aliases
-- UUID-based references for automatic tracking
-- In-memory storage during execution
-- Persistent file outputs for auditing
-
-✅ **Custom Commands**
-- Auto-discovery from `.open-tasks/commands/`
-- TypeScript or JavaScript support
+**Process Commands** - User-defined extensibility
+- Created in `.open-tasks/commands/`
+- Auto-discovered and integrated seamlessly
+- Can use Context API internally
 - Full access to CLI framework services
 
-✅ **Rich Output**
-- Color-coded terminal feedback
-- Progress indicators for long operations
-- Timestamped output files
-- Structured metadata for traceability
+**Context API** - Internal implementation (NOT user-facing)
+- `context.store()`, `context.load()`, `context.transform()`, `context.run()`
+- Used by command implementations internally
+- NOT exposed as CLI commands to users
 
 ## Project Goals
 
@@ -92,12 +91,38 @@ open-tasks replace "Deploy to {{env}} at {{domain}}" --ref env --ref domain
 
 ## Architecture Philosophy
 
+### Three-Layer Design
+
+**Layer 1: Context API (Internal)**
+- Programmatic workflow processing functions
+- Used by command implementations
+- NOT exposed to end users
+
+**Layer 2: CLI Commands (User-Facing)**
+- System commands (init, create)
+- Built-in CLI commands (store, load, replace, etc.)
+- Process commands (.open-tasks/commands/)
+
+**Layer 3: Implementation Layer**
+- CommandHandler base class
+- Execution context and services
+- Framework internals
+
 ### Command Pattern
 Each command is a self-contained handler that:
 - Accepts arguments and references
 - Executes asynchronously
 - Returns a reference to its output
 - Writes results to both terminal and file
+
+### Relationship
+```
+User invokes:   open-tasks store "value"
+                      ↓
+CLI Command:    StoreCommand.execute()
+                      ↓
+May use internally:  context.store() [Context API]
+```
 
 ### Explicit Context
 Unlike traditional piping, references are explicit:

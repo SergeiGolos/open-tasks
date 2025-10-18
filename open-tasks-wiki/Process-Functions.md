@@ -1,8 +1,16 @@
-# Process Functions in Working Directory
+# Commands in Open Tasks CLI
 
 ## Overview
 
-Process functions (commands) are the core building blocks of Open Tasks CLI. Each command performs a specific operation and can be chained together to build complex workflows. This guide explains how to use commands effectively in your working directory.
+Open Tasks CLI provides three types of commands that work together:
+
+1. **System Commands** (`init`, `create`) - Manage project setup and scaffolding
+2. **Built-in CLI Commands** (6 commands) - Core operations packaged with the CLI
+3. **Process Commands** - Custom user-defined commands in `.open-tasks/commands/`
+
+This guide focuses on the **built-in CLI commands** that perform specific operations and can be chained together to build complex workflows.
+
+**Important Note**: The Context API functions (`context.store()`, `context.load()`, `context.transform()`, `context.run()`) mentioned in other documentation are internal programmatic APIs used by command implementations. They are NOT exposed as CLI commands and users never invoke them directly. This guide documents the user-facing CLI commands only.
 
 ## Working Directory Context
 
@@ -21,9 +29,9 @@ your-working-directory/
 └── [your data]
 ```
 
-## Built-in Commands
+## Built-in CLI Commands
 
-Open Tasks CLI provides six built-in commands that cover common operations:
+Open Tasks CLI provides six built-in CLI commands that cover common operations. These are different from process commands (custom commands you create) and from the internal Context API:
 
 ### 1. store - Save Values
 
@@ -498,8 +506,83 @@ open-tasks replace "{{mytoken}}" --ref mytoken
 }
 ```
 
+## System Commands
+
+In addition to the six built-in CLI commands above, Open Tasks provides two **system commands** for project management:
+
+### init - Initialize Project
+
+Set up a new Open Tasks project in the current directory.
+
+**Syntax:**
+```bash
+open-tasks init [--force]
+```
+
+**What it does:**
+- Creates `.open-tasks/` directory structure
+- Creates `.open-tasks/commands/` for your process commands
+- Creates `.open-tasks/outputs/` for command outputs
+- Generates default `config.json`
+- Ensures `package.json` exists (creates if missing)
+- Installs npm dependencies if needed
+
+**Example:**
+```bash
+cd my-project
+open-tasks init
+```
+
+### create - Scaffold Process Command
+
+Create a new process command template in `.open-tasks/commands/`.
+
+**Syntax:**
+```bash
+open-tasks create <command-name> [--typescript] [--description "<text>"]
+```
+
+**What it does:**
+- Creates `.open-tasks/commands/<command-name>.js` (or `.ts`)
+- Scaffolds a CommandHandler class template
+- Includes example code and documentation
+- Makes the command available immediately
+
+**Examples:**
+```bash
+# Create JavaScript process command
+open-tasks create my-process
+
+# Create TypeScript process command
+open-tasks create my-process --typescript
+
+# Create with description
+open-tasks create my-process --description "My custom data processor"
+```
+
+## Process Commands vs Built-in Commands
+
+**Built-in CLI Commands** (this document):
+- Six packaged commands: `store`, `load`, `replace`, `powershell`, `ai-cli`, `extract`
+- Part of the CLI installation
+- Cannot be modified by users
+- General-purpose operations
+
+**Process Commands** (see [Building Custom Commands](Building-Custom-Commands.md)):
+- Custom commands you create in `.open-tasks/commands/`
+- Extend CLI with your own functionality
+- Can use Context API internally
+- Project-specific or workflow-specific operations
+- Created using `open-tasks create` command
+
+**Context API** (internal - not CLI commands):
+- `context.store()`, `context.load()`, `context.transform()`, `context.run()`
+- Programmatic functions used inside command implementations
+- NOT invoked directly by users
+- NOT exposed as CLI commands
+
 ## Next Steps
 
-- Learn [Building Custom Commands](Building-Custom-Commands.md) to extend functionality
-- Review [Architecture Overview](Architecture.md) for deeper understanding
-- See [API Reference](API-Reference.md) for complete command documentation
+- Learn [Building Custom Commands](Building-Custom-Commands.md) to create your own process commands
+- Review [Architecture Overview](Architecture.md) for deeper understanding of the three-layer architecture
+- See [Getting Started](Getting-Started.md) for complete workflows and examples

@@ -6,7 +6,19 @@
 
 ## Overview
 
-The Workflow Processing capability provides a context-based system for executing asynchronous processes with automatic file-based input/output recording. It enables storing values, loading from files, applying transforms, and running commands with file references that can be passed between operations.
+The Workflow Processing capability provides a context-based **internal programmatic API** for executing asynchronous processes with automatic file-based input/output recording. It enables storing values, loading from files, applying transforms, and running commands with file references that can be passed between operations.
+
+**CRITICAL DISTINCTION**: The functions in this specification (`context.store()`, `context.load()`, `context.transform()`, `context.run()`) are **internal API functions** used by command implementations. They are **NOT exposed as CLI commands** to end users.
+
+**User-Facing Commands** are defined in the `cli-core`, `command-builtins`, and `command-extension` capabilities:
+- **System Commands**: `init`, `create` - manage project setup
+- **Built-in CLI Commands**: `store`, `load`, `replace`, `powershell`, `ai-cli`, `extract` - user-facing operations
+- **Process Commands**: Custom user-defined commands in `.open-tasks/commands/`
+
+**Relationship**: CLI commands (like `store`) may internally call Context API functions (like `context.store()`), but they provide different interfaces and behaviors tailored for CLI usage. Process commands can also use the Context API internally while exposing a CLI interface.
+
+**Users invoke**: `open-tasks store "value"`  
+**NOT**: `open-tasks context.store "value"` (this does not exist)
 
 ---
 

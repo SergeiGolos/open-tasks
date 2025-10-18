@@ -1,20 +1,40 @@
-# Building Custom Commands with TypeScript
+# Building Process Commands with TypeScript
 
 ## Overview
 
-Open Tasks CLI allows you to extend its functionality by creating custom commands in TypeScript or JavaScript. Custom commands are automatically discovered from the `.open-tasks/commands/` directory and integrated with the CLI framework.
+Open Tasks CLI allows you to extend its functionality by creating **process commands** in TypeScript or JavaScript. Process commands are custom user-defined commands that are automatically discovered from the `.open-tasks/commands/` directory and integrated with the CLI framework.
+
+**Terminology**:
+- **Process Commands**: Custom commands you create in `.open-tasks/commands/` (user-facing)
+- **Built-in CLI Commands**: Six packaged commands (store, load, replace, etc.)
+- **System Commands**: Framework commands (init, create)
+- **Context API**: Internal programmatic API (context.store(), etc.) - NOT exposed as CLI commands
+
+**Key Point**: Process commands can use the Context API internally but are exposed to users as CLI commands via `open-tasks <command-name>`.
 
 ## Quick Start
 
-### 1. Create Commands Directory
+### 1. Initialize Your Project
+
+First, ensure your project is initialized:
 
 ```bash
-mkdir -p .open-tasks/commands
+open-tasks init
 ```
 
-### 2. Create Your First Command
+This creates the `.open-tasks/commands/` directory where your process commands will live.
 
-Create `.open-tasks/commands/uppercase.ts`:
+### 2. Create Your First Process Command
+
+Use the `create` system command to scaffold a template:
+
+```bash
+open-tasks create uppercase
+```
+
+This creates `.open-tasks/commands/uppercase.ts` (or `.js`) with a complete template.
+
+Or create it manually - `.open-tasks/commands/uppercase.ts`:
 
 ```typescript
 import { CommandHandler, ReferenceHandle, ExecutionContext } from 'open-tasks-cli';
@@ -74,10 +94,10 @@ export default class UppercaseCommand extends CommandHandler {
 }
 ```
 
-### 3. Use Your Command
+### 3. Use Your Process Command
 
 ```bash
-# Invoke your custom command
+# Invoke your process command just like built-in commands
 open-tasks uppercase "hello world"
 # Output: HELLO WORLD
 
@@ -87,11 +107,13 @@ open-tasks uppercase --ref text
 # Output: HELLO WORLD
 ```
 
+**Note**: Process commands work identically to built-in CLI commands from the user's perspective.
+
 ## Command Handler Interface
 
 ### Base Class
 
-All custom commands must extend `CommandHandler`:
+All process commands must extend `CommandHandler`:
 
 ```typescript
 abstract class CommandHandler {
@@ -639,12 +661,12 @@ Install type definitions:
 npm install --save-dev @types/node
 ```
 
-## Testing Custom Commands
+## Testing Process Commands
 
 ### Manual Testing
 
 ```bash
-# Test your command
+# Test your process command
 open-tasks mycommand "test input"
 
 # Check output file
@@ -680,19 +702,20 @@ describe('MyCommand', () => {
 
 ## Troubleshooting
 
-### Command Not Found
+### Process Command Not Found
 
-**Issue**: Custom command not discovered
+**Issue**: Process command not discovered
 
 **Solutions**:
 1. Check file is in `.open-tasks/commands/`
 2. Verify filename has `.ts` or `.js` extension
 3. Ensure file exports default class
-4. Restart CLI (no hot-reload in v1)
+4. Run `open-tasks init` if directory doesn't exist
+5. Restart CLI (no hot-reload in v1)
 
 ### Type Errors
 
-**Issue**: TypeScript errors in custom command
+**Issue**: TypeScript errors in process command
 
 **Solutions**:
 1. Install type definitions: `npm install --save-dev @types/node`

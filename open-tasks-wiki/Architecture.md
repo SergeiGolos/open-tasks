@@ -1,10 +1,119 @@
 # Architecture Overview
 
+## Three-Layer Architecture
+
+Open Tasks CLI is built on a **three-layer architecture** that separates internal APIs, user-facing commands, and extensibility:
+
+### Layer 1: Context API (Internal Programmatic API)
+
+**Purpose**: Internal functions used by command implementations  
+**Visibility**: NOT exposed to end users  
+**Location**: Core framework code
+
+The Context API provides programmatic functions for workflow processing:
+
+```typescript
+interface WorkflowContext {
+  // Store a value and create a file reference
+  store(value: string, propertyName: string): Promise<MemoryRef>;
+      
+  // Execute a command implementation
+  run(command: IComman): Promise<MemoryRef[]>;  
+}
+```
+
+**Key Point**: Users NEVER invoke `context.store()` directly. These are implementation details.
+
+### Layer 2: CLI Commands (User-Facing Interface)
+
+**Purpose**: Commands users invoke via `open-tasks <command>`  
+**Visibility**: Public CLI interface  
+**Types**:
+
+1. **System Commands** - Project management
+   - `init` - Initialize project structure
+   - `create` - Scaffold process command templates
+
+2. **Built-in CLI Commands** - Core operations (6 commands)
+   - `store` - Save values to memory/files
+   - `load` - Load file content  
+   - `replace` - Template substitution
+   - `powershell` - Execute PowerShell scripts
+   - `ai-cli` - AI tool integration
+   - `extract` - Regex extraction
+
+3. **Process Commands** - User-defined custom commands
+   - Located in `.open-tasks/commands/`
+   - Created with `open-tasks create <name>`
+   - Can use Context API internally
+   - Exposed as CLI commands
+
+**Example**:
+```bash
+# User invokes CLI command
+open-tasks store "Hello World" --token greeting
+
+# Internally, the store command implementation may use:
+# await context.store("Hello World", "greeting")
+```
+
+### Layer 3: Command Handler (Implementation Layer)
+
+**Purpose**: Base classes and interfaces for implementing commands  
+**Visibility**: API for command developers
+
+```typescript
+abstract class CommandHandler {
+  abstract execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle>;
+}
+```
+
+**Relationship Between Layers**:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  USER                                                │
+│  Invokes: open-tasks store "value"                  │
+└────────────────────┬────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────┐
+│  LAYER 2: CLI Commands                              │
+│  • System Commands (init, create)                   │
+│  • Built-in CLI Commands (store, load, etc.)        │
+│  • Process Commands (.open-tasks/commands/*.js)     │
+└────────────────────┬────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────┐
+│  LAYER 3: Command Handlers                          │
+│  • CommandHandler base class                        │
+│  • execute() method implementations                 │
+│  • May use Context API internally ↓                 │
+└────────────────────┬────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────┐
+│  LAYER 1: Context API (Internal)                    │
+│  • context.store()                                  │
+│  • context.load()                                   │
+│  • context.transform()                              │
+│  • context.run()                                    │
+│  (NOT exposed to users)                             │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
 ## System Architecture
 
 Open Tasks CLI follows a command pattern architecture with explicit context passing and reference management. This document explains the internal architecture, data flows, and design decisions.
 
-## High-Level Architecture
+## Command Flow Architecture
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -20,8 +129,9 @@ Open Tasks CLI follows a command pattern architecture with explicit context pass
 ┌─────────────────────────────────────────────────────┐
 │               Command Router                         │
 │                                                      │
-│  • Discover built-in commands                        │
-│  • Scan .open-tasks/commands/ for custom commands   │
+│  • Discover system commands (init, create)           │
+│  • Discover built-in CLI commands (store, etc.)     │
+│  • Scan .open-tasks/commands/ for process commands  │
 │  • Route to appropriate CommandHandler               │
 │  • Resolve --ref tokens to ReferenceHandles         │
 └────────────────────┬────────────────────────────────┘
@@ -35,22 +145,25 @@ Open Tasks CLI follows a command pattern architecture with explicit context pass
 │  • Output: ReferenceHandle with result              │
 └────────────────────┬────────────────────────────────┘
                      │
-        ┌────────────┴────────────┐
-        ▼                         ▼
-┌──────────────┐          ┌──────────────┐
-│   Built-in   │          │   Custom     │
-│   Commands   │          │   Commands   │
-│              │          │              │
-│ • store      │          │ • Dynamically│
-│ • load       │          │   loaded from│
-│ • replace    │          │   .open-tasks│
-│ • powershell │          │   /commands/ │
-│ • ai-cli     │          │              │
-│ • extract    │          │              │
-└──────┬───────┘          └──────┬───────┘
-       │                         │
-       └────────┬────────────────┘
-                ▼
+        ┌────────────┴────────────┬─────────────┐
+        ▼                         ▼             ▼
+┌──────────────┐          ┌─────────────┐  ┌──────────────┐
+│   System     │          │  Built-in   │  │   Process    │
+│   Commands   │          │     CLI     │  │   Commands   │
+│              │          │   Commands  │  │              │
+│ • init       │          │             │  │ • User-      │
+│ • create     │          │ • store     │  │   defined in │
+│              │          │ • load      │  │   .open-     │
+│              │          │ • replace   │  │   tasks/     │
+│              │          │ • powershell│  │   commands/  │
+│              │          │ • ai-cli    │  │              │
+│              │          │ • extract   │  │ • May use    │
+│              │          │             │  │   Context    │
+│              │          │             │  │   API        │
+└──────┬───────┘          └──────┬──────┘  └──────┬───────┘
+       │                         │                │
+       └────────────────┬────────┴────────────────┘
+                        ▼
 ┌─────────────────────────────────────────────────────┐
 │           Reference Manager                          │
 │                                                      │
@@ -69,7 +182,415 @@ Open Tasks CLI follows a command pattern architecture with explicit context pass
 │  • Directory: .open-tasks/outputs/                  │
 │  • Terminal formatting with colors (chalk)          │
 └─────────────────────────────────────────────────────┘
+│                                                      │
+│  ┌────────────────────────────────────────────────┐ │
+│  │  Context API Layer (Internal - Not Exposed)    │ │
+│  │                                                 │ │
+│  │  • context.store(value, propertyName)          │ │
+│  │  • context.load(fileName)                      │ │
+│  │  • context.transform(ref, transforms)          │ │
+│  │  • context.run(command, ...args)               │ │
+│  │                                                 │ │
+│  │  Used by command implementations internally    │ │
+│  └────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
 ```
+
+## Core Components
+
+### Complete TypeScript Interface Definitions
+
+#### Layer 1: Context API (Internal)
+
+```typescript
+/**
+ * WorkflowContext - Internal API for workflow processing
+ * NOT exposed as CLI commands to end users
+ */
+interface WorkflowContext {
+  /**
+   * Store a value and create a file reference
+   * @param value - Content to store
+   * @param propertyName - Property name for the file reference
+   * @returns Promise resolving to MemoryRef
+   */
+  store(value: string, propertyName: string): Promise<MemoryRef>;
+  
+  /**
+   * Load file content and create a reference
+   * @param fileName - Path to file to load
+   * @returns Promise resolving to MemoryRef with file content
+   */
+  load(fileName: string): Promise<MemoryRef>;
+  
+  /**
+   * Apply transformations to a reference
+   * @param reference - Input MemoryRef
+   * @param transforms - Array of Transform functions
+   * @returns Promise resolving to new MemoryRef with transformed content
+   */
+  transform(reference: MemoryRef, transforms: Transform[]): Promise<MemoryRef>;
+  
+  /**
+   * Execute a command implementation
+   * @param command - Command instance implementing ICommand
+   * @param args - Additional arguments to pass to command
+   * @returns Promise resolving to MemoryRef with command output
+   */
+  run(command: ICommand, ...args: any[]): Promise<MemoryRef>;
+}
+
+/**
+ * MemoryRef - Result of Context API operations
+ * Represents a stored file with metadata
+ */
+interface MemoryRef {
+  /**
+   * Absolute path to the file
+   */
+  filePath: string;
+  
+  /**
+   * Property name used when creating the reference
+   */
+  propertyName: string;
+  
+  /**
+   * Timestamp when the file was created
+   */
+  timestamp: Date;
+  
+  /**
+   * Load the file content
+   * @returns Promise resolving to file content as string
+   */
+  getContent(): Promise<string>;
+  
+  /**
+   * Optional metadata about the operation
+   */
+  metadata?: {
+    originalFileName?: string;
+    transformsApplied?: string[];
+    sourceCommand?: string;
+  };
+}
+
+/**
+ * ICommand - Interface for command implementations
+ * Used with context.run()
+ */
+interface ICommand {
+  /**
+   * Execute the command with the workflow context
+   * @param context - WorkflowContext for accessing Context API
+   * @param args - Additional arguments passed to the command
+   * @returns Promise resolving to MemoryRef
+   */
+  execute(context: WorkflowContext, ...args: any[]): Promise<MemoryRef>;
+}
+
+/**
+ * Transform - Function for transforming reference content
+ */
+type Transform = (content: string) => string | Promise<string>;
+```
+
+#### Layer 2 & 3: CLI Command Interface
+
+```typescript
+/**
+ * CommandHandler - Base class for all CLI commands
+ * Extended by system commands, built-in commands, and process commands
+ */
+abstract class CommandHandler {
+  /**
+   * Execute the command
+   * @param args - Positional arguments passed to the command
+   * @param refs - Map of resolved references (from --ref flags)
+   * @param context - Execution context with shared resources
+   * @returns Promise resolving to a ReferenceHandle
+   */
+  abstract execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle>;
+
+  /**
+   * Command description for help output (optional)
+   */
+  static description?: string;
+
+  /**
+   * Usage examples for help output (optional)
+   */
+  static examples?: string[];
+}
+
+/**
+ * ReferenceHandle - Result of CLI command execution
+ * Stored in ReferenceManager for use in subsequent commands
+ */
+interface ReferenceHandle {
+  /**
+   * Unique identifier (user token or auto-generated UUID)
+   */
+  id: string;
+  
+  /**
+   * Command output content (any type: string, buffer, object, etc.)
+   */
+  content: any;
+  
+  /**
+   * When the reference was created
+   */
+  timestamp: Date;
+  
+  /**
+   * Absolute path to the output file
+   */
+  outputFile: string;
+  
+  /**
+   * Optional metadata about command execution
+   */
+  metadata?: {
+    commandName: string;    // Name of command that created this
+    args: string[];         // Arguments passed to command
+    duration: number;       // Execution time in milliseconds
+    [key: string]: any;     // Additional command-specific metadata
+  };
+}
+
+/**
+ * ExecutionContext - Context passed to all CLI commands
+ * Provides access to shared CLI framework resources
+ */
+interface ExecutionContext {
+  /**
+   * Current working directory
+   */
+  cwd: string;
+  
+  /**
+   * Output directory path (from config or default)
+   */
+  outputDir: string;
+  
+  /**
+   * Reference manager for creating and retrieving references
+   */
+  referenceManager: ReferenceManager;
+  
+  /**
+   * Output handler for file and terminal output
+   */
+  outputHandler: OutputHandler;
+  
+  /**
+   * Loaded configuration (merged from files and defaults)
+   */
+  config: Record<string, any>;
+  
+  /**
+   * User-provided token from --token flag (if any)
+   */
+  token?: string;
+}
+```
+
+#### Core Framework Services
+
+```typescript
+/**
+ * ReferenceManager - Manages in-memory references during CLI session
+ */
+interface ReferenceManager {
+  /**
+   * Create a new reference
+   * @param content - Content to store in reference
+   * @param token - Optional user-provided token (generates UUID if omitted)
+   * @returns Created ReferenceHandle
+   */
+  createReference(content: any, token?: string): ReferenceHandle;
+  
+  /**
+   * Get a reference by ID
+   * @param id - Reference ID (token or UUID)
+   * @returns ReferenceHandle if found, undefined otherwise
+   */
+  getReference(id: string): ReferenceHandle | undefined;
+  
+  /**
+   * List all references in current session
+   * @returns Array of all ReferenceHandles
+   */
+  listReferences(): ReferenceHandle[];
+  
+  /**
+   * Check if a reference exists
+   * @param id - Reference ID to check
+   * @returns true if reference exists
+   */
+  hasReference(id: string): boolean;
+  
+  /**
+   * Clear all references (called on CLI exit)
+   */
+  clear(): void;
+}
+
+/**
+ * OutputHandler - Handles file writing and terminal formatting
+ */
+interface OutputHandler {
+  /**
+   * Write content to output file
+   * @param content - Content to write
+   * @param token - Optional user token for filename
+   * @param ext - File extension (default: 'txt')
+   * @returns Promise resolving to absolute file path
+   */
+  writeOutput(content: any, token?: string, ext?: string): Promise<string>;
+  
+  /**
+   * Write error to error file
+   * @param error - Error object
+   * @param context - Additional context about the error
+   * @returns Promise resolving to error file path
+   */
+  writeError(error: Error, context: any): Promise<string>;
+  
+  /**
+   * Format success message for terminal
+   * @param message - Message text
+   * @returns Formatted string with colors
+   */
+  formatSuccess(message: string): string;
+  
+  /**
+   * Format error message for terminal
+   * @param message - Error message text
+   * @returns Formatted string with colors
+   */
+  formatError(message: string): string;
+  
+  /**
+   * Format info message for terminal
+   * @param message - Info message text
+   * @returns Formatted string with colors
+   */
+  formatInfo(message: string): string;
+  
+  /**
+   * Format reference ID for terminal
+   * @param id - Reference ID
+   * @returns Formatted string with colors
+   */
+  formatReference(id: string): string;
+  
+  /**
+   * Format command name for terminal
+   * @param name - Command name
+   * @returns Formatted string with colors
+   */
+  formatCommand(name: string): string;
+}
+
+/**
+ * CommandRouter - Routes command invocations to handlers
+ */
+interface CommandRouter {
+  /**
+   * Discover and register all commands
+   * - System commands (init, create)
+   * - Built-in CLI commands (store, load, etc.)
+   * - Process commands from .open-tasks/commands/
+   */
+  discoverCommands(): Promise<void>;
+  
+  /**
+   * Route a command invocation to its handler
+   * @param commandName - Name of command to execute
+   * @param args - Positional arguments
+   * @param refTokens - Array of reference tokens from --ref flags
+   * @returns Promise resolving to ReferenceHandle
+   */
+  route(
+    commandName: string,
+    args: string[],
+    refTokens: string[]
+  ): Promise<ReferenceHandle>;
+  
+  /**
+   * Get list of all registered commands
+   * @returns Array of command names
+   */
+  listCommands(): string[];
+  
+  /**
+   * Get help for a specific command
+   * @param commandName - Command to get help for
+   * @returns Help text with description and examples
+   */
+  getCommandHelp(commandName: string): string;
+}
+
+/**
+ * Configuration - CLI configuration schema
+ */
+interface Configuration {
+  /**
+   * Output directory for command results
+   * @default ".open-tasks/outputs"
+   */
+  outputDir: string;
+  
+  /**
+   * Directory for custom process commands
+   * @default ".open-tasks/commands"
+   */
+  customCommandsDir: string;
+  
+  /**
+   * Timestamp format for output files
+   * @default "YYYYMMDD-HHmmss-SSS"
+   */
+  timestampFormat: string;
+  
+  /**
+   * Default file extension for outputs
+   * @default "txt"
+   */
+  defaultFileExtension: string;
+  
+  /**
+   * Enable colored terminal output
+   * @default true
+   */
+  colors: boolean;
+  
+  /**
+   * Maximum file size for loading (bytes)
+   * @default 10485760 (10 MB)
+   */
+  maxFileSize?: number;
+  
+  /**
+   * AI CLI configuration (optional)
+   */
+  aiCli?: {
+    command: string;
+    args: string[];
+    contextFlag: string;
+    timeout: number;
+  };
+}
+```
+
+---
 
 ## Core Components
 
@@ -316,6 +837,639 @@ class OutputHandler {
   }
 }
 ```
+
+## High-Level Pseudocode Implementations
+
+### Context API (Layer 1 - Internal)
+
+```typescript
+// WorkflowContext Implementation
+class WorkflowContextImpl implements WorkflowContext {
+  private outputDir: string;
+  private MemoryRefs: Map<string, MemoryRef>;
+  
+  async store(value: string, propertyName: string): Promise<MemoryRef> {
+    // 1. Generate filename with timestamp
+    const timestamp = new Date();
+    const fileName = `${propertyName}.${formatTimestamp(timestamp)}.md`;
+    const filePath = path.join(this.outputDir, fileName);
+    
+    // 2. Write file with content
+    await fs.writeFile(filePath, value, 'utf-8');
+    
+    // 3. Create MemoryRef
+    const fileRef: MemoryRef = {
+      filePath,
+      propertyName,
+      timestamp,
+      getContent: async () => await fs.readFile(filePath, 'utf-8'),
+    };
+    
+    // 4. Store in registry
+    this.MemoryRefs.set(propertyName, fileRef);
+    
+    return fileRef;
+  }
+  
+  async load(fileName: string): Promise<MemoryRef> {
+    // 1. Resolve file path
+    const filePath = path.resolve(fileName);
+    
+    // 2. Check file exists
+    if (!await fs.exists(filePath)) {
+      throw new Error(`File not found: ${filePath}`);
+    }
+    
+    // 3. Read content
+    const content = await fs.readFile(filePath, 'utf-8');
+    
+    // 4. Generate property name from filename
+    const propertyName = path.basename(fileName, path.extname(fileName));
+    
+    // 5. Store content and create reference
+    return await this.store(content, propertyName);
+  }
+  
+  async transform(reference: MemoryRef, transforms: Transform[]): Promise<MemoryRef> {
+    // 1. Get original content
+    let content = await reference.getContent();
+    
+    // 2. Apply transforms sequentially
+    for (const transform of transforms) {
+      content = await transform(content);
+    }
+    
+    // 3. Generate new property name
+    const newPropertyName = `${reference.propertyName}.transform`;
+    
+    // 4. Store transformed content
+    return await this.store(content, newPropertyName);
+  }
+  
+  async run(command: ICommand, ...args: any[]): Promise<MemoryRef> {
+    // 1. Execute command with this context
+    const result = await command.execute(this, ...args);
+    
+    // 2. Return the file reference from command execution
+    return result;
+  }
+}
+```
+
+### CLI Entry Point
+
+```typescript
+async function main() {
+  try {
+    // 1. Parse command line arguments
+    const parsed = parseArgs(process.argv);
+    // Result: { command: 'store', args: ['value'], flags: { token: 'mytoken', ref: ['ref1'] } }
+    
+    // 2. Load configuration
+    const config = await loadConfiguration([
+      path.join(process.cwd(), '.open-tasks/config.json'),
+      path.join(os.homedir(), '.open-tasks/config.json'),
+    ]);
+    // Merge with defaults
+    config = { ...DEFAULT_CONFIG, ...config };
+    
+    // 3. Initialize core services
+    const referenceManager = new ReferenceManager();
+    const outputHandler = new OutputHandler(config);
+    
+    // 4. Create execution context
+    const context: ExecutionContext = {
+      cwd: process.cwd(),
+      outputDir: config.outputDir,
+      referenceManager,
+      outputHandler,
+      config,
+      token: parsed.flags.token,
+    };
+    
+    // 5. Initialize command router
+    const router = new CommandRouter(context);
+    await router.discoverCommands();
+    
+    // 6. Route and execute command
+    const result = await router.route(
+      parsed.command,
+      parsed.args,
+      parsed.flags.ref || []
+    );
+    
+    // 7. Display success output
+    console.log(outputHandler.formatSuccess(`Reference created: ${result.id}`));
+    console.log(outputHandler.formatInfo(`File: ${result.outputFile}`));
+    
+    // 8. Exit successfully
+    process.exit(0);
+    
+  } catch (error) {
+    // Handle errors
+    console.error(outputHandler.formatError(error.message));
+    await outputHandler.writeError(error, { command: process.argv });
+    process.exit(1);
+  }
+}
+```
+
+### Command Router
+
+```typescript
+class CommandRouter {
+  private commands: Map<string, CommandHandler>;
+  private context: ExecutionContext;
+  
+  async discoverCommands(): Promise<void> {
+    this.commands = new Map();
+    
+    // 1. Register system commands
+    this.commands.set('init', new InitCommand());
+    this.commands.set('create', new CreateCommand());
+    
+    // 2. Register built-in CLI commands
+    this.commands.set('store', new StoreCommand());
+    this.commands.set('load', new LoadCommand());
+    this.commands.set('replace', new ReplaceCommand());
+    this.commands.set('powershell', new PowerShellCommand());
+    this.commands.set('ai-cli', new AiCliCommand());
+    this.commands.set('extract', new ExtractCommand());
+    
+    // 3. Discover process commands
+    const commandsDir = path.join(this.context.cwd, '.open-tasks/commands');
+    if (await fs.exists(commandsDir)) {
+      const files = await fs.readdir(commandsDir);
+      
+      for (const file of files) {
+        if (file.endsWith('.js') || file.endsWith('.ts')) {
+          // Load command module
+          const commandPath = path.join(commandsDir, file);
+          const CommandClass = await import(commandPath);
+          
+          // Register with filename as command name
+          const commandName = path.basename(file, path.extname(file));
+          this.commands.set(commandName, new CommandClass.default());
+        }
+      }
+    }
+  }
+  
+  async route(
+    commandName: string,
+    args: string[],
+    refTokens: string[]
+  ): Promise<ReferenceHandle> {
+    // 1. Get command handler
+    const handler = this.commands.get(commandName);
+    if (!handler) {
+      const suggestions = this.findSimilarCommands(commandName);
+      throw new Error(`Unknown command: ${commandName}\n` +
+                      `Did you mean: ${suggestions.join(', ')}?`);
+    }
+    
+    // 2. Resolve references
+    const refs = new Map<string, ReferenceHandle>();
+    for (const token of refTokens) {
+      const ref = this.context.referenceManager.getReference(token);
+      if (!ref) {
+        throw new Error(`Reference not found: ${token}\n` +
+                        `Create it first with: open-tasks store "value" --token ${token}`);
+      }
+      refs.set(token, ref);
+    }
+    
+    // 3. Execute command with resolved references
+    const startTime = Date.now();
+    const result = await handler.execute(args, refs, this.context);
+    result.metadata = result.metadata || {};
+    result.metadata.duration = Date.now() - startTime;
+    
+    return result;
+  }
+  
+  private findSimilarCommands(input: string): string[] {
+    // Simple similarity matching (Levenshtein distance)
+    const allCommands = Array.from(this.commands.keys());
+    return allCommands
+      .map(cmd => ({ cmd, distance: levenshtein(input, cmd) }))
+      .filter(x => x.distance <= 3)
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 3)
+      .map(x => x.cmd);
+  }
+}
+```
+
+### Built-in CLI Commands
+
+```typescript
+// System Command: init
+class InitCommand extends CommandHandler {
+  static description = 'Initialize Open Tasks project structure';
+  
+  async execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    const force = args.includes('--force');
+    const projectRoot = context.cwd;
+    
+    // 1. Check if already initialized
+    const openTasksDir = path.join(projectRoot, '.open-tasks');
+    if (await fs.exists(openTasksDir) && !force) {
+      throw new Error('Project already initialized. Use --force to reinitialize.');
+    }
+    
+    // 2. Create directory structure
+    await fs.mkdir(path.join(openTasksDir, 'commands'), { recursive: true });
+    await fs.mkdir(path.join(openTasksDir, 'outputs'), { recursive: true });
+    
+    // 3. Create default config
+    const defaultConfig = {
+      outputDir: '.open-tasks/outputs',
+      customCommandsDir: '.open-tasks/commands',
+      timestampFormat: 'YYYYMMDD-HHmmss-SSS',
+      defaultFileExtension: 'txt',
+      colors: true,
+    };
+    await fs.writeFile(
+      path.join(openTasksDir, 'config.json'),
+      JSON.stringify(defaultConfig, null, 2),
+      'utf-8'
+    );
+    
+    // 4. Ensure package.json exists
+    const packageJsonPath = path.join(projectRoot, 'package.json');
+    if (!await fs.exists(packageJsonPath)) {
+      const packageJson = {
+        name: path.basename(projectRoot),
+        version: '1.0.0',
+        description: 'Open Tasks CLI project',
+        scripts: {
+          tasks: 'open-tasks',
+        },
+        devDependencies: {
+          'open-tasks-cli': '^1.0.0',
+        },
+      };
+      await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf-8');
+    }
+    
+    // 5. Create output message
+    const message = `✓ Initialized Open Tasks project\n` +
+                    `  • Created .open-tasks/ directory\n` +
+                    `  • Created default config\n` +
+                    `  • Ready to use\n\n` +
+                    `Next steps:\n` +
+                    `  1. Create a process command: open-tasks create my-command\n` +
+                    `  2. Start using CLI commands: open-tasks store "value"`;
+    
+    // 6. Write output and create reference
+    const outputFile = await context.outputHandler.writeOutput(message, 'init-result');
+    return context.referenceManager.createReference(message, 'init-result');
+  }
+}
+
+// System Command: create
+class CreateCommand extends CommandHandler {
+  static description = 'Create a new process command template';
+  
+  async execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    if (args.length === 0) {
+      throw new Error('Command name required. Usage: open-tasks create <name>');
+    }
+    
+    const commandName = args[0];
+    const useTypeScript = args.includes('--typescript');
+    const description = args.find(a => a.startsWith('--description='))
+                           ?.split('=')[1] || 'Custom command';
+    
+    // 1. Validate command name
+    if (!/^[a-z0-9-]+$/.test(commandName)) {
+      throw new Error(`Invalid command name: ${commandName}\n` +
+                      `Use only lowercase letters, numbers, and hyphens.`);
+    }
+    
+    // 2. Check if command already exists
+    const ext = useTypeScript ? '.ts' : '.js';
+    const commandFile = path.join(context.cwd, '.open-tasks/commands', `${commandName}${ext}`);
+    if (await fs.exists(commandFile)) {
+      throw new Error(`Command already exists: ${commandName}\n` +
+                      `File: ${commandFile}`);
+    }
+    
+    // 3. Generate template
+    const template = useTypeScript
+      ? this.generateTypeScriptTemplate(commandName, description)
+      : this.generateJavaScriptTemplate(commandName, description);
+    
+    // 4. Write file
+    await fs.writeFile(commandFile, template, 'utf-8');
+    
+    // 5. Create result message
+    const message = `✓ Created process command: ${commandName}\n` +
+                    `  File: ${commandFile}\n\n` +
+                    `Usage:\n` +
+                    `  open-tasks ${commandName} <args>`;
+    
+    const outputFile = await context.outputHandler.writeOutput(message, 'create-result');
+    return context.referenceManager.createReference(message, 'create-result');
+  }
+  
+  private generateTypeScriptTemplate(name: string, desc: string): string {
+    return `import { CommandHandler, ReferenceHandle, ExecutionContext } from 'open-tasks-cli';
+
+/**
+ * ${desc}
+ */
+export default class ${this.toPascalCase(name)}Command extends CommandHandler {
+  static description = '${desc}';
+  static examples = [
+    'open-tasks ${name} <input>',
+    'open-tasks ${name} --ref <token>',
+  ];
+
+  async execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    // TODO: Implement your command logic here
+    
+    // Get input from args or first reference
+    const input = args[0] || refs.values().next().value?.content;
+    if (!input) {
+      throw new Error('No input provided');
+    }
+    
+    // Process the input
+    const output = \`Processed: \${input}\`;
+    
+    // Write output and create reference
+    const outputFile = await context.outputHandler.writeOutput(output, context.token);
+    return context.referenceManager.createReference(output, context.token);
+  }
+}
+`;
+  }
+  
+  private toPascalCase(str: string): string {
+    return str.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join('');
+  }
+}
+
+// Built-in CLI Command: store
+class StoreCommand extends CommandHandler {
+  static description = 'Store a value in memory and create a reference';
+  
+  async execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    // 1. Validate input
+    if (args.length === 0) {
+      throw new Error('No value provided. Usage: open-tasks store "value" [--token name]');
+    }
+    
+    // 2. Get value to store
+    const value = args[0];
+    
+    // 3. Write output file
+    const outputFile = await context.outputHandler.writeOutput(value, context.token);
+    
+    // 4. Create and return reference
+    return context.referenceManager.createReference(value, context.token);
+  }
+}
+
+// Built-in CLI Command: load
+class LoadCommand extends CommandHandler {
+  static description = 'Load file content and create a reference';
+  
+  async execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    // 1. Validate input
+    if (args.length === 0) {
+      throw new Error('No file path provided. Usage: open-tasks load <path> [--token name]');
+    }
+    
+    // 2. Resolve file path
+    const filePath = path.resolve(context.cwd, args[0]);
+    
+    // 3. Check file exists
+    if (!await fs.exists(filePath)) {
+      throw new Error(`File not found: ${filePath}`);
+    }
+    
+    // 4. Check file size
+    const stats = await fs.stat(filePath);
+    const maxSize = context.config.maxFileSize || 10485760; // 10 MB
+    if (stats.size > maxSize) {
+      throw new Error(`File too large: ${stats.size} bytes (max: ${maxSize})`);
+    }
+    
+    // 5. Read file content
+    const content = await fs.readFile(filePath, 'utf-8');
+    
+    // 6. Write to output file
+    const outputFile = await context.outputHandler.writeOutput(content, context.token);
+    
+    // 7. Create and return reference
+    return context.referenceManager.createReference(content, context.token);
+  }
+}
+
+// Built-in CLI Command: replace
+class ReplaceCommand extends CommandHandler {
+  static description = 'Perform template substitution with references';
+  
+  async execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    // 1. Validate input
+    if (args.length === 0) {
+      throw new Error('No template provided. Usage: open-tasks replace "{{token}}" --ref token');
+    }
+    
+    // 2. Get template
+    let template = args[0];
+    
+    // 3. Replace all {{token}} placeholders
+    for (const [token, ref] of refs) {
+      const placeholder = `{{${token}}}`;
+      const content = ref.content.toString();
+      template = template.replace(new RegExp(placeholder, 'g'), content);
+    }
+    
+    // 4. Check for unresolved placeholders
+    const unresolvedMatch = template.match(/\{\{([^}]+)\}\}/);
+    if (unresolvedMatch) {
+      throw new Error(`Unresolved placeholder: {{${unresolvedMatch[1]}}}\n` +
+                      `Create it first with: open-tasks store "value" --token ${unresolvedMatch[1]}`);
+    }
+    
+    // 5. Write output and create reference
+    const outputFile = await context.outputHandler.writeOutput(template, context.token);
+    return context.referenceManager.createReference(template, context.token);
+  }
+}
+```
+
+### Reference Manager
+
+```typescript
+class ReferenceManager implements ReferenceManager {
+  private references: Map<string, ReferenceHandle>;
+  
+  constructor() {
+    this.references = new Map();
+  }
+  
+  createReference(content: any, token?: string): ReferenceHandle {
+    // 1. Generate ID (use token or generate UUID)
+    const id = token || crypto.randomUUID();
+    
+    // 2. Create handle
+    const handle: ReferenceHandle = {
+      id,
+      content,
+      timestamp: new Date(),
+      outputFile: '', // Will be set by OutputHandler
+      metadata: {},
+    };
+    
+    // 3. Check for conflicts
+    if (this.references.has(id)) {
+      console.warn(`Warning: Overwriting existing reference: ${id}`);
+    }
+    
+    // 4. Store reference
+    this.references.set(id, handle);
+    
+    return handle;
+  }
+  
+  getReference(id: string): ReferenceHandle | undefined {
+    return this.references.get(id);
+  }
+  
+  listReferences(): ReferenceHandle[] {
+    return Array.from(this.references.values());
+  }
+  
+  hasReference(id: string): boolean {
+    return this.references.has(id);
+  }
+  
+  clear(): void {
+    this.references.clear();
+  }
+}
+```
+
+### Output Handler
+
+```typescript
+class OutputHandler implements OutputHandler {
+  private outputDir: string;
+  private timestampFormat: string;
+  private colors: boolean;
+  
+  constructor(config: Configuration) {
+    this.outputDir = config.outputDir;
+    this.timestampFormat = config.timestampFormat;
+    this.colors = config.colors;
+  }
+  
+  async writeOutput(content: any, token?: string, ext: string = 'txt'): Promise<string> {
+    // 1. Ensure output directory exists
+    await fs.mkdir(this.outputDir, { recursive: true });
+    
+    // 2. Generate filename
+    const timestamp = format(new Date(), this.timestampFormat);
+    const id = token || crypto.randomUUID();
+    const filename = `${timestamp}-${id}.${ext}`;
+    const filepath = path.join(this.outputDir, filename);
+    
+    // 3. Format content with metadata header
+    const metadata = this.formatMetadata(content, token);
+    const output = `${metadata}\n\n${content}`;
+    
+    // 4. Write file
+    await fs.writeFile(filepath, output, 'utf-8');
+    
+    return filepath;
+  }
+  
+  async writeError(error: Error, context: any): Promise<string> {
+    const timestamp = format(new Date(), this.timestampFormat);
+    const filename = `${timestamp}-error.error`;
+    const filepath = path.join(this.outputDir, filename);
+    
+    const errorOutput = {
+      error: {
+        message: error.message,
+        stack: error.stack,
+      },
+      context,
+      timestamp: new Date().toISOString(),
+    };
+    
+    await fs.writeFile(filepath, JSON.stringify(errorOutput, null, 2), 'utf-8');
+    return filepath;
+  }
+  
+  formatSuccess(message: string): string {
+    if (!this.colors) return `✓ ${message}`;
+    return chalk.green('✓') + ' ' + chalk.white(message);
+  }
+  
+  formatError(message: string): string {
+    if (!this.colors) return `✗ ${message}`;
+    return chalk.red('✗') + ' ' + chalk.red(message);
+  }
+  
+  formatInfo(message: string): string {
+    if (!this.colors) return message;
+    return chalk.blue(message);
+  }
+  
+  formatReference(id: string): string {
+    if (!this.colors) return id;
+    return chalk.yellow(id);
+  }
+  
+  formatCommand(name: string): string {
+    if (!this.colors) return name;
+    return chalk.cyan(name);
+  }
+  
+  private formatMetadata(content: any, token?: string): string {
+    return [
+      '# open-tasks-cli output',
+      `# Timestamp: ${new Date().toISOString()}`,
+      token ? `# Token: ${token}` : '# ID: [auto-generated]',
+      `# Content Length: ${content.length} characters`,
+    ].join('\n');
+  }
+}
+```
+
+---
 
 ## Data Types and Context
 
