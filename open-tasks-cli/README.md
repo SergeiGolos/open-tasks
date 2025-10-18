@@ -2,14 +2,27 @@
 
 A powerful CLI tool for executing tasks with explicit workflow context, enabling seamless command chaining, reference management, and extensibility.
 
+## 📚 Documentation
+
+For comprehensive documentation, visit the [Open Tasks Wiki](../open-tasks-wiki/index.md):
+
+- **[Quick Start](../open-tasks-wiki/Quick-Start.md)** - 5-minute tutorial
+- **[Core Concepts](../open-tasks-wiki/Core-Concepts.md)** - Tasks, Commands, IWorkflowContext, MemoryRef
+- **[Building Tasks](../open-tasks-wiki/Building-Tasks.md)** - Create custom workflows
+- **[Command Library](../open-tasks-wiki/Command-Library.md)** - Pre-built commands reference
+- **[Managing Context](../open-tasks-wiki/Managing-Context.md)** - MemoryRef and decorators
+- **[Architecture](../open-tasks-wiki/Architecture.md)** - System design
+- **[Contributing](../open-tasks-wiki/Contributing.md)** - Development guide
+
 ## Features
 
-- 🔗 **Reference Management**: Store command outputs and pass them between commands using tokens or UUIDs
+- 🔗 **Reference Management**: Store command outputs as MemoryRef objects and pass them between commands using tokens or UUIDs
 - 📝 **Built-in Commands**: Store, load, replace, extract, PowerShell execution, and AI CLI integration
 - 🔌 **Extensible**: Add custom commands in `.open-tasks/commands/` that are auto-discovered
-- 🌊 **Workflow Context**: Internal API for orchestrating multi-step workflows
-- 📁 **File Output**: Automatically saves command outputs with timestamps
-- 🎨 **Formatted Output**: Color-coded terminal output with progress indicators
+- 🌊 **Workflow Context**: Internal `IWorkflowContext` API for orchestrating multi-step workflows
+- 📁 **File Output**: Automatically saves outputs to `.open-tasks/outputs/{timestamp}-{command}/` with per-execution isolation
+- 🎨 **Formatted Output**: Color-coded terminal output with progress indicators (via chalk and ora)
+- 🎯 **Decorators**: Transform MemoryRef objects before file creation (tokens, filenames, metadata)
 - ⚡ **TypeScript**: Fully typed for excellent IDE support
 
 ## Installation
@@ -97,9 +110,10 @@ Line 3" --token multiline
 ```
 
 **Output:**
-- Creates a timestamped file in `.open-tasks/outputs/`
-- Returns a reference handle with UUID and optional token
-- File format: `YYYYMMDDTHHMMSS-<token>.txt`
+- Creates a file in `.open-tasks/outputs/{timestamp}-store/`
+- Returns a MemoryRef wrapped in a ReferenceHandle with UUID and optional token
+- File format: `{timestamp}-{token|uuid}.txt`
+- Each command execution gets its own timestamped output directory
 
 ---
 
@@ -214,6 +228,7 @@ open-tasks ai-cli <prompt> [--ref <context1> ...] [--token <name>]
 ```
 
 **Configuration:** Create `.open-tasks/ai-config.json`:
+
 ```json
 {
   "command": "gh copilot suggest",
@@ -222,14 +237,98 @@ open-tasks ai-cli <prompt> [--ref <context1> ...] [--token <name>]
 }
 ```
 
+**Configuration Options:**
+
+- `command` (required) - The AI CLI command to execute
+- `contextFlag` (optional) - Flag used to pass context files (default: `-t`)
+- `timeout` (optional) - Command timeout in milliseconds (default: 30000)
+
+**Supported AI CLIs:**
+
+#### GitHub Copilot CLI
+
+```json
+{
+  "command": "gh copilot suggest",
+  "contextFlag": "-t",
+  "timeout": 30000
+}
+```
+
+Usage:
+```bash
+open-tasks ai-cli "How do I parse JSON in PowerShell?"
+```
+
+#### OpenAI CLI (unofficial)
+
+```json
+{
+  "command": "openai-cli",
+  "contextFlag": "--context",
+  "timeout": 60000
+}
+```
+
+#### Custom AI Tool
+
+```json
+{
+  "command": "python /path/to/ai-tool.py",
+  "contextFlag": "--file",
+  "timeout": 45000
+}
+```
+
 **Examples:**
+
 ```bash
 # Simple AI query
 open-tasks ai-cli "How do I list files in PowerShell?"
 
-# With context files
+# With context from file
 open-tasks load ./code.ts --token code
 open-tasks ai-cli "Explain this code" --ref code
+
+# With multiple context files
+open-tasks load ./api.ts --token api
+open-tasks load ./types.ts --token types
+open-tasks ai-cli "How do these files work together?" --ref api --ref types
+
+# Save AI response for later use
+open-tasks ai-cli "Suggest improvements" --ref code --token suggestions
+```
+
+**Context File Passing:**
+
+When you use `--ref` flags, the AI CLI receives context files:
+
+```bash
+# This command:
+open-tasks ai-cli "Explain this" --ref code
+
+# Executes (approximately):
+gh copilot suggest "Explain this" -t /path/to/code-file.txt
+```
+
+**Error Handling:**
+
+- **Missing Configuration:** If `.open-tasks/ai-config.json` doesn't exist, command fails with helpful error
+- **Timeout:** If AI CLI doesn't respond within timeout, command fails
+- **Non-zero Exit Code:** If AI CLI returns error, it's captured and displayed
+
+**Troubleshooting:**
+
+```bash
+# Verify configuration exists
+cat .open-tasks/ai-config.json
+
+# Test AI CLI directly
+gh copilot suggest "test prompt"
+
+# Check timeout setting if AI CLI is slow
+# Increase timeout in ai-config.json:
+{ "timeout": 60000 }  # 60 seconds
 ```
 
 ---
@@ -392,6 +491,98 @@ open-tasks replace "File 1: {{f1}}\nFile 2: {{f2}}\nFile 3: {{f3}}" \
   --ref f1 --ref f2 --ref f3 --token combined
 ```
 
+### Example 5: Log Analysis
+
+```bash
+# Load log file
+open-tasks load ./app.log --token logs
+
+# Extract error messages
+open-tasks extract "ERROR: (.+)" --ref logs --all --token errors
+
+# Extract timestamps of errors
+open-tasks extract "(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})" --ref errors --all --token timestamps
+
+# Generate summary
+open-tasks replace "Found errors at:\n{{timestamps}}" --ref timestamps --token summary
+```
+
+### Example 6: Environment Configuration
+
+```bash
+# Load template config
+open-tasks load ./config.template.json --token template
+
+# Replace environment-specific values
+open-tasks replace "{{template}}" --ref template \
+  | replace "{{DATABASE_URL}}" "postgres://localhost/prod" --token step1 \
+  | replace "{{API_KEY}}" "secret-key-123" --token config
+
+# Output: .open-tasks/outputs/{timestamp}-replace/config.txt
+```
+
+### Example 7: Documentation Generation
+
+```bash
+# Extract function signatures from code
+open-tasks load ./src/api.ts --token source
+open-tasks extract "export function ([a-zA-Z]+)\([^)]*\)" --ref source --all --token functions
+
+# Generate documentation stub
+open-tasks replace "# API Documentation\n\nFunctions:\n{{functions}}" --ref functions --token docs
+
+# Output: .open-tasks/outputs/{timestamp}-replace/docs.txt
+```
+
+### Example 8: Data Validation Pipeline
+
+```bash
+# Load data file
+open-tasks load ./users.csv --token users
+
+# Extract email column
+open-tasks extract ",[^,]+@[^,]+," --ref users --all --token emails
+
+# Validate email format (custom command)
+open-tasks validate-emails --ref emails --token validated
+
+# Generate report
+open-tasks replace "Validated {{validated}}" --ref validated --token report
+```
+
+### Example 9: Build Automation
+
+```bash
+# Get current version from package.json
+open-tasks load ./package.json --token package
+open-tasks extract '"version": "([^"]+)"' --ref package --token version
+
+# Update changelog
+open-tasks load ./CHANGELOG.md --token changelog
+open-tasks replace "## [{{version}}]\n\n- New features\n\n{{changelog}}" \
+  --ref version --ref changelog --token updated-changelog
+
+# Generate release notes
+open-tasks replace "Release {{version}}" --ref version --token release-notes
+```
+
+### Example 10: Code Refactoring Helper
+
+```bash
+# Load source file
+open-tasks load ./legacy-code.js --token source
+
+# Ask AI to suggest refactoring
+open-tasks ai-cli "Suggest modern ES6 refactoring for this code" --ref source --token suggestions
+
+# Extract specific pattern to replace
+open-tasks extract "var ([a-zA-Z]+) = " --ref source --all --token var-declarations
+
+# Generate replacement script
+open-tasks replace "Replace these var declarations:\n{{var-declarations}}" \
+  --ref var-declarations --token refactor-plan
+```
+
 ## Reference Management
 
 ### Reference Types
@@ -402,19 +593,30 @@ open-tasks replace "File 1: {{f1}}\nFile 2: {{f2}}\nFile 3: {{f3}}" \
 ### Reference Lifetime
 
 - References exist in memory during CLI execution
-- Output files persist in `.open-tasks/outputs/`
+- Output files persist in `.open-tasks/outputs/{timestamp}-{command}/`
 - References are NOT preserved across CLI invocations
 - Use files for persistent storage between runs
 
-### File Naming Convention
+### Output Directory Structure
+
+Each command execution creates an isolated timestamped directory:
 
 ```
-YYYYMMDDTHHMMSS-<token|uuid>.txt
+.open-tasks/
+  outputs/
+    20250118T143052-store/
+      20250118T143052-greeting.txt
+    20250118T143105-replace/
+      20250118T143105-result.txt
+    20250118T143120-extract/
+      20250118T143120-emails.txt
 ```
 
-Examples:
-- `20251018T143052-greeting.txt`
-- `20251018T143053-a4f7e2d1.txt`
+**Benefits:**
+- No file naming conflicts between executions
+- Easy to track command history
+- Clean separation of outputs from different workflow steps
+- Simplifies debugging (each execution's files are isolated)
 
 ## Troubleshooting
 
@@ -510,10 +712,60 @@ interface ExecutionContext {
   outputDir: string;
   referenceManager: ReferenceManager;
   outputHandler: OutputHandler;
-  workflowContext: DirectoryOutputContext;
+  workflowContext: DirectoryOutputContext; // Implements IWorkflowContext
   config: Record<string, any>;
 }
 ```
+
+### IWorkflowContext
+
+The internal workflow processing API:
+
+```typescript
+interface IWorkflowContext {
+  // Create MemoryRef from content
+  store(content: any, decorators: IMemoryDecorator[]): Promise<MemoryRef>;
+  
+  // Load MemoryRef from file
+  load(filePath: string, decorators: IMemoryDecorator[]): Promise<MemoryRef>;
+  
+  // Apply transformation to MemoryRef
+  transform(ref: MemoryRef, transformer: ITransformer): Promise<MemoryRef>;
+}
+```
+
+### IMemoryDecorator
+
+Transform MemoryRef objects **before** file creation:
+
+```typescript
+interface IMemoryDecorator {
+  decorate(ref: MemoryRef): Promise<MemoryRef>;
+}
+```
+
+**Built-in Decorators:**
+- `TokenDecorator` - Assign a named token
+- `FileNameDecorator` - Set custom filename
+- `TimestampedFileNameDecorator` - Add timestamp prefix
+- `MetadataDecorator` - Add custom metadata
+
+**Example:**
+```typescript
+import { TokenDecorator, FileNameDecorator } from 'open-tasks-cli';
+
+// Decorators run BEFORE file is written
+const ref = await context.workflowContext.store(
+  "Hello World",
+  [
+    new TokenDecorator("greeting"),
+    new FileNameDecorator("message.txt")
+  ]
+);
+// File is written to: .open-tasks/outputs/{timestamp}-store/message.txt
+```
+
+See [Managing Context](../open-tasks-wiki/Managing-Context.md) for complete decorator documentation.
 
 ### ReferenceHandle
 
@@ -549,8 +801,9 @@ MIT License - see LICENSE file for details
 
 ## Support
 
+- **Documentation**: [Open Tasks Wiki](../open-tasks-wiki/index.md)
 - **Issues**: Report bugs and request features on GitHub Issues
-- **Documentation**: Full documentation in `/docs` directory
+- **Developer Guide**: [Contributing](../open-tasks-wiki/Contributing.md)
 
 ## Roadmap
 

@@ -1,6 +1,58 @@
 import { DirectoryOutputContext } from './workflow/index.js';
 
 /**
+ * Verbosity levels for command output
+ */
+export type VerbosityLevel = 'quiet' | 'summary' | 'verbose' | 'stream';
+
+/**
+ * Output destination targets
+ */
+export type OutputTarget = 'screen-only' | 'log-only' | 'both' | 'file';
+
+/**
+ * Summary data for command execution
+ */
+export interface SummaryData {
+  commandName: string;
+  executionTime: number;
+  outputFile?: string;
+  referenceToken?: string;
+  success: boolean;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Interface for building formatted command output
+ */
+export interface IOutputBuilder {
+  /**
+   * Add a section to the output (for verbose/stream modes)
+   */
+  addSection(title: string, content: string): void;
+  
+  /**
+   * Add summary information
+   */
+  addSummary(data: SummaryData): void;
+  
+  /**
+   * Add a progress message (for stream mode)
+   */
+  addProgress(message: string): void;
+  
+  /**
+   * Add an error message
+   */
+  addError(error: Error, context?: Record<string, any>): void;
+  
+  /**
+   * Build and return the formatted output string
+   */
+  build(): string;
+}
+
+/**
  * Reference handle for command outputs
  */
 export interface ReferenceHandle {
@@ -27,6 +79,12 @@ export interface ExecutionContext {
   workflowContext: DirectoryOutputContext;
   /** Configuration object */
   config: Record<string, any>;
+  /** Verbosity level (default: 'summary') */
+  verbosity?: VerbosityLevel;
+  /** Output target (default: 'both') */
+  outputTarget?: OutputTarget;
+  /** Custom output file path (for 'file' target) */
+  customOutputPath?: string;
 }
 
 /**

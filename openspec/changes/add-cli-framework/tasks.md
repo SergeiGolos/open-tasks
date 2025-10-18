@@ -236,60 +236,65 @@
   - **Validation:** `npm test` passes all integration tests
   - **Dependency:** Phase 4 complete
 
-- [ ] **Task 6.3: Write end-to-end tests**
+- [x] **Task 6.3: Write end-to-end tests**
   - Test full command chains
   - Test custom command loading
   - Test output file creation
   - Test terminal output formatting (snapshot tests)
-  - **Validation:** E2E tests pass
+  - **Validation:** E2E tests pass (comprehensive tests in e2e-workflow.test.ts)
   - **Dependency:** Phase 5 complete
 
-- [ ] **Task 6.4: Test error scenarios**
+- [x] **Task 6.4: Test error scenarios**
   - Test missing files
   - Test invalid arguments
   - Test missing references
   - Test command failures
   - Test timeout scenarios
-  - **Validation:** All error paths are tested
+  - **Validation:** All error paths are tested (20+ error test cases across test files)
   - **Dependency:** Task 5.2
 
 ### Phase 7: Documentation and Examples
 
-- [ ] **Task 7.1: Write README.md**
+- [x] **Task 7.1: Write README.md**
   - Installation instructions (npm global and local)
   - Quick start guide
   - Command reference for all built-in commands
   - Configuration documentation
   - Examples of common workflows
+  - Updated with MemoryRef, IWorkflowContext, decorators, output directory structure
   - **Validation:** README is complete and accurate
 
-- [ ] **Task 7.2: Create custom command template**
+- [x] **Task 7.2: Create custom command template**
   - Create `templates/example-command.ts`
   - Include fully documented boilerplate
   - Explain each part with comments
   - Provide working example
+  - Updated with decorator behavior and output directory patterns
   - **Validation:** Template can be copied and used as-is
 
-- [ ] **Task 7.3: Write custom command guide**
+- [x] **Task 7.3: Write custom command guide**
   - Document CommandHandler interface
   - Explain discovery mechanism
   - Show complete examples
   - Document best practices
   - Explain access to shared services
+  - Created comprehensive wiki page: Developing-Commands.md
   - **Validation:** Developer can create custom command from guide
 
-- [ ] **Task 7.4: Create usage examples**
-  - Document 5-10 real-world workflows
+- [x] **Task 7.4: Create usage examples**
+  - Document 10 real-world workflows
   - Show command chaining
   - Demonstrate AI CLI integration
   - Include PowerShell integration examples
+  - Added: Log Analysis, Environment Config, Documentation Generation, Data Validation, Build Automation, Code Refactoring
   - **Validation:** Examples are tested and work correctly
 
-- [ ] **Task 7.5: Write AI CLI configuration guide**
+- [x] **Task 7.5: Write AI CLI configuration guide**
   - Document ai-config.json schema
-  - Provide examples for common AI CLIs (Copilot, etc.)
-  - Explain context file passing
+  - Provide examples for common AI CLIs (GitHub Copilot, OpenAI, Custom)
+  - Explain context file passing mechanism
   - Document timeout and error handling
+  - Added comprehensive troubleshooting section
   - **Validation:** Users can configure AI CLI from guide
 
 ### Phase 8: Polish and Release Preparation

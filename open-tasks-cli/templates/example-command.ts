@@ -102,7 +102,8 @@ export default class ExampleCommand extends CommandHandler {
     // ========================================
     
     // Use workflow context to store the result
-    // This creates an output file and memory reference
+    // Decorators are applied BEFORE file creation
+    // Output is written to: .open-tasks/outputs/{timestamp}-example-command/
     const decorators = token ? [new TokenDecorator(token)] : [];
     const memoryRef = await context.workflowContext.store(result, decorators);
     
@@ -143,15 +144,30 @@ export default class ExampleCommand extends CommandHandler {
  * const results = await context.workflowContext.run(someCommandInstance);
  * ```
  * 
- * ## 2. Multiple Output Files
+ * ## 2. Using Decorators
  * 
  * ```typescript
- * // Store multiple results
- * const result1 = await context.workflowContext.store(data1, [new TokenDecorator('output1')]);
- * const result2 = await context.workflowContext.store(data2, [new TokenDecorator('output2')]);
+ * import { TokenDecorator, FileNameDecorator, MetadataDecorator } from '../workflow/decorators.js';
+ * 
+ * // Decorators run BEFORE file creation
+ * const ref = await context.workflowContext.store(data, [
+ *   new TokenDecorator('mytoken'),
+ *   new FileNameDecorator('custom-name.txt'),
+ *   new MetadataDecorator({ source: 'api', version: 1 })
+ * ]);
+ * // File written to: .open-tasks/outputs/{timestamp}-{command}/custom-name.txt
  * ```
  * 
- * ## 3. File System Operations
+ * ## 3. Multiple Output Files
+ * 
+ * ```typescript
+ * // Each store creates a file in the same timestamped directory
+ * const result1 = await context.workflowContext.store(data1, [new TokenDecorator('output1')]);
+ * const result2 = await context.workflowContext.store(data2, [new TokenDecorator('output2')]);
+ * // Both files in: .open-tasks/outputs/{timestamp}-{command}/
+ * ```
+ * 
+ * ## 4. File System Operations
  * 
  * ```typescript
  * import { promises as fs } from 'fs';

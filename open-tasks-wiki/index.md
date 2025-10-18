@@ -66,8 +66,9 @@ Then invoke: `open-tasks analyze-repo`
 
 ### Developer Guides  
 - **[[Architecture]]** - Understanding the three-layer design
-- **[[Creating Commands]]** - Build custom ICommand implementations
-- **[[Workflow API]]** - Deep dive into IWorkflowContext
+- **[[Building Tasks]]** - Create custom workflows and tasks
+- **[[Developing Commands]]** - Extend the CLI with custom commands
+- **[[Managing Context]]** - Work with MemoryRef objects and decorators
 - **[[Contributing]]** - Development setup and guidelines
 
 ### Reference
