@@ -3,15 +3,10 @@ title: "Open Tasks CLI"
 description: "Flexible command-line tool for composable workflow automation by bitcobblers"
 ---
 
-# Open Tasks CLI
-
-<div class="hero-section" style="text-align: center; margin: 2rem 0; padding: 2rem 0; background: linear-gradient(135deg, #2563eb, #7c3aed); border-radius: 12px; color: white;">
 
 ## 🚀 Workflow Automation Made Simple
 
 **Open Tasks CLI** is a flexible command-line tool designed for composable workflow automation. Chain asynchronous command operations with explicit context passing, making it ideal for building multi-step workflows.
-
-</div>
 
 <div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
 
