@@ -109,6 +109,11 @@ async function main() {
     const refs = new Map<string, ReferenceHandle>();
     const cleanArgs: string[] = [];
     
+    // Parse verbosity and output target flags
+    let verbosity: 'quiet' | 'summary' | 'verbose' | 'stream' = 'summary';
+    let outputTarget: 'screen-only' | 'log-only' | 'both' | 'file' = 'both';
+    let customOutputPath: string | undefined;
+    
     for (let i = 0; i < commandArgs.length; i++) {
       const arg = commandArgs[i];
       
@@ -121,6 +126,24 @@ async function main() {
           console.warn(formatError(`Reference not found: ${refToken}`));
         }
         i++; // Skip the token value
+      } else if (arg === '--quiet' || arg === '-q') {
+        verbosity = 'quiet';
+      } else if (arg === '--summary' || arg === '-s') {
+        verbosity = 'summary';
+      } else if (arg === '--verbose' || arg === '-v') {
+        verbosity = 'verbose';
+      } else if (arg === '--stream') {
+        verbosity = 'stream';
+      } else if (arg === '--screen-only') {
+        outputTarget = 'screen-only';
+      } else if (arg === '--log-only') {
+        outputTarget = 'log-only';
+      } else if (arg === '--both') {
+        outputTarget = 'both';
+      } else if (arg === '--file' && i + 1 < commandArgs.length) {
+        outputTarget = 'file';
+        customOutputPath = commandArgs[i + 1];
+        i++; // Skip the path value
       } else {
         cleanArgs.push(arg);
       }
@@ -134,6 +157,9 @@ async function main() {
       outputHandler,
       workflowContext,
       config,
+      verbosity,
+      outputTarget,
+      customOutputPath,
     };
 
     // Execute command

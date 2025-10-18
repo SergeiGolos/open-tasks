@@ -149,15 +149,57 @@ export class ReferenceManager {
 export class OutputHandler {
   constructor(private outputDir: string) {}
 
+  /**
+   * Determine if output should be written to screen/terminal
+   */
+  shouldOutputToScreen(target: OutputTarget = 'both'): boolean {
+    return target === 'screen-only' || target === 'both' || target === 'file';
+  }
+
+  /**
+   * Determine if output should be written to file
+   */
+  shouldOutputToFile(target: OutputTarget = 'both'): boolean {
+    return target === 'log-only' || target === 'both' || target === 'file';
+  }
+
+  /**
+   * Write output with routing based on output target
+   */
+  async writeOutputWithRouting(
+    content: string,
+    fileName: string,
+    outputTarget: OutputTarget = 'both',
+    customPath?: string
+  ): Promise<string | undefined> {
+    let filePath: string | undefined;
+
+    // Write to file if needed
+    if (this.shouldOutputToFile(outputTarget)) {
+      filePath = await this.writeOutput(content, fileName, customPath);
+    }
+
+    // Write to screen if needed
+    if (this.shouldOutputToScreen(outputTarget)) {
+      console.log(content);
+    }
+
+    return filePath;
+  }
+
   async writeOutput(
     content: string,
-    fileName: string
+    fileName: string,
+    customPath?: string
   ): Promise<string> {
     const path = await import('path');
     const fse = (await import('fs-extra')).default;
     
-    const filePath = path.join(this.outputDir, fileName);
-    await fse.ensureDir(this.outputDir);
+    const targetDir = customPath ? path.dirname(customPath) : this.outputDir;
+    const targetFileName = customPath ? path.basename(customPath) : fileName;
+    const filePath = path.join(targetDir, targetFileName);
+    
+    await fse.ensureDir(targetDir);
     await fse.writeFile(filePath, content, 'utf-8');
     
     return filePath;
@@ -200,9 +242,135 @@ export abstract class CommandHandler {
   abstract description: string;
   abstract examples: string[];
 
-  abstract execute(
+  /**
+   * Main execute method - can be overridden for backward compatibility
+   * or use the new executeCommand pattern for enhanced output control
+   */
+  async execute(
     args: string[],
     refs: Map<string, ReferenceHandle>,
     context: ExecutionContext
-  ): Promise<ReferenceHandle>;
+  ): Promise<ReferenceHandle> {
+    // Check if subclass implements executeCommand (new pattern)
+    if (this.executeCommand !== CommandHandler.prototype.executeCommand) {
+      return this.executeWithOutputControl(args, refs, context);
+    }
+    
+    // Fallback to direct execution for backward compatibility
+    // Subclasses can override this execute method directly
+    throw new Error(`Command ${this.name} must implement execute() or executeCommand()`);
+  }
+
+  /**
+   * Execute with timing and output control (new pattern)
+   */
+  private async executeWithOutputControl(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    const startTime = Date.now();
+    const builder = this.createOutputBuilder(context);
+
+    try {
+      // Execute the actual command logic
+      const result = await this.executeCommand(args, refs, context);
+      
+      // Handle successful output
+      await this.handleOutput(result, context, startTime, builder);
+      
+      return result;
+    } catch (error) {
+      // Handle error output
+      await this.handleError(error as Error, context, startTime, builder);
+      throw error;
+    }
+  }
+
+  /**
+   * Create appropriate output builder based on verbosity level
+   */
+  protected createOutputBuilder(context: ExecutionContext): IOutputBuilder {
+    const { createOutputBuilder } = require('./output-builders.js');
+    return createOutputBuilder(context.verbosity || 'summary');
+  }
+
+  /**
+   * Handle successful command output
+   */
+  protected async handleOutput(
+    result: ReferenceHandle,
+    context: ExecutionContext,
+    startTime: number,
+    builder: IOutputBuilder
+  ): Promise<void> {
+    const { calculateDuration } = await import('./utils.js');
+    const executionTime = calculateDuration(startTime);
+
+    // Build summary data
+    const summaryData: SummaryData = {
+      commandName: this.name,
+      executionTime,
+      outputFile: result.outputFile,
+      referenceToken: result.token,
+      success: true,
+    };
+
+    // Add summary to builder
+    builder.addSummary(summaryData);
+
+    // Build and route output
+    const output = builder.build();
+    if (output) {
+      const outputTarget = context.outputTarget || 'both';
+      
+      if (context.outputHandler.shouldOutputToScreen(outputTarget)) {
+        console.log(output);
+      }
+    }
+  }
+
+  /**
+   * Handle error output
+   */
+  protected async handleError(
+    error: Error,
+    context: ExecutionContext,
+    startTime: number,
+    builder: IOutputBuilder
+  ): Promise<void> {
+    const { calculateDuration } = await import('./utils.js');
+    const executionTime = calculateDuration(startTime);
+
+    // Add error to builder
+    builder.addError(error, {
+      command: this.name,
+      executionTime,
+    });
+
+    // Build and output error
+    const output = builder.build();
+    if (output) {
+      console.error(output);
+    }
+
+    // Write error file
+    await context.outputHandler.writeError(error, {
+      command: this.name,
+      executionTime,
+    });
+  }
+
+  /**
+   * Subclasses can implement this for the new output control pattern
+   * Leave unimplemented to use the old execute() override pattern
+   */
+  protected executeCommand(
+    _args: string[],
+    _refs: Map<string, ReferenceHandle>,
+    _context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    // Default implementation - signals to use old pattern
+    return Promise.resolve({} as ReferenceHandle);
+  }
 }

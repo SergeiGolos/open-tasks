@@ -30,121 +30,122 @@
 
 ### Phase 2: Output Builder Implementations
 
-- [ ] **Task 2.1: Implement QuietOutputBuilder**
+- [x] **Task 2.1: Implement QuietOutputBuilder**
   - Create class implementing IOutputBuilder
   - Only include essential summary information
   - Format as single line: "✓ command completed in Xms"
-  - **Validation:** Builder produces correct quiet output
+  - **Validation:** Builder produces correct quiet output ✓
   - **Dependency:** Task 1.2
 
-- [ ] **Task 2.2: Implement SummaryOutputBuilder**
+- [x] **Task 2.2: Implement SummaryOutputBuilder**
   - Create class implementing IOutputBuilder
   - Format with command name, time, file path, reference token
   - Use emojis (✓, 📁, 🔗) for visual clarity
   - Match current default behavior
-  - **Validation:** Builder produces current-style output
+  - **Validation:** Builder produces current-style output ✓
   - **Dependency:** Task 1.2
 
-- [ ] **Task 2.3: Implement VerboseOutputBuilder**
+- [x] **Task 2.3: Implement VerboseOutputBuilder**
   - Create class implementing IOutputBuilder
   - Include all sections added via addSection
   - Show detailed metadata and progress messages
   - Format with headers and structured content
-  - **Validation:** Builder includes all added sections
+  - **Validation:** Builder includes all added sections ✓
   - **Dependency:** Task 1.2
 
-- [ ] **Task 2.4: Implement StreamingOutputBuilder**
+- [x] **Task 2.4: Implement StreamingOutputBuilder**
   - Create class implementing IOutputBuilder
   - Output sections immediately (no buffering)
   - Show timestamps or elapsed time for each update
   - Support progress indicators
-  - **Validation:** Output appears in real-time
+  - **Validation:** Output appears in real-time ✓
   - **Dependency:** Task 1.2
 
-- [ ] **Task 2.5: Create OutputBuilder factory**
+- [x] **Task 2.5: Create OutputBuilder factory**
   - Implement factory function that returns appropriate builder
   - Accept verbosity level and return correct implementation
   - Handle unknown verbosity levels gracefully
-  - **Validation:** Factory returns correct builder for each level
+  - **Validation:** Factory returns correct builder for each level ✓
   - **Dependency:** Tasks 2.1-2.4
 
 ### Phase 3: ExecutionContext and OutputHandler Enhancements
 
-- [ ] **Task 3.1: Update ExecutionContext creation**
+- [x] **Task 3.1: Update ExecutionContext creation**
   - Modify context creation in index.ts to include new properties
   - Add default values (verbosity='summary', outputTarget='both')
   - Parse CLI flags and set properties accordingly
-  - **Validation:** Context created with correct defaults
+  - **Validation:** Context created with correct defaults ✓
   - **Dependency:** Task 1.3
 
-- [ ] **Task 3.2: Extend OutputHandler with routing logic**
+- [x] **Task 3.2: Extend OutputHandler with routing logic**
   - Add shouldOutputToScreen() method
   - Add shouldOutputToFile() method
   - Implement logic based on outputTarget property
-  - **Validation:** Methods return correct boolean based on target
+  - **Validation:** Methods return correct boolean based on target ✓
   - **Dependency:** Task 1.3
 
-- [ ] **Task 3.3: Add execution time tracking utilities**
+- [x] **Task 3.3: Add execution time tracking utilities**
   - Create formatExecutionTime() function (ms → "Xms" or "X.Xs")
   - Create calculateDuration() helper
-  - Add to OutputHandler or separate utils module
-  - **Validation:** Time formatting is accurate and readable
+  - Add to utils.ts module
+  - **Validation:** Time formatting is accurate and readable ✓
   - **Dependency:** Task 1.2
 
-- [ ] **Task 3.4: Implement custom path validation**
+- [x] **Task 3.4: Implement custom path validation**
   - Create validateOutputPath() function
   - Check for directory traversal patterns (../)
   - Ensure path is within allowed directory
   - Return sanitized path or throw error
-  - **Validation:** Malicious paths are rejected
+  - **Validation:** Malicious paths are rejected ✓
   - **Dependency:** Task 1.3
 
-- [ ] **Task 3.5: Add output routing to OutputHandler**
+- [x] **Task 3.5: Add output routing to OutputHandler**
   - Update writeOutput() to check outputTarget
   - Route to screen, file, or both based on target
   - Support custom file paths
   - Handle file creation errors gracefully
-  - **Validation:** Output goes to correct destination(s)
+  - **Validation:** Output goes to correct destination(s) ✓
   - **Dependency:** Tasks 3.2, 3.4
 
 ### Phase 4: CommandHandler Base Class Enhancement
 
-- [ ] **Task 4.1: Add timing wrapper to CommandHandler**
+- [x] **Task 4.1: Add timing wrapper to CommandHandler**
   - Modify execute() method to record start time
   - Calculate execution duration after command completes
   - Pass timing info to output building
-  - **Validation:** Execution time is accurately tracked
+  - **Validation:** Execution time is accurately tracked ✓
   - **Dependency:** Task 3.3
 
-- [ ] **Task 4.2: Add output builder creation to CommandHandler**
+- [x] **Task 4.2: Add output builder creation to CommandHandler**
   - Implement createOutputBuilder() protected method
   - Use factory to get correct builder based on verbosity
   - Pass ExecutionContext to determine verbosity
-  - **Validation:** Correct builder is created for each verbosity
+  - **Validation:** Correct builder is created for each verbosity ✓
   - **Dependency:** Task 2.5
 
-- [ ] **Task 4.3: Implement handleOutput() method**
+- [x] **Task 4.3: Implement handleOutput() method**
   - Create protected method for successful command output
   - Build summary using SummaryData
   - Use output builder to format
   - Route output via OutputHandler
-  - **Validation:** Summary is displayed/written correctly
+  - **Validation:** Summary is displayed/written correctly ✓
   - **Dependency:** Tasks 4.1, 4.2, 3.5
 
-- [ ] **Task 4.4: Implement handleError() method**
+- [x] **Task 4.4: Implement handleError() method**
   - Create protected method for error handling
   - Format error with execution time
   - Use output builder for formatting
   - Write error log file
-  - **Validation:** Errors are formatted and logged correctly
+  - **Validation:** Errors are formatted and logged correctly ✓
   - **Dependency:** Task 4.3
 
-- [ ] **Task 4.5: Refactor execute() to use new methods**
+- [x] **Task 4.5: Refactor execute() to use new methods**
   - Wrap command logic with try/catch
   - Call handleOutput() on success
   - Call handleError() on failure
   - Return ReferenceHandle as before
-  - **Validation:** Command execution flow works end-to-end
+  - Maintain backward compatibility with opt-in pattern
+  - **Validation:** Command execution flow works end-to-end ✓
   - **Dependency:** Tasks 4.3, 4.4
 
 ### Phase 5: CLI Argument Parsing
