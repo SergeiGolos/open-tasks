@@ -96,11 +96,11 @@ export class OutputHandler {
     fileName: string
   ): Promise<string> {
     const path = await import('path');
-    const fs = await import('fs-extra');
+    const fse = await import('fs-extra');
     
     const filePath = path.join(this.outputDir, fileName);
-    await fs.ensureDir(this.outputDir);
-    await fs.writeFile(filePath, content, 'utf-8');
+    await fse.ensureDir(this.outputDir);
+    await fse.writeFile(filePath, content, 'utf-8');
     
     return filePath;
   }

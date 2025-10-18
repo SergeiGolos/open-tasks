@@ -1,7 +1,0 @@
-{
-  "outputDir": ".open-tasks/outputs",
-  "customCommandsDir": ".open-tasks/commands",
-  "timestampFormat": "YYYYMMDD-HHmmss-SSS",
-  "defaultFileExtension": "txt",
-  "colors": true
-}
