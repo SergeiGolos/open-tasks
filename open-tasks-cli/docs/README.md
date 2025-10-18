@@ -4,13 +4,52 @@
 
 ## 📚 Find Documentation in the Wiki
 
-All Open Tasks CLI documentation is now located in **[open-tasks-wiki](../open-tasks-wiki/)**
+All Open Tasks CLI documentation is now located in **[open-tasks-wiki](../../open-tasks-wiki/)**
 
 **Start Here**: [open-tasks-wiki/index.md](../../open-tasks-wiki/index.md)
 
-### Vision
+### Quick Links
 
-The tool bridges the gap between shell scripting and complex automation by providing:
+**Getting Started:**
+- [Installation](../../open-tasks-wiki/Installation.md)
+- [Quick Start](../../open-tasks-wiki/Quick-Start.md)
+- [Core Concepts](../../open-tasks-wiki/Core-Concepts.md)
+
+**User Guides:**
+- [Building Tasks](../../open-tasks-wiki/Building-Tasks.md)
+- [Command Library](../../open-tasks-wiki/Command-Library.md)
+- [System Commands](../../open-tasks-wiki/System-Commands.md)
+- [Configuration](../../open-tasks-wiki/Configuration.md)
+
+**Developer Guides:**
+- [Architecture](../../open-tasks-wiki/Architecture.md)
+- [Contributing](../../open-tasks-wiki/Contributing.md)
+
+## 🗂️ What Happened to These Docs?
+
+The content from this directory has been consolidated, reorganized, and migrated to the wiki:
+
+1. **Consolidated** - Removed duplications and inconsistencies
+2. **Reorganized** - Structured by user/developer journeys
+3. **Updated** - Aligned with current architecture
+4. **Enhanced** - Added examples, diagrams, and clarity
+5. **Migrated** - Moved to wiki for better organization
+
+See [DOCUMENTATION-MIGRATION.md](../../DOCUMENTATION-MIGRATION.md) for full details.
+
+## 📁 Archive
+
+Original documentation and brainstorming notes are preserved in:
+
+- **[History/](./History/)** - Early requirements and brainstorming
+
+These files are kept for historical reference but are no longer maintained.
+
+---
+
+**Last Updated**: October 18, 2025  
+**Status**: Deprecated - Use wiki instead  
+**Wiki Location**: [open-tasks-wiki](../../open-tasks-wiki/)
 
 - **Task-Command Architecture**: Clear separation where tasks (files) compose commands (ICommand implementations)
 - **Pre-built Command Library**: Rich set of commands (PowershellCommand, ClaudeCommand, RegexCommand, etc.)
