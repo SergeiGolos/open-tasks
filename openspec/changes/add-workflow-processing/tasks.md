@@ -138,12 +138,13 @@
   - **Validation:** Transform commands work and can be chained ✅
   - **Dependency:** Task 3.1, 4.1, 4.2
 
-- [ ] **Task 4.5: Add transform metadata to output files**
+- [x] **Task 4.5: Add transform metadata to output files**
   - Store list of applied transforms in file header or footer
   - Include transform type and parameters
-  - Format as markdown comments or frontmatter
+  - Format as markdown YAML frontmatter
   - Preserve original content
-  - **Validation:** Output files contain transform metadata
+  - Implemented via MetadataDecorator and DirectoryOutputContext
+  - **Validation:** Output files contain transform metadata ✅
   - **Dependency:** Task 4.4
 
 ### Phase 5: Optional File Name Transforms
@@ -207,11 +208,14 @@
   - **Validation:** All transform tests pass (14 tests) ✅
   - **Dependency:** Phase 4 complete
 
-- [ ] **Task 6.5: Write end-to-end workflow tests**
+- [x] **Task 6.5: Write end-to-end workflow tests**
   - Test complete workflows with multiple operations
   - Test chaining store → run(command) → token
   - Test real file I/O operations with DirectoryOutputContext
-  - **Validation:** E2E tests pass
+  - Test metadata persistence in files
+  - Test error handling across workflow chains
+  - Implemented in `test/e2e-workflow.test.ts` (11 tests)
+  - **Validation:** E2E tests pass ✅
   - **Dependency:** Phase 3, 4, 5 complete
 
 ### Phase 7: Documentation and Examples

@@ -1,251 +1,531 @@
 # open-tasks-cli
 
-A CLI tool for executing tasks with explicit workflow context and file-based input/output tracking.
+A powerful CLI tool for executing tasks with explicit workflow context, enabling seamless command chaining, reference management, and extensibility.
 
 ## Features
 
-- **Workflow Processing**: Store, load, and transform data with automatic file tracking
-- **Built-in Commands**: Core operations for common tasks
-- **Custom Commands**: Extend functionality with your own command modules
-- **Reference System**: Pass data between commands using tokens
-- **File Persistence**: All operations are automatically logged to timestamped files
+- 🔗 **Reference Management**: Store command outputs and pass them between commands using tokens or UUIDs
+- 📝 **Built-in Commands**: Store, load, replace, extract, PowerShell execution, and AI CLI integration
+- 🔌 **Extensible**: Add custom commands in `.open-tasks/commands/` that are auto-discovered
+- 🌊 **Workflow Context**: Internal API for orchestrating multi-step workflows
+- 📁 **File Output**: Automatically saves command outputs with timestamps
+- 🎨 **Formatted Output**: Color-coded terminal output with progress indicators
+- ⚡ **TypeScript**: Fully typed for excellent IDE support
 
 ## Installation
 
-### Global Installation
+### Global Installation (Recommended)
 
 ```bash
 npm install -g open-tasks-cli
 ```
 
-### Project-Local Installation
+### Local Installation
 
 ```bash
-npm install --save-dev open-tasks-cli
+npm install open-tasks-cli
+npx open-tasks --help
 ```
 
-Then use with `npx`:
+### From Source
 
 ```bash
-npx open-tasks <command>
+git clone <repository-url>
+cd open-tasks-cli
+npm install
+npm run build
+npm link
 ```
 
 ## Quick Start
 
-1. **Initialize a project**:
+### 1. Initialize a Project
+
 ```bash
+# Create .open-tasks directory with default configuration
 open-tasks init
 ```
 
-This creates:
-- `.open-tasks/commands/` - Directory for custom commands
-- `.open-tasks/outputs/` - Directory for output files
-- `.open-tasks/config.json` - Configuration file
+### 2. Store a Value
 
-2. **Store a value**:
 ```bash
+# Store a simple value
+open-tasks store "Hello World"
+
+# Store with a named token
 open-tasks store "Hello World" --token greeting
 ```
 
-3. **Load a file**:
+### 3. Use References in Commands
+
 ```bash
-open-tasks load ./myfile.txt --token content
+# Store and replace in template
+open-tasks store "World" --token name
+open-tasks replace "Hello {{name}}!" --ref name
 ```
 
-4. **Create a custom command**:
+### 4. Chain Commands
+
 ```bash
-open-tasks create my-command
+# Extract email from text
+open-tasks store "Contact: support@example.com" --token contact
+open-tasks extract "[a-z]+@[a-z.]+" --ref contact --token email
 ```
 
 ## Built-in Commands
 
-### System Commands
+### `store` - Store Values
 
-#### `init`
-Initialize a new open-tasks project.
+Store a value and create a reference for use in other commands.
 
 ```bash
-open-tasks init
-open-tasks init --force  # Reinitialize existing project
+open-tasks store <value> [--token <name>]
 ```
 
-#### `create`
-Create a new custom command template.
-
+**Examples:**
 ```bash
-open-tasks create my-command
-open-tasks create my-command --typescript
-open-tasks create my-command --description "My custom command"
-```
-
-### Data Commands
-
-#### `store`
-Store a value and create a reference.
-
-```bash
+# Store a simple string
 open-tasks store "Hello World"
-open-tasks store "Hello World" --token greeting
+
+# Store with a named token
+open-tasks store "API response data" --token api-result
+
+# Store multi-line content
+open-tasks store "Line 1
+Line 2
+Line 3" --token multiline
 ```
 
-#### `load`
-Load content from a file.
+**Output:**
+- Creates a timestamped file in `.open-tasks/outputs/`
+- Returns a reference handle with UUID and optional token
+- File format: `YYYYMMDDTHHMMSS-<token>.txt`
+
+---
+
+### `load` - Load Files
+
+Load content from a file and create a reference.
 
 ```bash
-open-tasks load ./file.txt
-open-tasks load ./file.txt --token myfile
+open-tasks load <filepath> [--token <name>]
 ```
 
-#### `replace`
+**Examples:**
+```bash
+# Load a text file
+open-tasks load ./data.txt
+
+# Load with token for later reference
+open-tasks load ./template.html --token template
+
+# Load JSON file
+open-tasks load ./config.json --token config
+```
+
+---
+
+### `replace` - Template Substitution
+
 Replace tokens in a template string with referenced values.
 
 ```bash
-# First create some references
-open-tasks store "John" --token name
-open-tasks store "Hello" --token greeting
-
-# Then use them in a template (note: refs must be from same session)
-# For cross-session use, directly reference the file content
+open-tasks replace <template> --ref <token1> [--ref <token2> ...]
 ```
 
-Note: References are session-specific. To use values across commands, load them from the output files.
-
-#### `extract`
-Extract text using regex patterns.
-
+**Examples:**
 ```bash
-# Load a file first
-open-tasks load data.txt --token data
+# Simple replacement
+open-tasks store "World" --token name
+open-tasks replace "Hello {{name}}!" --ref name
 
-# Then extract from it
-open-tasks extract "\\d+" --ref data
-open-tasks extract "\\w+@\\w+\\.\\w+" --ref data --all
+# Multiple replacements
+open-tasks store "John" --token first
+open-tasks store "Doe" --token last
+open-tasks replace "Name: {{first}} {{last}}" --ref first --ref last
 ```
 
-#### `powershell`
-Execute PowerShell scripts.
+**Token Format:**
+- Use `{{token}}` in templates
+- Tokens are case-sensitive
+- Unreplaced tokens remain as-is (with warning)
+
+---
+
+### `extract` - Regex Extraction
+
+Extract text from content using regular expressions.
 
 ```bash
+open-tasks extract <pattern> --ref <input> [--all] [--token <name>]
+```
+
+**Examples:**
+```bash
+# Extract first number
+open-tasks store "Price: $42.99" --token price
+open-tasks extract "\$([0-9.]+)" --ref price
+
+# Extract all emails
+open-tasks load ./contacts.txt --token contacts
+open-tasks extract "[a-z]+@[a-z.]+" --ref contacts --all
+
+# Extract with capture groups
+open-tasks store "Name: John Doe" --token name
+open-tasks extract "Name: ([A-Z][a-z]+) ([A-Z][a-z]+)" --ref name
+```
+
+**Flags:**
+- `--all`: Extract all matches (newline-separated)
+- Without `--all`: Extract first match only
+- Capture groups: Returns captured groups, not full match
+
+---
+
+### `powershell` - Execute PowerShell
+
+Execute PowerShell scripts and capture output.
+
+```bash
+open-tasks powershell <script> [--ref <token1> ...] [--token <name>]
+```
+
+**Examples:**
+```bash
+# Simple command
 open-tasks powershell "Get-Date"
-open-tasks powershell "Get-Content myfile.txt"
+
+# With reference substitution
+open-tasks store "C:\Users" --token path
+open-tasks powershell "Get-ChildItem {{path}}" --ref path
+
+# Capture output for later use
+open-tasks powershell "Get-Process | Select-Object -First 5" --token processes
 ```
 
-#### `ai-cli`
-Execute an AI CLI tool with context files.
+---
 
-First, create `.open-tasks/ai-config.json`:
+### `ai-cli` - AI CLI Integration
 
+Execute AI CLI commands with context from references.
+
+```bash
+open-tasks ai-cli <prompt> [--ref <context1> ...] [--token <name>]
+```
+
+**Configuration:** Create `.open-tasks/ai-config.json`:
 ```json
 {
-  "command": "copilot",
-  "args": ["chat"],
-  "timeout": 60000
+  "command": "gh copilot suggest",
+  "contextFlag": "-t",
+  "timeout": 30000
 }
 ```
 
-Then use it:
-
+**Examples:**
 ```bash
-open-tasks ai-cli "Summarize this document" --ref document
+# Simple AI query
+open-tasks ai-cli "How do I list files in PowerShell?"
+
+# With context files
+open-tasks load ./code.ts --token code
+open-tasks ai-cli "Explain this code" --ref code
 ```
 
-## Output Files
+---
 
-All command outputs are automatically saved to `.open-tasks/outputs/` with timestamped filenames:
+### `init` - Initialize Project
 
-Format: `YYYYMMDDTHHmmss-SSS-{token|uuid}.txt`
+Create `.open-tasks` directory structure and configuration.
 
-Examples:
-- `20251018T033130-946-name.txt`
-- `20251018T033131-054-greeting.txt`
+```bash
+open-tasks init
+```
+
+**Creates:**
+- `.open-tasks/` directory
+- `.open-tasks/config.json` with defaults
+- `.open-tasks/commands/` for custom commands
+- `.open-tasks/outputs/` for command outputs
+
+---
+
+### `create` - Scaffold Custom Command
+
+Create a new custom command template.
+
+```bash
+open-tasks create <command-name>
+```
+
+**Example:**
+```bash
+open-tasks create validate-email
+# Creates: .open-tasks/commands/validate-email.ts
+```
+
+## Configuration
+
+### Project Configuration
+
+Create `.open-tasks/config.json`:
+
+```json
+{
+  "outputDir": ".open-tasks/outputs",
+  "customCommandsDir": ".open-tasks/commands"
+}
+```
+
+### User Configuration
+
+Create `~/.open-tasks/config.json` for global defaults:
+
+```json
+{
+  "outputDir": ".open-tasks/outputs",
+  "defaultVerbosity": "normal"
+}
+```
+
+**Configuration Precedence:**
+1. Project config (`.open-tasks/config.json`)
+2. User config (`~/.open-tasks/config.json`)
+3. Built-in defaults
 
 ## Custom Commands
 
-Create custom commands in `.open-tasks/commands/`:
+Extend the CLI by creating custom commands in `.open-tasks/commands/`.
 
-```javascript
-// .open-tasks/commands/my-command.js
-export default class MyCommand {
-  name = 'my-command';
-  description = 'My custom command';
+### Basic Example
+
+Create `.open-tasks/commands/greet.ts`:
+
+```typescript
+import { CommandHandler, ExecutionContext, ReferenceHandle } from 'open-tasks-cli';
+
+export default class GreetCommand extends CommandHandler {
+  name = 'greet';
+  description = 'Greet someone by name';
   examples = [
-    'open-tasks my-command',
-    'open-tasks my-command arg1 --token result',
+    'open-tasks greet --ref name',
   ];
 
-  async execute(args, refs, context) {
-    // Access arguments
-    const arg = args[0];
-    
-    // Access references
-    const refValue = refs.get('sometoken')?.content;
-    
-    // Use workflow context
-    const result = await context.workflowContext.store(
-      'My result',
-      []
-    );
-    
-    // Return a reference
+  async execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    const nameRef = Array.from(refs.values())[0];
+    const name = nameRef ? nameRef.content : 'World';
+    const greeting = `Hello, ${name}!`;
+
+    // Store result using workflow context
+    const memoryRef = await context.workflowContext.store(greeting, []);
+
+    // Create reference handle
     return context.referenceManager.createReference(
-      result.id,
-      'My result',
-      'myresult'
+      memoryRef.id,
+      greeting,
+      undefined,
+      memoryRef.fileName
     );
   }
 }
 ```
 
-## Configuration
+**Usage:**
+```bash
+open-tasks store "Alice" --token name
+open-tasks greet --ref name
+# Output: Hello, Alice!
+```
 
-Configuration file: `.open-tasks/config.json`
+## Workflow Examples
 
-```json
-{
-  "outputDir": ".open-tasks/outputs",
-  "customCommandsDir": ".open-tasks/commands",
-  "timestampFormat": "YYYYMMDD-HHmmss-SSS",
-  "defaultFileExtension": "txt",
-  "colors": true
+### Example 1: Process API Response
+
+```bash
+# Fetch API data
+open-tasks powershell "Invoke-RestMethod 'https://api.example.com/data'" --token api-data
+
+# Extract specific field
+open-tasks extract '"email":"([^"]+)"' --ref api-data --token email
+
+# Use in template
+open-tasks replace "Contact email: {{email}}" --ref email
+```
+
+### Example 2: Code Analysis
+
+```bash
+# Load source code
+open-tasks load ./app.ts --token source
+
+# Ask AI for review
+open-tasks ai-cli "Review this code for security issues" --ref source --token review
+```
+
+### Example 3: Data Transformation Pipeline
+
+```bash
+# Load raw data
+open-tasks load ./data.csv --token raw
+
+# Extract specific columns
+open-tasks extract "^([^,]+)," --ref raw --all --token names
+
+# Generate report template
+open-tasks replace "Names found:\n{{names}}" --ref names --token report
+```
+
+### Example 4: Multi-file Processing
+
+```bash
+# Load multiple files
+open-tasks load ./file1.txt --token f1
+open-tasks load ./file2.txt --token f2
+open-tasks load ./file3.txt --token f3
+
+# Combine with template
+open-tasks replace "File 1: {{f1}}\nFile 2: {{f2}}\nFile 3: {{f3}}" \
+  --ref f1 --ref f2 --ref f3 --token combined
+```
+
+## Reference Management
+
+### Reference Types
+
+1. **UUID References**: Automatically generated unique identifiers
+2. **Token References**: User-defined named references
+
+### Reference Lifetime
+
+- References exist in memory during CLI execution
+- Output files persist in `.open-tasks/outputs/`
+- References are NOT preserved across CLI invocations
+- Use files for persistent storage between runs
+
+### File Naming Convention
+
+```
+YYYYMMDDTHHMMSS-<token|uuid>.txt
+```
+
+Examples:
+- `20251018T143052-greeting.txt`
+- `20251018T143053-a4f7e2d1.txt`
+
+## Troubleshooting
+
+### Command Not Found
+
+```bash
+# Verify installation
+npm list -g open-tasks-cli
+
+# Re-link if needed
+npm link
+```
+
+### Custom Commands Not Loading
+
+```bash
+# Check directory structure
+ls .open-tasks/commands/
+
+# Verify file is exported as default
+# ✓ export default class MyCommand extends CommandHandler
+# ✗ export class MyCommand extends CommandHandler
+```
+
+### Reference Not Found
+
+References are ephemeral - they only exist during the current CLI session. To persist data:
+
+```bash
+# Store to file first
+open-tasks store "data" --token mydata
+
+# Later: load from file
+open-tasks load .open-tasks/outputs/YYYYMMDDTHHMMSS-mydata.txt --token mydata
+```
+
+### AI CLI Configuration Missing
+
+```bash
+# Create configuration
+echo '{"command":"gh copilot suggest","contextFlag":"-t","timeout":30000}' > .open-tasks/ai-config.json
+
+# Verify
+open-tasks ai-cli "test prompt"
+```
+
+## Development
+
+### Building from Source
+
+```bash
+npm install
+npm run build
+```
+
+### Running Tests
+
+```bash
+npm test              # Watch mode
+npm run test:coverage # With coverage
+```
+
+### Linting and Formatting
+
+```bash
+npm run lint
+npm run format
+```
+
+## API Documentation
+
+### CommandHandler Interface
+
+```typescript
+abstract class CommandHandler {
+  abstract name: string;
+  abstract description: string;
+  abstract examples: string[];
+  
+  abstract execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle>;
 }
 ```
 
-## Workflow Context API
-
-The workflow context provides an internal API for command implementations:
+### ExecutionContext
 
 ```typescript
-// Store a value
-const ref = await context.workflowContext.store(value, decorators);
-
-// Load from file
-const ref = await context.workflowContext.load(filePath, token);
-
-// Get value by token (synchronous)
-const value = context.workflowContext.token('mytoken');
-
-// Execute a command
-const refs = await context.workflowContext.run(commandInstance);
+interface ExecutionContext {
+  cwd: string;
+  outputDir: string;
+  referenceManager: ReferenceManager;
+  outputHandler: OutputHandler;
+  workflowContext: DirectoryOutputContext;
+  config: Record<string, any>;
+}
 ```
 
-## Architecture
+### ReferenceHandle
 
-### Three-Layer Design
-
-1. **Workflow Processing Layer**: Internal API for context-based operations
-   - `IWorkflowContext` interface
-   - `MemoryRef` type for tracking stored values
-   - `ICommand` interface for composable operations
-
-2. **CLI Commands Layer**: User-facing commands
-   - System commands: `init`, `create`
-   - Built-in commands: `store`, `load`, `replace`, etc.
-   - Custom commands: User-defined in `.open-tasks/commands/`
-
-3. **Command Handler Layer**: Base classes and execution engine
-   - `CommandHandler` abstract class
-   - Command routing and discovery
-   - Output formatting and error handling
+```typescript
+interface ReferenceHandle {
+  id: string;
+  token?: string;
+  content: any;
+  timestamp: Date;
+  outputFile?: string;
+}
+```
 
 ## Requirements
 
@@ -253,26 +533,38 @@ const refs = await context.workflowContext.run(commandInstance);
 - PowerShell (for `powershell` command)
 - AI CLI tool (for `ai-cli` command, e.g., GitHub Copilot CLI)
 
-## Development
+## Contributing
 
-### Build
+Contributions are welcome! Please:
 
-```bash
-npm run build
-```
-
-### Test
-
-```bash
-npm test
-```
-
-### Lint
-
-```bash
-npm run lint
-```
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
 
 ## License
 
-MIT
+MIT License - see LICENSE file for details
+
+## Support
+
+- **Issues**: Report bugs and request features on GitHub Issues
+- **Documentation**: Full documentation in `/docs` directory
+
+## Roadmap
+
+- [ ] Shell integration (bash, zsh completion)
+- [ ] Plugin system for third-party extensions
+- [ ] Web UI for workflow visualization
+- [ ] Docker integration commands
+- [ ] Git workflow commands
+
+## Acknowledgments
+
+Built with:
+- [Commander.js](https://github.com/tj/commander.js/) - CLI framework
+- [Chalk](https://github.com/chalk/chalk) - Terminal colors
+- [Ora](https://github.com/sindresorhus/ora) - Progress indicators
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+- [Vitest](https://vitest.dev/) - Testing framework

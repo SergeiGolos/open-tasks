@@ -7,7 +7,7 @@
 
 ### Phase 1: Project Setup and Core Infrastructure
 
-- [ ] **Task 1.1: Initialize npm project**
+- [x] **Task 1.1: Initialize npm project**
   - Create package.json with TypeScript configuration
   - Add dependencies: commander, chalk, fs-extra, ora, uuid
   - Add dev dependencies: typescript, tsup, vitest, @types/*
@@ -15,14 +15,14 @@
   - Set up ESLint and Prettier for code quality
   - **Validation:** `npm install` succeeds, `npm run build` creates dist/
 
-- [ ] **Task 1.2: Configure TypeScript**
+- [x] **Task 1.2: Configure TypeScript**
   - Create tsconfig.json with strict mode
   - Configure module resolution for ES modules
   - Set up path aliases if needed
   - Configure type checking for tests
   - **Validation:** `tsc --noEmit` passes with no errors
 
-- [ ] **Task 1.3: Create CLI entry point**
+- [x] **Task 1.3: Create CLI entry point**
   - Implement `src/index.ts` with shebang for CLI execution
   - Set up commander.js program
   - Configure version and description
@@ -30,7 +30,7 @@
   - **Validation:** `node dist/index.js --version` displays version
   - **Dependency:** Task 1.1, 1.2
 
-- [ ] **Task 1.4: Set up build and packaging**
+- [x] **Task 1.4: Set up build and packaging**
   - Configure tsup for bundling
   - Create bin entry in package.json
   - Set up prepublish scripts
@@ -40,13 +40,13 @@
 
 ### Phase 2: Reference Management and Output Handling
 
-- [ ] **Task 2.1: Implement ReferenceHandle interface**
+- [x] **Task 2.1: Implement ReferenceHandle interface**
   - Create `src/types.ts` with ReferenceHandle and ExecutionContext
   - Define interfaces for all data structures
   - Add type exports for external use
   - **Validation:** Types compile without errors
 
-- [ ] **Task 2.2: Implement ReferenceManager class**
+- [x] **Task 2.2: Implement ReferenceManager class**
   - Create `src/reference-manager.ts`
   - Implement UUID generation
   - Implement in-memory Map storage
@@ -55,7 +55,7 @@
   - **Validation:** Unit tests pass for reference CRUD operations
   - **Dependency:** Task 2.1
 
-- [ ] **Task 2.3: Implement OutputHandler class**
+- [x] **Task 2.3: Implement OutputHandler class**
   - Create `src/output-handler.ts`
   - Implement file naming with timestamp and token/UUID
   - Implement directory creation (mkdir -p)
@@ -64,7 +64,7 @@
   - **Validation:** Unit tests write files with correct naming
   - **Dependency:** Task 2.1
 
-- [ ] **Task 2.4: Implement terminal formatting**
+- [x] **Task 2.4: Implement terminal formatting**
   - Create `src/formatters.ts`
   - Implement color scheme using chalk
   - Add functions: formatSuccess, formatError, formatInfo, formatReference
@@ -72,7 +72,7 @@
   - **Validation:** Visual test shows correct colors in terminal
   - **Dependency:** None
 
-- [ ] **Task 2.5: Implement progress indicators**
+- [x] **Task 2.5: Implement progress indicators**
   - Add spinner support using ora
   - Create wrapper for long-running operations
   - Implement progress display with percentage
@@ -82,7 +82,7 @@
 
 ### Phase 3: Command Infrastructure
 
-- [ ] **Task 3.1: Implement CommandHandler base class**
+- [x] **Task 3.1: Implement CommandHandler base class**
   - Create `src/command-handler.ts`
   - Define abstract execute method
   - Add static properties for metadata (description, examples)
@@ -90,7 +90,7 @@
   - **Validation:** Class exports correctly and compiles
   - **Dependency:** Task 2.1
 
-- [ ] **Task 3.2: Implement CommandRouter**
+- [x] **Task 3.2: Implement CommandRouter**
   - Create `src/router.ts`
   - Implement command registration
   - Add command lookup by name
@@ -99,14 +99,14 @@
   - **Validation:** Unit tests route commands correctly
   - **Dependency:** Task 3.1
 
-- [ ] **Task 3.3: Implement CommandLoader for built-ins**
+- [x] **Task 3.3: Implement CommandLoader for built-ins**
   - Create `src/command-loader.ts`
   - Load commands from `src/commands/` directory
   - Register built-in commands with router
   - **Validation:** All built-in commands are registered
   - **Dependency:** Task 3.2
 
-- [ ] **Task 3.4: Implement custom command discovery**
+- [x] **Task 3.4: Implement custom command discovery**
   - Extend CommandLoader to scan `.open-tasks/commands/`
   - Support .js and .ts files
   - Implement dynamic import for command modules
@@ -114,7 +114,7 @@
   - **Validation:** Custom command in test directory is discovered
   - **Dependency:** Task 3.3
 
-- [ ] **Task 3.5: Implement execution context**
+- [x] **Task 3.5: Implement execution context**
   - Create ExecutionContext factory
   - Pass context to all command handlers
   - Include: cwd, outputDir, referenceManager, config, outputHandler
@@ -123,7 +123,7 @@
 
 ### Phase 4: Built-in Commands
 
-- [ ] **Task 4.1: Implement store command**
+- [x] **Task 4.1: Implement store command**
   - Create `src/commands/store.ts`
   - Accept value as positional argument
   - Support --token flag
@@ -132,7 +132,7 @@
   - **Validation:** `open-tasks store "test" --token t1` creates file and reference
   - **Dependency:** Task 3.1, 2.2, 2.3
 
-- [ ] **Task 4.2: Implement load command**
+- [x] **Task 4.2: Implement load command**
   - Create `src/commands/load.ts`
   - Accept filepath as positional argument
   - Read file content (text and binary)
@@ -141,7 +141,7 @@
   - **Validation:** `open-tasks load ./file.txt` loads file content
   - **Dependency:** Task 3.1, 2.2, 2.3
 
-- [ ] **Task 4.3: Implement replace command**
+- [x] **Task 4.3: Implement replace command**
   - Create `src/commands/replace.ts`
   - Accept template string as first argument
   - Support multiple --ref flags
@@ -151,7 +151,7 @@
   - **Validation:** `open-tasks replace "{{t1}} World" --ref t1` performs substitution
   - **Dependency:** Task 3.1, 2.2, 2.3, 4.1
 
-- [ ] **Task 4.4: Implement powershell command**
+- [x] **Task 4.4: Implement powershell command**
   - Create `src/commands/powershell.ts`
   - Accept PowerShell script as first argument
   - Support --ref flags for script substitution
@@ -161,7 +161,7 @@
   - **Validation:** `open-tasks powershell "Get-Date"` executes and captures output
   - **Dependency:** Task 3.1, 2.2, 2.3, 4.3
 
-- [ ] **Task 4.5: Implement ai-cli command**
+- [x] **Task 4.5: Implement ai-cli command**
   - Create `src/commands/ai-cli.ts`
   - Load configuration from `.open-tasks/ai-config.json`
   - Accept prompt as first argument
@@ -172,7 +172,7 @@
   - **Validation:** With config file, `open-tasks ai-cli "test"` executes AI CLI
   - **Dependency:** Task 3.1, 2.2, 2.3, 4.4
 
-- [ ] **Task 4.6: Implement extract command**
+- [x] **Task 4.6: Implement extract command**
   - Create `src/commands/extract.ts`
   - Accept regex pattern as first argument
   - Require --ref flag for input
@@ -184,7 +184,7 @@
 
 ### Phase 5: CLI Integration and Error Handling
 
-- [ ] **Task 5.1: Integrate commands with CLI**
+- [x] **Task 5.1: Integrate commands with CLI**
   - Update `src/index.ts` to register all commands
   - Implement command invocation flow
   - Parse common flags: --token, --ref, --help
@@ -192,7 +192,7 @@
   - **Validation:** All commands are accessible via CLI
   - **Dependency:** Task 3.5, Phase 4 complete
 
-- [ ] **Task 5.2: Implement global error handling**
+- [x] **Task 5.2: Implement global error handling**
   - Wrap command execution in try-catch
   - Format errors consistently
   - Write error files with full context
@@ -201,7 +201,7 @@
   - **Validation:** Forced error creates .error file and displays message
   - **Dependency:** Task 2.3, 2.4
 
-- [ ] **Task 5.3: Implement help system**
+- [x] **Task 5.3: Implement help system**
   - Generate help text from command metadata
   - Display command list in --help
   - Display command-specific help for each command
@@ -209,7 +209,7 @@
   - **Validation:** `open-tasks --help` and `open-tasks store --help` display correct info
   - **Dependency:** Task 5.1
 
-- [ ] **Task 5.4: Implement configuration loading**
+- [x] **Task 5.4: Implement configuration loading**
   - Create `src/config-loader.ts`
   - Load from `.open-tasks/config.json` (project)
   - Load from `~/.open-tasks/config.json` (user)
@@ -220,7 +220,7 @@
 
 ### Phase 6: Testing
 
-- [ ] **Task 6.1: Write unit tests for core classes**
+- [x] **Task 6.1: Write unit tests for core classes**
   - Test ReferenceManager (create, get, collision)
   - Test OutputHandler (file creation, naming)
   - Test CommandRouter (routing, unknown commands)
@@ -228,7 +228,7 @@
   - **Validation:** `npm test` passes all unit tests
   - **Dependency:** Phase 2, 3 complete
 
-- [ ] **Task 6.2: Write integration tests for built-in commands**
+- [x] **Task 6.2: Write integration tests for built-in commands**
   - Test each command with various arguments
   - Test reference passing between commands
   - Test error conditions

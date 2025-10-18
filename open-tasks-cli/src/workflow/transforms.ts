@@ -1,5 +1,5 @@
 import { ICommand, IWorkflowContext, MemoryRef, TransformMetadata } from './types.js';
-import { TokenDecorator } from './decorators.js';
+import { TokenDecorator, MetadataDecorator } from './decorators.js';
 
 /**
  * Base class for transform commands that automatically track metadata
@@ -29,18 +29,22 @@ abstract class BaseTransformCommand implements ICommand {
   protected async storeWithMetadata(
     context: IWorkflowContext,
     content: any,
-    outputToken?: string
+    outputToken?: string,
+    additionalParams?: Record<string, any>
   ): Promise<MemoryRef> {
-    const decorators = outputToken ? [new TokenDecorator(outputToken)] : [];
-    const ref = await context.store(content, decorators);
-
-    // Add metadata to the reference
     const metadata = this.createMetadata();
-    if (!ref.metadata) {
-      ref.metadata = [];
+    
+    // Merge additional params if provided
+    if (additionalParams) {
+      metadata.params = { ...metadata.params, ...additionalParams };
     }
-    ref.metadata.push(metadata);
 
+    const decorators = [
+      new MetadataDecorator(metadata),
+      ...(outputToken ? [new TokenDecorator(outputToken)] : []),
+    ];
+    
+    const ref = await context.store(content, decorators);
     return ref;
   }
 }
@@ -102,16 +106,12 @@ export class TokenReplaceCommand extends BaseTransformCommand {
     }
 
     // Store result with metadata
-    const ref = await this.storeWithMetadata(context, result, this.outputToken);
-    
-    // Add used tokens to metadata
-    if (ref.metadata && ref.metadata.length > 0) {
-      const lastMetadata = ref.metadata[ref.metadata.length - 1];
-      lastMetadata.params = {
-        ...lastMetadata.params,
-        replacedTokens: usedTokens,
-      };
-    }
+    const ref = await this.storeWithMetadata(
+      context,
+      result,
+      this.outputToken,
+      { replacedTokens: usedTokens }
+    );
 
     return [ref];
   }
@@ -226,16 +226,12 @@ export class RegexMatchCommand extends BaseTransformCommand {
       return `${idx + 1}. ${match[0]}${groups.length > 0 ? ` (groups: ${groups.join(', ')})` : ''}`;
     }).join('\n');
     
-    const ref = await this.storeWithMetadata(context, result, this.outputToken);
-    
-    // Add match count to metadata
-    if (ref.metadata && ref.metadata.length > 0) {
-      const lastMetadata = ref.metadata[ref.metadata.length - 1];
-      lastMetadata.params = {
-        ...lastMetadata.params,
-        matchCount: matches.length,
-      };
-    }
+    const ref = await this.storeWithMetadata(
+      context,
+      result,
+      this.outputToken,
+      { matchCount: matches.length }
+    );
 
     return [ref];
   }
@@ -290,17 +286,12 @@ export class SplitCommand extends BaseTransformCommand {
         ? `${this.outputTokenPrefix}-${i + 1}`
         : undefined;
       
-      const ref = await this.storeWithMetadata(context, parts[i], token);
-      
-      // Add part index to metadata
-      if (ref.metadata && ref.metadata.length > 0) {
-        const lastMetadata = ref.metadata[ref.metadata.length - 1];
-        lastMetadata.params = {
-          ...lastMetadata.params,
-          partIndex: i + 1,
-          totalParts: parts.length,
-        };
-      }
+      const ref = await this.storeWithMetadata(
+        context,
+        parts[i],
+        token,
+        { partIndex: i + 1, totalParts: parts.length }
+      );
       
       refs.push(ref);
     }
@@ -352,16 +343,12 @@ export class JoinCommand extends BaseTransformCommand {
     }
 
     const result = values.join(this.delimiter);
-    const ref = await this.storeWithMetadata(context, result, this.outputToken);
-    
-    // Add token count to metadata
-    if (ref.metadata && ref.metadata.length > 0) {
-      const lastMetadata = ref.metadata[ref.metadata.length - 1];
-      lastMetadata.params = {
-        ...lastMetadata.params,
-        tokenCount: this.inputTokens.length,
-      };
-    }
+    const ref = await this.storeWithMetadata(
+      context,
+      result,
+      this.outputToken,
+      { tokenCount: this.inputTokens.length }
+    );
 
     return [ref];
   }

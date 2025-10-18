@@ -1,4 +1,4 @@
-import { IMemoryDecorator, MemoryRef } from './types.js';
+import { IMemoryDecorator, MemoryRef, TransformMetadata } from './types.js';
 
 /**
  * Decorator that adds a user-friendly token to a MemoryRef
@@ -46,6 +46,21 @@ export class TimestampedFileNameDecorator implements IMemoryDecorator {
     return {
       ...ref,
       fileName,
+    };
+  }
+}
+
+/**
+ * Decorator that adds transform metadata to a MemoryRef
+ */
+export class MetadataDecorator implements IMemoryDecorator {
+  constructor(private metadata: TransformMetadata) {}
+
+  decorate(ref: MemoryRef): MemoryRef {
+    const existingMetadata = ref.metadata || [];
+    return {
+      ...ref,
+      metadata: [...existingMetadata, this.metadata],
     };
   }
 }
