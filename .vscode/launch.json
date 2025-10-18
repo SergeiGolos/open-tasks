@@ -1,0 +1,179 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug CLI",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+      "args": ["store", "test data", "--token", "debug"],
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Debug Init Command",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+      "args": ["init"],
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/test-workspace"
+    },
+    {
+      "name": "Debug Create Command",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+      "args": ["create", "my-custom-command"],
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/test-workspace"
+    },
+    {
+      "name": "Debug Store Command with Reference",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+      "args": ["store", "Hello World", "--token", "greeting"],
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/test-workspace"
+    },
+    {
+      "name": "Debug Load Command with Reference",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+      "args": ["load", "--ref", "greeting"],
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/test-workspace"
+    },
+    {
+      "name": "Debug Replace Command",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+      "args": ["replace", "template: {value}", "--value", "replaced", "--token", "result"],
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/test-workspace"
+    },
+    {
+      "name": "Debug Custom Command",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+      "args": ["my-custom-command", "--input", "test value"],
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/test-workspace"
+    },
+    {
+      "name": "Debug Workflow Context",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+      "args": ["store", "{\"key\": \"value\"}", "--token", "workflow-test"],
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules",
+        "DEBUG_WORKFLOW": "true"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/test-workspace"
+    },
+    {
+      "name": "Debug Error Handling",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+      "args": ["store", "", "--invalid-flag"],
+      "runtimeArgs": ["--loader", "ts-node/esm"],
+      "env": {
+        "NODE_OPTIONS": "--experimental-vm-modules"
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/test-workspace"
+    },
+    {
+      "name": "Debug Tests - Workflow",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/node_modules/vitest/vitest.mjs",
+      "args": ["run", "workflow.test.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "cwd": "${workspaceFolder}/open-tasks-cli"
+    },
+    {
+      "name": "Debug Tests - Router",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/node_modules/vitest/vitest.mjs",
+      "args": ["run", "router.test.ts"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "cwd": "${workspaceFolder}/open-tasks-cli"
+    },
+    {
+      "name": "Debug Tests - All",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/open-tasks-cli/node_modules/vitest/vitest.mjs",
+      "args": ["run"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "cwd": "${workspaceFolder}/open-tasks-cli"
+    },
+    {
+      "name": "Attach to Running Process",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true,
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

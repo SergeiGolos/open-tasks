@@ -1,0 +1,63 @@
+{
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "debug.node.autoAttach": "on",
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.git/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.git": true
+  },
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "eslint.workingDirectories": ["open-tasks-cli"],
+  "prettier.configPath": "open-tasks-cli/.prettierrc",
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "emmet.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascriptreact"
+  },
+  "terminal.integrated.env.windows": {
+    "NODE_OPTIONS": "--experimental-vm-modules"
+  },
+  "terminal.integrated.env.linux": {
+    "NODE_OPTIONS": "--experimental-vm-modules"
+  },
+  "terminal.integrated.env.osx": {
+    "NODE_OPTIONS": "--experimental-vm-modules"
+  },
+  "launch": {
+    "configurations": [
+      {
+        "name": "Debug CLI",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/open-tasks-cli/src/index.ts",
+        "args": ["store", "test data", "--token", "debug"],
+        "runtimeArgs": ["--loader", "ts-node/esm"],
+        "env": {
+          "NODE_OPTIONS": "--experimental-vm-modules"
+        },
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen",
+        "skipFiles": ["<node_internals>/**"],
+        "cwd": "${workspaceFolder}"
+      }
+    ]
+  }
+}
