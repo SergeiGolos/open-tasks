@@ -4,3 +4,4 @@ open-tasks-cli/dist/
 open-tasks-cli/coverage/
 open-tasks-cli/pnpm-lock.yaml
 package-lock.json
+test-workspace/

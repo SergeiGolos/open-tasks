@@ -4,6 +4,20 @@
  */
 
 /**
+ * Metadata about a transform or operation applied to content
+ */
+export interface TransformMetadata {
+  /** Type of transform (e.g., 'TokenReplace', 'Extract', 'RegexMatch') */
+  type: string;
+  /** Input token(s) used */
+  inputs?: string[];
+  /** Parameters passed to the transform */
+  params?: Record<string, any>;
+  /** Timestamp when transform was applied */
+  timestamp: Date;
+}
+
+/**
  * Reference to a stored memory value with metadata
  */
 export interface MemoryRef {
@@ -17,6 +31,8 @@ export interface MemoryRef {
   content: any;
   /** Creation timestamp */
   timestamp: Date;
+  /** Metadata about transforms applied to this content */
+  metadata?: TransformMetadata[];
 }
 
 /**

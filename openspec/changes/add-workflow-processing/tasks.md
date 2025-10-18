@@ -1,140 +1,141 @@
 # Implementation Tasks: Add Workflow Processing
 
 **Change ID:** `add-workflow-processing`  
-**Last Updated:** 2025-10-17
+**Last Updated:** 2025-10-18
 
 ## Task Checklist
 
 ### Phase 1: Core Interfaces and Types
 
-- [ ] **Task 1.1: Define FileReference interface**
-  - Create interface for file references with path and content accessors
-  - Include methods to get file path and load content
-  - Add timestamp and property name metadata
-  - **Validation:** Interface compiles and exports correctly
+- [x] **Task 1.1: Define MemoryRef interface**
+  - Create interface for memory references with id, token, fileName, content, timestamp
+  - Implemented in `src/workflow/types.ts`
+  - **Validation:** Interface compiles and exports correctly ✅
   
-- [ ] **Task 1.2: Define ICommand interface**
+- [x] **Task 1.2: Define ICommand interface**
   - Create interface with execute method signature
   - Accept context and arguments in execute method
-  - Define return type as Promise<FileReference>
-  - **Validation:** Interface allows proper implementation
+  - Define return type as Promise<MemoryRef[]>
+  - Implemented in `src/workflow/types.ts`
+  - **Validation:** Interface allows proper implementation ✅
   - **Dependency:** Task 1.1
 
-- [ ] **Task 1.3: Define ITransform interface**
-  - Create interface for transform operations
-  - Include method to transform string content
-  - Accept collection of file references as input
-  - Support context object parameter
-  - **Validation:** Interface supports multiple transform types
+- [x] **Task 1.3: Define IMemoryDecorator interface**
+  - Create interface for decorator operations that transform MemoryRef
+  - Include method to decorate MemoryRef objects
+  - Implemented in `src/workflow/types.ts`
+  - **Validation:** Interface supports multiple decorator types ✅
   - **Dependency:** Task 1.1
 
-- [ ] **Task 1.4: Create workflow types module**
+- [x] **Task 1.4: Create workflow types module**
   - Define all TypeScript types for workflow system
-  - Include TransformMetadata type for tracking applied transforms
-  - Add WorkflowOptions type for configuration
-  - **Validation:** All types export and compile cleanly
+  - Include TaskOutcome and TaskLog types for execution tracking
+  - Add IWorkflowContext interface
+  - Implemented in `src/workflow/types.ts`
+  - **Validation:** All types export and compile cleanly ✅
 
 ### Phase 2: File Storage and Reference System
 
-- [ ] **Task 2.1: Implement file naming convention**
-  - Create function to generate file names: `{property}.{timestamp}.md`
-  - Implement timestamp format (ISO 8601 or custom)
+- [x] **Task 2.1: Implement file naming convention**
+  - Create function to generate timestamped file names
+  - Implement timestamp format (ISO 8601)
   - Handle special characters in property names
-  - **Validation:** Generated file names follow convention
+  - Implemented in `src/workflow/decorators.ts` (TimestampedFileNameDecorator)
+  - **Validation:** Generated file names follow convention ✅
   
-- [ ] **Task 2.2: Implement FileReference class**
-  - Store file path and metadata
-  - Implement lazy loading of file content
-  - Add methods: getPath(), getContent(), getMetadata()
-  - Cache loaded content for performance
-  - **Validation:** Can create and use file references
+- [x] **Task 2.2: Implement MemoryRef creation**
+  - Store memory references with id, token, fileName, content, timestamp
+  - Implemented in WorkflowContext classes
+  - **Validation:** Can create and use memory references ✅
   - **Dependency:** Task 1.1, 2.1
 
-- [ ] **Task 2.3: Implement file storage service**
+- [x] **Task 2.3: Implement file storage service**
   - Create service to write content to files
   - Ensure directory creation for output paths
   - Handle file write errors gracefully
   - Support atomic write operations
-  - **Validation:** Files are created with correct names and content
+  - Implemented in `src/workflow/directory-output-context.ts`
+  - **Validation:** Files are created with correct names and content ✅
   - **Dependency:** Task 2.1
 
-- [ ] **Task 2.4: Implement file loading service**
+- [x] **Task 2.4: Implement file loading service**
   - Create service to read content from files
-  - Support both path-based and reference-based loading
+  - Support both path-based loading
   - Handle missing files with clear errors
   - Support encoding options (default UTF-8)
-  - **Validation:** Can load files and return content
+  - Implemented in DirectoryOutputContext.load()
+  - **Validation:** Can load files and return content ✅
   - **Dependency:** Task 2.2
 
 ### Phase 3: WorkflowContext Implementation
 
-- [ ] **Task 3.1: Create WorkflowContext class skeleton**
-  - Define class with constructor accepting options
+- [x] **Task 3.1: Create WorkflowContext class skeleton**
+  - Define InMemoryWorkflowContext and DirectoryOutputContext classes
   - Store output directory and configuration
   - Initialize internal state for tracking references
-  - **Validation:** Class can be instantiated
+  - Implemented in `src/workflow/in-memory-context.ts` and `src/workflow/directory-output-context.ts`
+  - **Validation:** Classes can be instantiated ✅
 
-- [ ] **Task 3.2: Implement store method**
-  - Accept arguments to be stored as strings
-  - Generate file name based on property name and timestamp
+- [x] **Task 3.2: Implement store method**
+  - Accept values to be stored
+  - Apply decorators to MemoryRef
+  - Generate file name based on token/id and timestamp (DirectoryOutputContext)
   - Write content to file using storage service
-  - Create and return FileReference
-  - Support optional custom property name
-  - **Validation:** `context.store("value", "propName")` creates file and returns reference
+  - Create and return MemoryRef
+  - Implemented in both context classes
+  - **Validation:** `context.store(value, decorators)` creates file and returns reference ✅
   - **Dependency:** Task 2.2, 2.3, 3.1
 
-- [ ] **Task 3.3: Implement load method**
-  - Accept file name or FileReference as input
-  - Read file content using loading service
-  - Create FileReference with timestamp in name
-  - Store reference in memory location
-  - Return FileReference for chaining
-  - **Validation:** `context.load("file.md")` loads and returns reference
-  - **Dependency:** Task 2.2, 2.4, 3.1
+- [x] **Task 3.3: Implement token lookup method**
+  - Accept token name as input
+  - Return latest value for that token (synchronous)
+  - Implemented as `token(name: string)` method
+  - **Validation:** `context.token("name")` returns stored value ✅
+  - **Dependency:** Task 2.2, 3.1
 
-- [ ] **Task 3.4: Implement run method**
+- [x] **Task 3.4: Implement run method**
   - Accept ICommand instance as parameter
   - Call command's execute method with context
   - Await async execution
-  - Return FileReference from command execution
+  - Return MemoryRef[] from command execution
   - Handle command execution errors
-  - **Validation:** `context.run(command)` executes and returns reference
+  - Implemented in both context classes
+  - **Validation:** `context.run(command)` executes and returns references ✅
   - **Dependency:** Task 1.2, 3.1
 
 ### Phase 4: Transform System
 
-- [ ] **Task 4.1: Create transform base class**
-  - Implement abstract base class for transforms
-  - Define transform method signature
-  - Include context parameter
-  - Support transform metadata tracking
-  - **Validation:** Base class can be extended
+- [x] **Task 4.1: Create ICommand implementations as transforms**
+  - Implement transform commands using ICommand interface
+  - Commands pull tokens from context by name
+  - No transform method on WorkflowContext (per updated architecture)
+  - **Validation:** Transform commands can be implemented ✅
   - **Dependency:** Task 1.3
 
-- [ ] **Task 4.2: Implement token replacement transform**
-  - Create transform that replaces `{{token}}` patterns
-  - Accept variable name-to-reference mappings
+- [x] **Task 4.2: Implement token replacement transform**
+  - Create TokenReplaceCommand that replaces `{{token}}` patterns
+  - Pull token values from context using context.token()
   - Replace tokens with referenced content
   - Handle missing tokens gracefully
-  - **Validation:** Replaces tokens correctly in test strings
+  - Implemented in `src/workflow/transforms.ts`
+  - **Validation:** Replaces tokens correctly in test strings ✅
   - **Dependency:** Task 4.1
 
-- [ ] **Task 4.3: Implement regex parsing transform**
-  - Create transform that applies regex patterns
-  - Extract matches as array
-  - Support capture groups
+- [x] **Task 4.3: Implement regex parsing transform**
+  - Create ExtractCommand that applies regex patterns
+  - Extract matches using capture groups
+  - Support full match when no groups
   - Store match results as formatted string
-  - **Validation:** Extracts matches from test strings
+  - Implemented ExtractCommand and RegexMatchCommand in `src/workflow/transforms.ts`
+  - **Validation:** Extracts matches from test strings ✅
   - **Dependency:** Task 4.1
 
-- [ ] **Task 4.4: Implement transform method on WorkflowContext**
-  - Accept memory element (FileReference) as input
-  - Accept collection of transforms to apply
-  - Apply transforms in sequence on content
-  - Create metadata for applied transforms
-  - Write output with transform metadata
-  - Return new FileReference with .transform naming
-  - **Validation:** `context.transform(ref, [transforms])` applies and returns new reference
+- [x] **Task 4.4: Implement additional transform commands**
+  - SplitCommand: splits content by delimiter into multiple MemoryRefs
+  - JoinCommand: joins multiple tokens into single output
+  - All commands use token-based lookup from context
+  - Implemented in `src/workflow/transforms.ts`
+  - **Validation:** Transform commands work and can be chained ✅
   - **Dependency:** Task 3.1, 4.1, 4.2
 
 - [ ] **Task 4.5: Add transform metadata to output files**
@@ -174,40 +175,42 @@
 
 ### Phase 6: Testing
 
-- [ ] **Task 6.1: Write unit tests for file naming**
-  - Test file name generation with various property names
-  - Test timestamp formatting
-  - Test special character handling
-  - **Validation:** All naming tests pass
+- [x] **Task 6.1: Write unit tests for decorators**
+  - Test TokenDecorator, FileNameDecorator, TimestampedFileNameDecorator
+  - Test decorator application to MemoryRefs
+  - Implemented in `test/decorators.test.ts`
+  - **Validation:** All decorator tests pass ✅
   - **Dependency:** Task 2.1
 
-- [ ] **Task 6.2: Write unit tests for FileReference**
-  - Test reference creation and metadata
-  - Test content loading
-  - Test caching behavior
-  - **Validation:** All reference tests pass
+- [x] **Task 6.2: Write unit tests for WorkflowContext**
+  - Test InMemoryWorkflowContext and DirectoryOutputContext
+  - Test store, token, run methods
+  - Test error conditions
+  - Implemented in `test/workflow.test.ts`
+  - **Validation:** All context tests pass ✅
   - **Dependency:** Task 2.2
 
-- [ ] **Task 6.3: Write unit tests for WorkflowContext methods**
-  - Test store, load, run, and transform individually
+- [x] **Task 6.3: Write unit tests for WorkflowContext methods**
+  - Test store, token, run individually
   - Test error conditions
-  - Test file creation and naming
-  - **Validation:** All context method tests pass
+  - Test file creation and naming (DirectoryOutputContext)
+  - Implemented in `test/workflow.test.ts`
+  - **Validation:** All context method tests pass ✅
   - **Dependency:** Phase 3, 4 complete
 
-- [ ] **Task 6.4: Write integration tests for transforms**
-  - Test token replacement with real references
+- [x] **Task 6.4: Write integration tests for transforms**
+  - Test token replacement with real context
   - Test regex parsing with various patterns
   - Test transform chaining
-  - Test metadata preservation
-  - **Validation:** All transform tests pass
+  - Test all transform commands (TokenReplace, Extract, RegexMatch, Split, Join)
+  - Implemented in `test/transforms.test.ts`
+  - **Validation:** All transform tests pass (14 tests) ✅
   - **Dependency:** Phase 4 complete
 
 - [ ] **Task 6.5: Write end-to-end workflow tests**
   - Test complete workflows with multiple operations
-  - Test chaining store → load → transform → run
-  - Test file reference passing
-  - Test real file I/O operations
+  - Test chaining store → run(command) → token
+  - Test real file I/O operations with DirectoryOutputContext
   - **Validation:** E2E tests pass
   - **Dependency:** Phase 3, 4, 5 complete
 

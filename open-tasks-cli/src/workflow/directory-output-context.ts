@@ -50,11 +50,19 @@ export class DirectoryOutputContext implements IWorkflowContext {
     // Ensure output directory exists
     await fse.ensureDir(this.outputDir);
 
+    // Prepare content with metadata if present
+    let fileContent =
+      typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+
+    // Add metadata as frontmatter if present
+    if (ref.metadata && ref.metadata.length > 0) {
+      const metadataYaml = this.formatMetadataAsYaml(ref.metadata);
+      fileContent = `---\n${metadataYaml}---\n\n${fileContent}`;
+    }
+
     // Write to file
     const filePath = path.join(this.outputDir, ref.fileName!);
-    const content =
-      typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-    await fs.writeFile(filePath, content, 'utf-8');
+    await fs.writeFile(filePath, fileContent, 'utf-8');
 
     // Store in memory
     this.memory.set(ref.id, ref);
@@ -65,6 +73,32 @@ export class DirectoryOutputContext implements IWorkflowContext {
     }
 
     return ref;
+  }
+
+  /**
+   * Format metadata as YAML frontmatter
+   */
+  private formatMetadataAsYaml(metadata: any[]): string {
+    const lines: string[] = ['transforms:'];
+    
+    for (const transform of metadata) {
+      lines.push(`  - type: ${transform.type}`);
+      if (transform.inputs && transform.inputs.length > 0) {
+        lines.push(`    inputs: [${transform.inputs.join(', ')}]`);
+      }
+      if (transform.params && Object.keys(transform.params).length > 0) {
+        lines.push(`    params:`);
+        for (const [key, value] of Object.entries(transform.params)) {
+          const valueStr = typeof value === 'string' 
+            ? `"${value}"` 
+            : JSON.stringify(value);
+          lines.push(`      ${key}: ${valueStr}`);
+        }
+      }
+      lines.push(`    timestamp: ${transform.timestamp.toISOString()}`);
+    }
+    
+    return lines.join('\n') + '\n';
   }
 
   token(name: string): any {
