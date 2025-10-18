@@ -58,12 +58,6 @@ jobs:
             echo "Moved custom.scss to quartz/styles/"
           fi
 
-          # Move index styles to correct location
-          if [ -f quartz-build/content/quartz/styles/index.scss ]; then
-            mv quartz-build/content/quartz/styles/index.scss quartz-build/quartz/styles/
-            echo "Moved index.scss to quartz/styles/"
-          fi
-
           # Use README.md as index.md if index doesn't exist
           if [ ! -f quartz-build/content/index.md ] && [ -f quartz-build/content/README.md ]; then
             cp quartz-build/content/README.md quartz-build/content/index.md
