@@ -284,16 +284,18 @@ const value = context.token('mytoken');  // Returns file content
 ```
 your-project/
 ├── .open-tasks/
-│   ├── tasks/                    # User tasks (Layer 2)
+│   ├── tasks/                           # User tasks (Layer 2)
 │   │   ├── analyze-repo.ts
 │   │   ├── process-data.ts
 │   │   └── ...
-│   ├── outputs/                  # MemoryRef files
-│   │   ├── 20251018-143022-456-log.txt
-│   │   ├── 20251018-143025-789-analysis.txt
-│   │   └── ...
-│   └── config.json              # Configuration
-├── src/                          # Your application code
+│   ├── outputs/                         # Task execution outputs
+│   │   ├── 20251018T140000000Z-analyze-repo/
+│   │   │   ├── 20251018T140001000Z-log.txt
+│   │   │   └── 20251018T140002000Z-analysis.md
+│   │   └── 20251018T150000000Z-process-data/
+│   │       └── 20251018T150001000Z-result.txt
+│   └── config.json                      # Configuration
+├── src/                                  # Your application code
 └── package.json
 ```
 

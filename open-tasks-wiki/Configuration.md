@@ -40,7 +40,13 @@ Created automatically by `open-tasks init`:
 **Type**: `string`  
 **Default**: `.open-tasks/outputs`
 
-Directory where command outputs are stored.
+Base directory where command outputs are stored. Each task execution creates a timestamped subdirectory:
+
+```
+.open-tasks/outputs/
+└── {timestamp}-{task-name}/
+    └── output-files...
+```
 
 ```json
 {

@@ -27,8 +27,15 @@ This creates the `.open-tasks/` directory structure:
 ```
 .open-tasks/
 ├── tasks/        # Your custom task files
-├── outputs/      # Command output files
+├── outputs/      # Task execution outputs (timestamped per run)
 └── config.json   # Configuration (optional)
+```
+
+**Directory Isolation**: Each task execution creates its own timestamped directory:
+```
+.open-tasks/outputs/
+└── 20251018T143022456Z-task-name/
+    └── output-files...
 ```
 
 ## Step 2: Create Your First Task

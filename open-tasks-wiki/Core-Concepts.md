@@ -253,9 +253,10 @@ interface MemoryRef {
 ### How MemoryRefs Work
 
 1. **Created** - When you store a value or run a command
-2. **Passed** - As inputs to subsequent commands
-3. **Tracked** - In TaskLog entries for auditing
-4. **Persisted** - Content saved to `.open-tasks/outputs/`
+2. **Decorated** - IMemoryDecorators transform the ref (set fileName, token, etc.)
+3. **Persisted** - Content saved to `.open-tasks/outputs/{timestamp}-{task-name}/`
+4. **Passed** - As inputs to subsequent commands
+5. **Tracked** - In TaskLog entries for auditing
 
 ### Example Flow
 
@@ -265,7 +266,8 @@ const cmd = new PowershellCommand("echo 'Hello'");
 const [ref] = await context.run(cmd);
 
 console.log(ref.id);        // "uuid-123-456"
-console.log(ref.fileName);  // ".open-tasks/outputs/20251018-143022-456-hello.txt"
+console.log(ref.fileName);  // "20251018T143022456Z-hello.txt"
+// Full path: .open-tasks/outputs/20251018T143022456Z-task-name/20251018T143022456Z-hello.txt
 
 // MemoryRef passed to next command
 const nextCmd = new ProcessCommand(ref);

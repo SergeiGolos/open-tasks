@@ -61,7 +61,7 @@ Then invoke: `open-tasks analyze-repo`
 ### User Guides
 - **[[Building Tasks]]** - Create custom workflow tasks
 - **[[Using Commands]]** - Work with pre-built command library
-- **[[Managing Context]]** - Store and pass data between operations
+- **[[Managing Context]]** - Store and pass data with MemoryRef and decorators
 - **[[System Commands]]** - Init and create commands
 
 ### Developer Guides  
@@ -95,7 +95,7 @@ This creates:
 ```
 .open-tasks/
 ├── tasks/        # Your custom task files
-├── outputs/      # Command output files
+├── outputs/      # Task execution outputs (timestamped directories)
 └── config.json   # Configuration
 ```
 
