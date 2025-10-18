@@ -4,7 +4,8 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "WebFetch(domain:sergeigolos.github.io)",
-      "WebFetch(domain:quartz.jzhao.xyz)"
+      "WebFetch(domain:quartz.jzhao.xyz)",
+      "Bash(openspec:*)"
     ],
     "deny": [],
     "ask": []

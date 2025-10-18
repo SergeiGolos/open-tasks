@@ -1,8 +1,12 @@
-# Open Tasks CLI
+# Documentation (Deprecated)
 
-## Project Overview
+**⚠️ This documentation directory is deprecated. All documentation has been migrated to the wiki.**
 
-**Open Tasks CLI** is a flexible command-line tool designed for composable workflow automation. It enables users to build custom tasks that compose commands together, making it ideal for multi-step workflows where commands pass data through MemoryRef references.
+## 📚 Find Documentation in the Wiki
+
+All Open Tasks CLI documentation is now located in **[open-tasks-wiki](../open-tasks-wiki/)**
+
+**Start Here**: [open-tasks-wiki/index.md](../../open-tasks-wiki/index.md)
 
 ### Vision
 
