@@ -9,7 +9,11 @@ abstract class BaseTransformCommand implements ICommand {
   protected abstract getInputTokens(): string[];
   protected abstract getTransformParams(): Record<string, any>;
 
-  abstract execute(context: IWorkflowContext, args: any[]): Promise<MemoryRef[]>;
+  abstract execute(
+    context: IWorkflowContext,
+    args: any[],
+    cardBuilder?: import('../types.js').ICardBuilder
+  ): Promise<MemoryRef[]>;
 
   /**
    * Create metadata for this transform
@@ -74,7 +78,8 @@ export class TokenReplaceCommand extends BaseTransformCommand {
 
   async execute(
     context: IWorkflowContext,
-    args: any[]
+    args: any[],
+    cardBuilder?: import('../types.js').ICardBuilder
   ): Promise<MemoryRef[]> {
     // Get input content from context by token
     const input = context.token(this.inputToken);
@@ -147,7 +152,8 @@ export class ExtractCommand extends BaseTransformCommand {
 
   async execute(
     context: IWorkflowContext,
-    args: any[]
+    args: any[],
+    cardBuilder?: import('../types.js').ICardBuilder
   ): Promise<MemoryRef[]> {
     const input = context.token(this.inputToken);
     
@@ -190,7 +196,7 @@ export class RegexMatchCommand extends BaseTransformCommand {
   }
 
   protected getTransformParams(): Record<string, any> {
-    return {
+    return{
       pattern: this.pattern.source,
       flags: this.pattern.flags,
       outputToken: this.outputToken,
@@ -199,7 +205,8 @@ export class RegexMatchCommand extends BaseTransformCommand {
 
   async execute(
     context: IWorkflowContext,
-    args: any[]
+    args: any[],
+    cardBuilder?: import('../types.js').ICardBuilder
   ): Promise<MemoryRef[]> {
     const input = context.token(this.inputToken);
     
@@ -268,7 +275,8 @@ export class SplitCommand extends BaseTransformCommand {
 
   async execute(
     context: IWorkflowContext,
-    args: any[]
+    args: any[],
+    cardBuilder?: import('../types.js').ICardBuilder
   ): Promise<MemoryRef[]> {
     const input = context.token(this.inputToken);
     
@@ -329,7 +337,8 @@ export class JoinCommand extends BaseTransformCommand {
 
   async execute(
     context: IWorkflowContext,
-    args: any[]
+    args: any[],
+    cardBuilder?: import('../types.js').ICardBuilder
   ): Promise<MemoryRef[]> {
     const values: string[] = [];
     

@@ -43,9 +43,14 @@ export interface ICommand {
    * Execute the command with the given context
    * @param context - The workflow context
    * @param args - Command arguments
+   * @param cardBuilder - Optional card builder for creating formatted output (provided by framework)
    * @returns Array of memory references produced by the command
    */
-  execute(context: IWorkflowContext, args: any[]): Promise<MemoryRef[]>;
+  execute(
+    context: IWorkflowContext, 
+    args: any[],
+    cardBuilder?: import('../types.js').ICardBuilder
+  ): Promise<MemoryRef[]>;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { DirectoryOutputContext } from './workflow/index.js';
 import { createOutputBuilder as createOutputBuilderFactory } from './output-builders.js';
+import { createCardBuilder as createCardBuilderFactory } from './card-builders.js';
 
 /**
  * Verbosity levels for command output
@@ -25,21 +26,94 @@ export interface SummaryData {
 }
 
 /**
- * Interface for building formatted command output
+ * Tree node for hierarchical card content
+ */
+export interface TreeNode {
+  label: string;
+  icon?: string;
+  children?: TreeNode[];
+}
+
+/**
+ * Table card content
+ */
+export interface TableCard {
+  type: 'table';
+  headers: string[];
+  rows: string[][];
+  footer?: string;
+}
+
+/**
+ * List card content
+ */
+export interface ListCard {
+  type: 'list';
+  items: string[];
+  ordered?: boolean;
+}
+
+/**
+ * Tree card content
+ */
+export interface TreeCard {
+  type: 'tree';
+  root: TreeNode;
+}
+
+/**
+ * Content types that can be displayed in a card
+ */
+export type CardContent = 
+  | string                    // Plain text card
+  | Record<string, any>       // Key-value pairs (rendered as JSON)
+  | TableCard                 // Structured table
+  | ListCard                  // Bulleted or numbered list
+  | TreeCard;                 // Hierarchical tree
+
+/**
+ * Interface for building command-specific formatted content
+ * Created and managed by the framework based on ExecutionContext verbosity
+ * Commands receive this and use it without worrying about output format
+ */
+export interface ICardBuilder {
+  /**
+   * Add a progress message (shown based on verbosity level)
+   */
+  addProgress(message: string): void;
+  
+  /**
+   * Add a custom card to the output
+   * Cards are formatted sections that display command-specific content
+   */
+  addCard(title: string, content: CardContent): void;
+  
+  /**
+   * Build and return the formatted cards as a string
+   * Called by framework, not by commands
+   */
+  build(): string;
+}
+
+/**
+ * Interface for building framework-level formatted output
+ * Handles system-level execution reporting: timing, status, files, errors
  */
 export interface IOutputBuilder {
   /**
    * Add a section to the output (for verbose mode)
+   * @deprecated Use ICardBuilder.addCard() instead for command content
    */
   addSection(title: string, content: string): void;
   
   /**
-   * Add summary information
+   * Add summary information (execution metadata)
    */
   addSummary(data: SummaryData): void;
   
   /**
    * Add a progress message (for verbose mode, optional progressive output)
+   * @deprecated Use ICardBuilder.addProgress() instead for command progress
    */
   addProgress(message: string): void;
   
@@ -271,6 +345,7 @@ export abstract class CommandHandler {
 
   /**
    * Execute with timing and output control (new pattern)
+   * Framework creates both output builder (for summary) and card builder (for command content)
    */
   private async executeWithOutputControl(
     args: string[],
@@ -278,19 +353,20 @@ export abstract class CommandHandler {
     context: ExecutionContext
   ): Promise<ReferenceHandle> {
     const startTime = Date.now();
-    const builder = this.createOutputBuilder(context);
+    const outputBuilder = this.createOutputBuilder(context);
+    const cardBuilder = this.createCardBuilder(context);
 
     try {
-      // Execute the actual command logic
-      const result = await this.executeCommand(args, refs, context);
+      // Execute the actual command logic, passing card builder
+      const result = await this.executeCommand(args, refs, context, cardBuilder);
       
-      // Handle successful output
-      await this.handleOutput(result, context, startTime, builder);
+      // Handle successful output (combine cards + summary)
+      await this.handleOutput(result, context, startTime, outputBuilder, cardBuilder);
       
       return result;
     } catch (error) {
       // Handle error output
-      await this.handleError(error as Error, context, startTime, builder);
+      await this.handleError(error as Error, context, startTime, outputBuilder, cardBuilder);
       throw error;
     }
   }
@@ -305,13 +381,24 @@ export abstract class CommandHandler {
   }
 
   /**
+   * Create appropriate card builder based on verbosity level
+   * Uses same verbosity resolution as output builder
+   */
+  protected createCardBuilder(context: ExecutionContext): ICardBuilder {
+    const verbosity = context.verbosity || this.defaultVerbosity || 'summary';
+    return createCardBuilderFactory(verbosity);
+  }
+
+  /**
    * Handle successful command output
+   * Combines command cards with framework summary
    */
   protected async handleOutput(
     result: ReferenceHandle,
     context: ExecutionContext,
     startTime: number,
-    builder: IOutputBuilder
+    outputBuilder: IOutputBuilder,
+    cardBuilder: ICardBuilder
   ): Promise<void> {
     const { calculateDuration } = await import('./utils.js');
     const executionTime = calculateDuration(startTime);
@@ -325,16 +412,22 @@ export abstract class CommandHandler {
       success: true,
     };
 
-    // Add summary to builder
-    builder.addSummary(summaryData);
+    // Add summary to output builder
+    outputBuilder.addSummary(summaryData);
 
-    // Build and route output
-    const output = builder.build();
-    if (output) {
+    // Build final output: cards first, then summary
+    const cards = cardBuilder.build();
+    const summary = outputBuilder.build();
+    
+    // Combine cards and summary (cards appear before summary)
+    const finalOutput = cards ? `${cards}\n\n${summary}` : summary;
+    
+    // Route output to appropriate destination
+    if (finalOutput) {
       const outputTarget = context.outputTarget || 'both';
       
       if (context.outputHandler.shouldOutputToScreen(outputTarget)) {
-        console.log(output);
+        console.log(finalOutput);
       }
     }
   }
@@ -346,21 +439,25 @@ export abstract class CommandHandler {
     error: Error,
     context: ExecutionContext,
     startTime: number,
-    builder: IOutputBuilder
+    outputBuilder: IOutputBuilder,
+    cardBuilder: ICardBuilder
   ): Promise<void> {
     const { calculateDuration } = await import('./utils.js');
     const executionTime = calculateDuration(startTime);
 
     // Add error to builder
-    builder.addError(error, {
+    outputBuilder.addError(error, {
       command: this.name,
       executionTime,
     });
 
-    // Build and output error
-    const output = builder.build();
-    if (output) {
-      console.error(output);
+    // Build error output (cards + error details)
+    const cards = cardBuilder.build();
+    const errorOutput = outputBuilder.build();
+    const finalOutput = cards ? `${cards}\n\n${errorOutput}` : errorOutput;
+    
+    if (finalOutput) {
+      console.error(finalOutput);
     }
 
     // Write error file
@@ -371,13 +468,18 @@ export abstract class CommandHandler {
   }
 
   /**
-   * Subclasses can implement this for the new output control pattern
-   * Leave unimplemented to use the old execute() override pattern
+   * Subclasses implement this for command logic
+   * Framework passes cardBuilder for command to create custom output cards
+   * @param args - Command arguments
+   * @param refs - Reference handles map
+   * @param context - Execution context with configuration
+   * @param cardBuilder - Card builder for creating command-specific output (managed by framework)
    */
   protected executeCommand(
     _args: string[],
     _refs: Map<string, ReferenceHandle>,
-    _context: ExecutionContext
+    _context: ExecutionContext,
+    _cardBuilder: ICardBuilder
   ): Promise<ReferenceHandle> {
     // Default implementation - signals to use old pattern
     return Promise.resolve({} as ReferenceHandle);
