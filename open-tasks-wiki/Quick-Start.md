@@ -4,7 +4,7 @@ title: "Quick Start"
 
 # Quick Start
 
-Get up and running with Open Tasks CLI in 5 minutes.
+Get up and running with Open Tasks CLI in 5 minutes. Learn the basics of building AI-powered workflows.
 
 ## Prerequisites
 
@@ -26,27 +26,63 @@ open-tasks init
 This creates the `.open-tasks/` directory structure:
 ```
 .open-tasks/
-├── tasks/        # Your custom task files
-├── outputs/      # Task execution outputs (timestamped per run)
+├── commands/     # Your custom commands (deprecated, use for compatibility)
+├── outputs/      # Command execution outputs (timestamped per run)
 └── config.json   # Configuration (optional)
 ```
 
-**Directory Isolation**: Each task execution creates its own timestamped directory:
+**Directory Isolation**: Each command execution creates its own timestamped directory:
 ```
 .open-tasks/outputs/
-└── 20251018T143022456Z-task-name/
-    └── output-files...
+└── 20240119T143022-store/
+    └── data.txt
 ```
 
-## Step 2: Create Your First Task
+## Step 2: Try Built-in Commands
 
-Use the `create` system command to scaffold a task template:
+Let's use some built-in commands to understand the workflow:
+
+### Store and Reference Data
 
 ```bash
-open-tasks create hello-world
+# Store a simple value
+open-tasks store "Hello, World!" --token greeting
+
+# You'll see output like:
+# ✅ Stored with token: greeting
+# 📁 File: .open-tasks/outputs/20240119-143022-store/greeting.txt
 ```
 
-This creates `.open-tasks/tasks/hello-world.ts` with a complete template.
+### Load a File
+
+```bash
+# Create a test file
+echo "OpenTasks is awesome!" > test.txt
+
+# Load it
+open-tasks load test.txt --token content
+
+# Output shows where it's stored
+```
+
+### Chain Commands
+
+```bash
+# Extract data from the stored content
+open-tasks extract "[A-Z][a-z]+" --ref content --all
+
+# This extracts all capitalized words
+```
+
+## Step 3: Create a Custom Command
+
+Now let's create a custom command:
+
+```bash
+open-tasks create word-count
+```
+
+This creates `.open-tasks/commands/word-count.ts`.
 
 ## Step 3: Edit Your Task
 
@@ -147,124 +183,137 @@ export default class AnalyzeFileTask extends TaskHandler {
       });
 
       // 2. Analyze with ClaudeCommand
-      const analyzeCmd = new ClaudeCommand(
-        "Analyze this file and provide a brief summary",
-        [fileRef]
-      );
-      const [analysisRef] = await context.run(analyzeCmd);
-      
-      outcome.logs.push({
-        ...analysisRef,
-        command: 'ClaudeCommand',
-        args: ["Analyze this file and provide a brief summary"],
-        start: new Date(),
-        end: new Date()
-      });
 
-      // 3. Store with token for later use
-      const finalRef = await context.store(
-        await context.token('analysis'),
-        [new TokenDecorator('file-analysis')]
-      );
 
-      console.log(`✓ Analysis saved with token: file-analysis`);
-      console.log(`✓ Output file: ${finalRef.fileName}`);
+## Common Workflow Patterns
 
-    } catch (error) {
-      outcome.errors.push(error.message);
-    }
-
-    return outcome;
-  }
-}
-```
-
-Run it:
+### Pattern 1: Store and Reference
 
 ```bash
-open-tasks analyze-file ./README.md
-```
-
-## Common Patterns
-
-### Pattern 1: Store and Retrieve
-
-```bash
-# Store a value
+# Store data
 open-tasks store "important data" --token mydata
 
-# Load and process
+# Load file
 open-tasks load ./input.txt --token source
-open-tasks process --ref source --ref mydata
+
+# Use references together
+open-tasks replace "Data: {{mydata}}, Source: {{source}}" --ref mydata --ref source
 ```
 
-### Pattern 2: Chain Operations
+### Pattern 2: Command Chaining
 
-```typescript
-// In your task file
-const step1 = new PowershellCommand("git log --oneline -5");
-const [logRef] = await context.run(step1);
+```bash
+# Step 1: Load file
+open-tasks load README.md --token readme
 
-const step2 = new ClaudeCommand("Summarize these commits", [logRef]);
-const [summaryRef] = await context.run(step2);
+# Step 2: Extract information
+open-tasks extract "version.*" --ref readme --token version
 
-const step3 = new FileCommand("write", "summary.md", summaryRef);
-await context.run(step3);
+# Step 3: Use extracted data
+open-tasks store "Version is: {{version}}" --ref version
 ```
 
-### Pattern 3: Multiple Inputs
+### Pattern 3: AI-Powered Analysis
 
-```typescript
-// Gather multiple contexts
-const readme = new PowershellCommand("Get-Content README.md");
-const [readmeRef] = await context.run(readme);
+```bash
+# Configure AI CLI first (if not done)
+echo '{"command":"gh copilot suggest","contextFlag":"-t","timeout":30000}' > .open-tasks/ai-config.json
 
-const package = new PowershellCommand("Get-Content package.json");
-const [pkgRef] = await context.run(package);
+# Gather context
+open-tasks load ./src/api.ts --token code
+open-tasks powershell "git log --oneline -5" --token history
 
-// Process together
-const analyze = new ClaudeCommand(
-  "Describe this project based on its README and package.json",
-  [readmeRef, pkgRef]
-);
-const [descRef] = await context.run(analyze);
+# Analyze with AI
+open-tasks ai-cli "Review this code and its history" --ref code --ref history
 ```
 
 ## What's Next?
 
-Now that you've created your first tasks, explore:
+Now that you understand the basics, explore:
 
-- **[[Core Concepts]]** - Understand the architecture
-- **[[Building Tasks]]** - Advanced task development
-- **[[Using Commands]]** - Full command library
-- **[[Managing Context]]** - Work with MemoryRef and tokens
+- **[[Commands]]** - Complete command reference
+- **[[Example-Tasks]]** - Real-world examples (code review, news summary)
+- **[[Building-Custom-Commands]]** - Create reusable commands
+- **[[Building-Custom-Tasks]]** - Build complex workflows
+- **[[Architecture]]** - Understand the system design
+
+## Common Operations
+
+### Working with Files
+
+```bash
+# Load multiple files
+open-tasks load file1.txt --token f1
+open-tasks load file2.txt --token f2
+open-tasks load file3.txt --token f3
+
+# Combine with template
+open-tasks replace "Files:\n{{f1}}\n{{f2}}\n{{f3}}" --ref f1 --ref f2 --ref f3
+```
+
+### Shell Commands
+
+```bash
+# Execute git commands
+open-tasks powershell "git status --short" --token status
+open-tasks powershell "git log --oneline -10" --token log
+
+# System information
+open-tasks powershell "Get-Process | Select-Object -First 10" --token processes
+```
+
+### Data Extraction
+
+```bash
+# Extract emails
+open-tasks load contacts.txt --token contacts
+open-tasks extract "[a-z]+@[a-z.]+" --ref contacts --all --token emails
+
+# Extract URLs
+open-tasks load webpage.html --token html
+open-tasks extract 'href="([^"]+)"' --ref html --all --token urls
+```
 
 ## Getting Help
 
 ```bash
-# Get help for any command
+# General help
 open-tasks --help
 
-# Get help for a specific task
-open-tasks hello-world --help
+# Command-specific help
+open-tasks store --help
+open-tasks ai-cli --help
 
-# List all available tasks
-open-tasks list
+# Check version
+open-tasks --version
 ```
 
 ## Troubleshooting
 
-**Task not found?**
-- Ensure you ran `open-tasks init`
-- Check that your task file is in `.open-tasks/tasks/`
-- Verify the task exports a default class extending TaskHandler
+**Command not found?**
+```bash
+# Check installation
+npm list -g open-tasks-cli
 
-**Import errors?**
-- Ensure you have `open-tasks-cli` installed locally in your project
-- Check your TypeScript configuration
+# Reinstall if needed
+npm install -g open-tasks-cli
+```
 
-**Command execution fails?**
-- Check the `.open-tasks/outputs/` directory for error logs
-- Enable verbose mode: `open-tasks --verbose <task-name>`
+**Reference not found?**
+- References only exist during the CLI session
+- Use files for persistent storage between runs
+- Check token names are correct
 
-See **[[Troubleshooting]]** for more help.
+**AI CLI not working?**
+```bash
+# Verify configuration
+cat .open-tasks/ai-config.json
+
+# Test AI CLI directly
+gh copilot suggest "test prompt"
+```
+
+For more help, see:
+- **[[Installation]]** - Installation and setup
+- **[[Commands]]** - Full command documentation
+- **[[Developer-Guide]]** - Contributing and development

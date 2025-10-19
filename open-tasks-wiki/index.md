@@ -1,167 +1,229 @@
 ---
 title: "Open Tasks CLI"
-description: "Flexible command-line tool for composable workflow automation"
+description: "Build AI-powered CLI workflows with quick, easy-to-understand TypeScript"
 ---
 
 # Open Tasks CLI
 
-**Open Tasks CLI** is a flexible command-line tool designed for composable workflow automation. Build custom tasks that compose commands together, making it ideal for multi-step workflows where operations pass data through memory references.
+**Open Tasks CLI** is a powerful framework for building AI-powered command-line workflows. It enables you to quickly write scripts that build context and execute agent CLI tools (like Claude Code, Codex, or Gemini CLI) with the ability to execute dependencies for building context in real-time, rather than depending on the LLM to figure out the tools it needs.
 
-## 🎯 Key Concepts
+## 🎯 Value Proposition
 
-### Task-Command Architecture
+Traditional AI CLI tools require you to manually gather context and often struggle with complex workflows. **Open Tasks CLI** solves this by:
 
-**Tasks** are workflow orchestration files in `.open-tasks/tasks/` that:
-- Extend the `TaskHandler` abstract class
-- Compose pre-built and custom commands
-- Are auto-discovered and integrated as CLI commands
-- Return `TaskOutcome` with logs and errors
+- **Explicit Dependency Execution** - Define exactly what context to gather and how, executing dependencies in the right order automatically
+- **Built for AI Agents** - Designed specifically to prepare context for AI CLI tools with a clean, typed interface
+- **Quick TypeScript Syntax** - Write workflows in easy-to-understand TypeScript without boilerplate
+- **Reusable Components** - Build a library of commands and tasks that can be composed together
+- **Real-time Context Building** - Execute shell commands, load files, and transform data on-demand as your workflow runs
 
-**Commands** are `ICommand` implementations that:
-- Consume and produce `MemoryRef[]` arrays
-- Can be pre-built (library) or custom (user-defined)
-- Execute via `context.run()` within tasks
-- Chain together to build complex workflows
+### Why Open Tasks?
 
-**IWorkflowContext API** provides internal functions:
-- `context.store()` - Store values and get MemoryRef
-- `context.token()` - Generate unique tokens
-- `context.run()` - Execute commands
+```mermaid
+graph LR
+    A[Your Request] --> B[Open Tasks]
+    B --> C[Gather Context]
+    C --> D[Load Files]
+    C --> E[Run Commands]
+    C --> F[Extract Data]
+    D --> G[AI CLI Tool]
+    E --> G
+    F --> G
+    G --> H[Intelligent Response]
+    
+    style B fill:#4CAF50
+    style G fill:#2196F3
+```
 
-### Quick Example
+Instead of manually gathering context files and hoping the AI understands your project structure, Open Tasks automates the entire workflow, ensuring your AI tools always have the right context.
+
+## 🚀 Quick Example
+
+Here's how you can analyze a repository with AI in just a few lines:
 
 ```typescript
 // .open-tasks/tasks/analyze-repo.ts
-export default class AnalyzeRepoTask extends TaskHandler {
-  static name = 'analyze-repo';
-  
-  async execute(args: string[], context: IWorkflowContext): Promise<TaskOutcome> {
-    // 1. Use PowershellCommand to get git log
-    const gitLogCmd = new PowershellCommand("git log --oneline -10");
-    const [logRef] = await context.run(gitLogCmd);
+import { CommandHandler, ExecutionContext, ReferenceHandle } from 'open-tasks-cli';
+
+export default class AnalyzeRepoCommand extends CommandHandler {
+  name = 'analyze-repo';
+  description = 'Analyze repository with AI';
+  examples = ['open-tasks analyze-repo'];
+
+  async execute(
+    args: string[],
+    refs: Map<string, ReferenceHandle>,
+    context: ExecutionContext
+  ): Promise<ReferenceHandle> {
+    // 1. Get git log
+    const gitLog = await context.workflowContext.store(
+      await this.runShellCommand('git log --oneline -10'),
+      []
+    );
     
-    // 2. Use ClaudeCommand with context
-    const analyzeCmd = new ClaudeCommand("Analyze this repository", [logRef]);
-    const [analysisRef] = await context.run(analyzeCmd);
+    // 2. Get file structure
+    const fileTree = await context.workflowContext.store(
+      await this.runShellCommand('tree -L 3'),
+      []
+    );
     
-    return { id, name: 'analyze-repo', logs: [...], errors: [] };
+    // 3. Pass to AI CLI with context
+    const result = await this.runAI(
+      'Analyze this repository structure and recent commits',
+      [gitLog, fileTree]
+    );
+    
+    return context.referenceManager.createReference(
+      result.id,
+      result.content,
+      'analysis'
+    );
   }
 }
 ```
 
-Then invoke: `open-tasks analyze-repo`
+Run it: `open-tasks analyze-repo`
 
 ## 📚 Documentation
 
 ### Getting Started
 - **[[Installation]]** - Install and set up Open Tasks CLI
-- **[[Quick Start]]** - Your first workflow in 5 minutes
-- **[[Core Concepts]]** - Understanding tasks, commands, and context
+- **[[Commands]]** - Available commands reference
+- **[[Example-Tasks]]** - Real-world examples (code review, news summary)
 
-### User Guides
-- **[[Building Tasks]]** - Create custom workflow tasks
-- **[[Using Commands]]** - Work with pre-built command library
-- **[[Managing Context]]** - Store and pass data with MemoryRef and decorators
-- **[[System Commands]]** - Init and create commands
+### Building Your Own
+- **[[Building-Custom-Tasks]]** - Create custom workflow tasks that chain commands together
+- **[[Building-Custom-Commands]]** - Build reusable commands with the box format
+- **[[Architecture]]** - Core concepts and high-level developer overview
+- **[[Developer-Guide]]** - Development setup and coding additional tasks
 
-### Developer Guides  
-- **[[Architecture]]** - Understanding the three-layer design
-- **[[Building Tasks]]** - Create custom workflows and tasks
-- **[[Developing Commands]]** - Extend the CLI with custom commands
-- **[[Managing Context]]** - Work with MemoryRef objects and decorators
-- **[[Contributing]]** - Development setup and guidelines
+## 🏗️ How It Works
 
-### Reference
-- **[[Command Library]]** - Pre-built commands (PowershellCommand, ClaudeCommand, etc.)
-- **[[API Reference]]** - TypeScript interfaces and types
-- **[[Configuration]]** - Config file options
-- **[[Troubleshooting]]** - Common issues and solutions
+Open Tasks uses a simple workflow model:
 
-## 🚀 Quick Start
+```mermaid
+graph TD
+    A[CLI Invocation] --> B[Task Handler]
+    B --> C{Command 1}
+    C --> D[Store Output]
+    D --> E{Command 2}
+    E --> F[Use Previous Output]
+    F --> G{Command 3}
+    G --> H[Final Result]
+    
+    style A fill:#e3f2fd
+    style B fill:#fff3e0
+    style C fill:#f3e5f5
+    style E fill:#f3e5f5
+    style G fill:#f3e5f5
+    style H fill:#e8f5e9
+```
 
-### Installation
+**Key Concepts:**
 
+1. **Commands** - Individual operations (load file, run shell command, call AI)
+2. **Tasks** - Workflows that chain commands together
+3. **References** - Pass outputs between commands using tokens or UUIDs
+4. **Context** - Automatic context management and file output
+
+### Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "User Layer"
+        CLI[CLI: open-tasks command]
+    end
+    
+    subgraph "Task Layer"
+        TASK[Task Handler<br/>Your Custom Workflow]
+    end
+    
+    subgraph "Command Layer"
+        STORE[Store Command]
+        LOAD[Load Command]
+        PS[PowerShell Command]
+        AI[AI CLI Command]
+        EXTRACT[Extract Command]
+        REPLACE[Replace Command]
+    end
+    
+    subgraph "Context Layer"
+        WF[Workflow Context<br/>Memory Management]
+        FILES[File System<br/>Output Management]
+    end
+    
+    CLI --> TASK
+    TASK --> STORE
+    TASK --> LOAD
+    TASK --> PS
+    TASK --> AI
+    TASK --> EXTRACT
+    TASK --> REPLACE
+    
+    STORE --> WF
+    LOAD --> WF
+    PS --> WF
+    AI --> WF
+    EXTRACT --> WF
+    REPLACE --> WF
+    
+    WF --> FILES
+    
+    style CLI fill:#2196F3,color:#fff
+    style TASK fill:#4CAF50,color:#fff
+    style WF fill:#FF9800,color:#fff
+```
+
+## 💡 Example Use Cases
+
+### Code Review Task
 ```bash
-npm install -g open-tasks-cli
+# Automatically gather context and get AI review
+open-tasks code-review ./src/api.ts
 ```
 
-### Initialize Project
+This task can:
+1. Load the file to review
+2. Load related test files
+3. Get git history for the file
+4. Pass all context to AI for comprehensive review
 
+### News Summary Task
 ```bash
-cd your-project-directory
-open-tasks init
+# Fetch and summarize news articles
+open-tasks news-summary "artificial intelligence"
 ```
 
-This creates:
-```
-.open-tasks/
-├── tasks/        # Your custom task files
-├── outputs/      # Task execution outputs (timestamped directories)
-└── config.json   # Configuration
-```
+This task can:
+1. Fetch articles from RSS feeds or APIs
+2. Extract article text
+3. Pass to AI for summarization
+4. Generate formatted report
 
-### Create Your First Task
+## 🎨 Built-in Commands
 
-```bash
-open-tasks create analyze-code
-```
+- **`store`** - Store values and create references
+- **`load`** - Load files and create references
+- **`replace`** - Template substitution with tokens
+- **`extract`** - Regex extraction from content
+- **`powershell`** - Execute PowerShell scripts
+- **`ai-cli`** - Integrate with AI CLI tools
+- **`init`** - Initialize project structure
+- **`create`** - Scaffold new tasks
 
-Edit `.open-tasks/tasks/analyze-code.ts` to compose commands, then run:
+See **[[Commands]]** for complete documentation.
 
-```bash
-open-tasks analyze-code ./src/app.ts
-```
-
-## 🏗️ Architecture
-
-**Three-Layer Design:**
-
-1. **IWorkflowContext (Internal API)** - Programmatic functions used within tasks
-2. **Tasks (CLI Commands)** - User-facing commands (system + custom)
-3. **Commands (ICommand)** - Composable operations with MemoryRef I/O
-
-**Key Components:**
-- **TaskHandler** - Abstract class for CLI-invokable tasks
-- **ICommand** - Interface for executable operations  
-- **MemoryRef** - Reference objects tracking stored values
-- **TaskOutcome** - Structured results with logs and errors
-
-## � Use Cases
-
-**Code Analysis Workflow**
-```bash
-# Create task that reads code, analyzes with AI, generates report
-open-tasks create analyze-code
-# Compose: PowershellCommand → ClaudeCommand → FileCommand
-open-tasks analyze-code ./src/
-```
-
-**Multi-File Processing**
-```bash
-# Process multiple files with AI
-# Compose: FileCommand → ClaudeCommand → TemplateCommand
-open-tasks process-project ./src/
-```
-
-**Template Generation**
-```bash
-# Generate config from templates
-# Compose: FileCommand → TemplateCommand → FileCommand
-open-tasks generate-config production
-```
-
-## 🛠️ Technology Stack
+## 🛠️ Technology
 
 - **Runtime**: Node.js 18.x+
-- **Language**: TypeScript
-- **Build**: tsup (fast TypeScript bundler)
+- **Language**: TypeScript (with full type safety)
+- **CLI Framework**: Commander.js
+- **Build Tool**: tsup
 - **Testing**: Vitest
-- **CLI**: Commander.js
-- **Output**: chalk, ora
 
 ## 🤝 Contributing
 
-We welcome contributions! See **[[Contributing]]** for:
+We welcome contributions! See **[[Developer-Guide]]** for:
 - Development environment setup
 - Building and testing
 - Code style and conventions
@@ -169,5 +231,4 @@ We welcome contributions! See **[[Contributing]]** for:
 
 ---
 
-**Built by [bitcobblers](https://github.com/bitcobblers)**  
-[GitHub](https://github.com/bitcobblers/open-tasks) • [Issues](https://github.com/bitcobblers/open-tasks/issues) • [NPM](https://www.npmjs.com/package/open-tasks-cli)
+**Get Started**: `npm install -g open-tasks-cli` • **GitHub**: [SergeiGolos/open-tasks](https://github.com/SergeiGolos/open-tasks)

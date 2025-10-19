@@ -1,16 +1,178 @@
 ---
-title: "Architecture"
+title: "Architecture & Core Concepts"
 ---
 
-# Architecture
+# Architecture & Core Concepts
 
-Understanding the design and structure of Open Tasks CLI.
+High-level developer overview of Open Tasks CLI design and structure.
 
 ## Overview
 
-Open Tasks CLI is built on a **three-layer architecture** that provides clear separation between internal APIs, user-facing commands, and composable operations.
+Open Tasks CLI is built to enable quick creation of AI-powered command-line workflows. The architecture is designed to make it easy to build context for AI tools without depending on the LLM to figure out what it needs.
 
-## Three-Layer Design
+```mermaid
+graph TB
+    subgraph "User Experience"
+        CLI[CLI Interface<br/>open-tasks command]
+    end
+    
+    subgraph "Command Layer"
+        HANDLER[CommandHandler<br/>The Box Format]
+        STORE[store]
+        LOAD[load]
+        EXTRACT[extract]
+        REPLACE[replace]
+        PS[powershell]
+        AI[ai-cli]
+    end
+    
+    subgraph "Context Management"
+        WF[Workflow Context<br/>Memory & References]
+        REF[Reference Manager<br/>Token & UUID Tracking]
+        OUT[Output Handler<br/>File System]
+    end
+    
+    subgraph "Storage"
+        FILES[File System<br/>.open-tasks/outputs/]
+    end
+    
+    CLI --> HANDLER
+    HANDLER --> STORE
+    HANDLER --> LOAD
+    HANDLER --> EXTRACT
+    HANDLER --> REPLACE
+    HANDLER --> PS
+    HANDLER --> AI
+    
+    STORE --> WF
+    LOAD --> WF
+    EXTRACT --> WF
+    REPLACE --> WF
+    PS --> WF
+    AI --> WF
+    
+    WF --> REF
+    WF --> OUT
+    OUT --> FILES
+    
+    style CLI fill:#2196F3,color:#fff
+    style HANDLER fill:#4CAF50,color:#fff
+    style WF fill:#FF9800,color:#fff
+    style FILES fill:#9C27B0,color:#fff
+```
+
+## Core Concepts
+
+### 1. The Box Format
+
+Commands follow a consistent pattern called the "box format":
+
+```mermaid
+graph LR
+    A[Inputs<br/>args + refs] --> B[Command Box<br/>Processing]
+    B --> C[Output<br/>ReferenceHandle]
+    
+    style A fill:#E3F2FD
+    style B fill:#FFF3E0
+    style C fill:#E8F5E9
+```
+
+Every command is a box with:
+- **Inputs** - Arguments and references from previous commands
+- **Processing** - Your custom logic
+- **Output** - A reference that can be used by next commands
+
+This makes commands:
+- **Composable** - Chain together easily
+- **Predictable** - Same interface for all
+- **Testable** - Clear inputs and outputs
+
+### 2. References & Memory
+
+The system uses references to pass data between commands:
+
+```mermaid
+graph TD
+    A[Command 1] --> B[Store Output]
+    B --> C[MemoryRef<br/>UUID + Token]
+    C --> D[File System<br/>.open-tasks/outputs/]
+    C --> E[Reference Manager<br/>In-Memory Index]
+    E --> F[Command 2 Input]
+    
+    style C fill:#FFF3E0
+    style E fill:#E3F2FD
+```
+
+**ReferenceHandle Structure:**
+```typescript
+{
+  id: 'uuid-1234',           // Unique identifier
+  token: 'my-token',          // Optional named token
+  content: 'data...',         // Actual content
+  outputFile: '.open-tasks/outputs/...',  // File path
+  timestamp: Date             // When created
+}
+```
+
+**Two Ways to Reference:**
+1. **By Token** - Named references: `--ref my-token`
+2. **By UUID** - Unique IDs: `--ref uuid-1234`
+
+### 3. Workflow Context
+
+The Workflow Context manages the flow of data:
+
+```mermaid
+sequenceDiagram
+    participant Command
+    participant Context
+    participant Storage
+    participant RefMgr
+    
+    Command->>Context: store(data, decorators)
+    Context->>Storage: Write file
+    Storage-->>Context: File path
+    Context->>RefMgr: Create reference
+    RefMgr-->>Context: ReferenceHandle
+    Context-->>Command: MemoryRef
+```
+
+**Key Responsibilities:**
+- Store command outputs
+- Create references with tokens
+- Manage file system operations
+- Track reference metadata
+
+### 4. Command Chaining
+
+Commands chain by passing references:
+
+```mermaid
+graph LR
+    A[load file.txt] --> B[ref: content]
+    B --> C[extract pattern]
+    C --> D[ref: matches]
+    D --> E[ai-cli analyze]
+    E --> F[ref: analysis]
+    
+    style B fill:#FFF3E0
+    style D fill:#FFF3E0
+    style F fill:#FFF3E0
+```
+
+**Example Flow:**
+```bash
+# Step 1: Load file → creates reference
+open-tasks load data.txt --token content
+
+# Step 2: Extract data → uses reference, creates new reference
+open-tasks extract "[a-z]+@[a-z.]+" --ref content --token emails
+
+# Step 3: Analyze with AI → uses reference
+open-tasks ai-cli "Categorize these emails" --ref emails
+```
+
+## Three-Layer Architecture
 
 ### Layer 1: IWorkflowContext (Internal API)
 
@@ -346,168 +508,196 @@ your-project/
 
 ## Design Principles
 
-### 1. Separation of Concerns
+### 1. Explicit Dependencies
+Build context explicitly rather than hoping AI figures it out:
+```typescript
+// Explicit: You control what context to gather
+const code = await loadFile('./app.ts');
+const tests = await loadFile('./app.test.ts');
+const docs = await loadFile('./README.md');
 
-- **Layer 1**: Internal workflow processing
-- **Layer 2**: User-facing CLI commands
-- **Layer 3**: Composable operations
+// Now AI has everything it needs
+await aiAnalyze([code, tests, docs]);
+```
 
-### 2. Explicit Context Passing
+### 2. Composable Operations
+Small, focused commands that chain together:
+```bash
+open-tasks load file.txt --token content
+open-tasks extract "pattern" --ref content --token data
+open-tasks ai-cli "analyze" --ref data
+```
 
-- No global state
-- Context passed through IWorkflowContext
-- Clear data dependencies
-
-### 3. Command Composition
-
-- Small, focused commands
-- Chain via MemoryRef passing
-- Reusable building blocks
+### 3. Type Safety
+TypeScript throughout for better developer experience:
+```typescript
+interface ReferenceHandle {
+  id: string;
+  token?: string;
+  content: any;
+  outputFile?: string;
+  timestamp: Date;
+}
+```
 
 ### 4. Observable Execution
+Every step is tracked and logged:
+- File outputs for all operations
+- Timestamped directories for isolation
+- References track data flow
+- Clear error messages
 
-- TaskOutcome with full logs
-- TaskLog entries for each operation
-- File outputs for persistence
+### 5. Zero Magic
+Everything is explicit:
+- No hidden context gathering
+- No automatic dependency resolution
+- You control the workflow
+- Predictable behavior
 
-### 5. Extensibility
+## Execution Flow
 
-- User tasks in `.open-tasks/tasks/`
-- Custom ICommand implementations
-- Decorator pattern for MemoryRef
-- Plugin architecture
+Complete flow from CLI invocation to output:
 
-### 6. Type Safety
-
-- TypeScript interfaces throughout
-- Compile-time validation
-- Clear API contracts
-
-### 7. Async-First
-
-- All operations async
-- Promise-based APIs
-- Non-blocking execution
-
-## Implementation Contexts
-
-### InMemoryWorkflowContext
-
-Store values in memory (for testing):
-
-```typescript
-class InMemoryWorkflowContext implements IWorkflowContext {
-  private storage: Map<string, string> = new Map();
-  
-  async store(value: string, decorators: IMemoryDecorator[]): Promise<MemoryRef> {
-    // Store in Map, return MemoryRef
-  }
-}
-```
-
-### DirectoryOutputContext
-
-Store values as files (production):
-
-```typescript
-class DirectoryOutputContext implements IWorkflowContext {
-  async store(value: string, decorators: IMemoryDecorator[]): Promise<MemoryRef> {
-    // Create timestamped file in .open-tasks/outputs/
-    // Return MemoryRef pointing to file
-  }
-}
-```
-
-### Future: RemoteOutputContext
-
-Store values remotely (cloud storage):
-
-```typescript
-class RemoteOutputContext implements IWorkflowContext {
-  async store(value: string, decorators: IMemoryDecorator[]): Promise<MemoryRef> {
-    // Upload to S3/Azure Blob
-    // Return MemoryRef with URL
-  }
-}
-```
-
-## Command Patterns
-
-### Simple Command
-
-```typescript
-class EchoCommand implements ICommand {
-  constructor(private message: string) {}
-  
-  async execute(context: IWorkflowContext): Promise<MemoryRef[]> {
-    const ref = await context.store(
-      this.message,
-      [new TokenDecorator('echo')]
-    );
-    return [ref];
-  }
-}
-```
-
-### Transform Command
-
-```typescript
-class UppercaseCommand implements ICommand {
-  constructor(private input: MemoryRef) {}
-  
-  async execute(context: IWorkflowContext): Promise<MemoryRef[]> {
-    const content = await fs.readFile(this.input.fileName, 'utf-8');
-    const uppercased = content.toUpperCase();
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Router
+    participant Command
+    participant Context
+    participant Storage
     
-    const ref = await context.store(
-      uppercased,
-      [new TokenDecorator('uppercased')]
-    );
-    return [ref];
-  }
-}
+    User->>CLI: open-tasks load data.txt --token content
+    CLI->>Router: Route to load command
+    Router->>Command: execute(args, refs, context)
+    Command->>Storage: Read file
+    Storage-->>Command: File content
+    Command->>Context: store(content, decorators)
+    Context->>Storage: Write to .open-tasks/outputs/
+    Storage-->>Context: File path
+    Context-->>Command: MemoryRef
+    Command->>Router: ReferenceHandle
+    Router->>CLI: Format output
+    CLI->>User: ✅ Stored with token: content
 ```
 
-### Multi-Output Command
+## Key Components
 
+### CommandHandler (The Box)
 ```typescript
-class SplitCommand implements ICommand {
-  constructor(private input: MemoryRef, private delimiter: string) {}
+export default class MyCommand extends CommandHandler {
+  name = 'my-command';
+  description = 'What it does';
+  examples = ['open-tasks my-command arg'];
   
-  async execute(context: IWorkflowContext): Promise<MemoryRef[]> {
-    const content = await fs.readFile(this.input.fileName, 'utf-8');
-    const parts = content.split(this.delimiter);
-    
-    const refs: MemoryRef[] = [];
-    for (let i = 0; i < parts.length; i++) {
-      const ref = await context.store(
-        parts[i],
-        [new TokenDecorator(`part-${i}`)]
-      );
-      refs.push(ref);
-    }
-    
-    return refs;
+  async execute(
+    args: string[],                      // CLI arguments
+    refs: Map<string, ReferenceHandle>,  // Previous outputs
+    context: ExecutionContext            // System context
+  ): Promise<ReferenceHandle> {          // Your output
+    // Your logic here
   }
 }
 ```
+
+### ExecutionContext
+Provides access to core services:
+```typescript
+interface ExecutionContext {
+  cwd: string;                           // Current directory
+  outputDir: string;                     // Where to write files
+  referenceManager: ReferenceManager;    // Track references
+  outputHandler: OutputHandler;          // Write files
+  workflowContext: DirectoryOutputContext; // Store data
+  config: Record<string, any>;           // User config
+}
+```
+
+### Workflow Context
+Manages data flow:
+```typescript
+interface IWorkflowContext {
+  store(content: any, decorators: IMemoryDecorator[]): Promise<MemoryRef>;
+  load(filePath: string, decorators: IMemoryDecorator[]): Promise<MemoryRef>;
+  transform(ref: MemoryRef, transformer: ITransformer): Promise<MemoryRef>;
+}
+```
+
+## Directory Structure
+
+```
+project/
+├── .open-tasks/
+│   ├── commands/              # Custom commands (deprecated pattern)
+│   ├── outputs/               # All command outputs
+│   │   ├── 20240119T143022-load/
+│   │   │   └── content.txt
+│   │   └── 20240119T143045-extract/
+│   │       └── matches.txt
+│   ├── config.json            # Configuration
+│   └── ai-config.json         # AI CLI configuration (optional)
+├── src/                       # Your code
+└── package.json
+```
+
+**Output Organization:**
+- Each command execution gets its own timestamped directory
+- Files within use: `{timestamp}-{token}.txt`
+- Prevents naming conflicts
+- Easy to trace execution history
+- Clean separation between workflow steps
+
+## Integration Points
+
+### AI CLI Tools
+Open Tasks integrates with any AI CLI tool:
+
+```json
+{
+  "command": "gh copilot suggest",
+  "contextFlag": "-t",
+  "timeout": 30000
+}
+```
+
+Supported tools:
+- GitHub Copilot CLI
+- Claude Code CLI
+- OpenAI CLI
+- Custom AI tools
+
+### Shell Commands
+Execute any shell command via PowerShell:
+
+```bash
+open-tasks powershell "git log --oneline -10"
+open-tasks powershell "npm test"
+open-tasks powershell "docker ps"
+```
+
+### File System
+All operations use the file system:
+- Load files with `load`
+- Store results with `store`
+- Extract with `extract`
+- Replace with `replace`
 
 ## Summary
 
-**Key Architectural Points:**
+**Open Tasks CLI Architecture:**
 
-1. **Three layers** - Clear separation of internal API, CLI, and operations
-2. **Task-Command pattern** - Tasks compose commands to build workflows
-3. **Explicit context** - IWorkflowContext passed through operations
-4. **MemoryRef chain** - Data flows via reference passing
-5. **Observable** - TaskOutcome provides complete execution trace
-6. **Extensible** - User tasks and custom commands
-7. **Type-safe** - TypeScript throughout
-8. **Async-first** - Promise-based APIs
+1. **Box Format** - Consistent command interface (inputs → processing → output)
+2. **References** - Pass data between commands via tokens/UUIDs
+3. **Workflow Context** - Manages data flow and storage
+4. **Three Layers** - Internal API, CLI commands, composable operations
+5. **Explicit Dependencies** - Build context manually for AI tools
+6. **Type Safe** - TypeScript throughout
+7. **Observable** - Track all operations with files and logs
+8. **Composable** - Chain commands to build workflows
 
 ## Next Steps
 
-- **[[Core Concepts]]** - Understand the fundamentals
-- **[[Building Tasks]]** - Create custom workflows
-- **[[Creating Commands]]** - Build custom ICommand implementations
-- **[[Workflow API]]** - Deep dive into IWorkflowContext
+- **[[Building-Custom-Commands]]** - Create reusable commands
+- **[[Building-Custom-Tasks]]** - Build complex workflows
+- **[[Commands]]** - Reference for all built-in commands
+- **[[Example-Tasks]]** - Real-world implementations
