@@ -141,13 +141,36 @@ nvm use 18
 npm install -g open-tasks-cli
 ```
 
-## Next Steps
+## Getting Started
 
-After installation, continue with:
+After installation, here's what to do next:
 
-- **[[Quick Start]]** - Your first workflow
-- **[[Core Concepts]]** - Understanding tasks and commands
-- **[[Building Tasks]]** - Create custom tasks
+### 1. Initialize Your Project
+
+```bash
+cd your-project
+open-tasks init
+```
+
+### 2. Try Built-in Commands
+
+```bash
+# Store a value
+open-tasks store "Hello World" --token greeting
+
+# Load a file
+open-tasks load ./README.md --token readme
+
+# Extract data
+open-tasks extract "version.*" --ref readme
+```
+
+### 3. Learn More
+
+- **[[Commands]]** - Complete command reference
+- **[[Example-Tasks]]** - Real-world examples
+- **[[Building-Custom-Tasks]]** - Create your own workflows
+- **[[Architecture]]** - Understanding the system
 
 ## Updating
 
