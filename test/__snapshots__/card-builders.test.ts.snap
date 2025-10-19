@@ -1,0 +1,49 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`VerboseCardBuilder snapshots > should match snapshot for default style 1`] = `
+"╭ Test default ───────────╮
+│                         │
+│   This is a test card   │
+│                         │
+╰─────────────────────────╯"
+`;
+
+exports[`VerboseCardBuilder snapshots > should match snapshot for dim style 1`] = `
+"[2m[90m╭ Test dim ───────────────╮[39m[22m
+[2m[90m│[39m[22m                         [2m[90m│[39m[22m
+[2m[90m│[39m[22m   This is a test card   [2m[90m│[39m[22m
+[2m[90m│[39m[22m                         [2m[90m│[39m[22m
+[2m[90m╰─────────────────────────╯[39m[22m"
+`;
+
+exports[`VerboseCardBuilder snapshots > should match snapshot for error style 1`] = `
+"[31m╭ Test error ─────────────╮[39m
+[31m│[39m                         [31m│[39m
+[31m│[39m   This is a test card   [31m│[39m
+[31m│[39m                         [31m│[39m
+[31m╰─────────────────────────╯[39m"
+`;
+
+exports[`VerboseCardBuilder snapshots > should match snapshot for info style 1`] = `
+"[34m╭ Test info ──────────────╮[39m
+[34m│[39m                         [34m│[39m
+[34m│[39m   This is a test card   [34m│[39m
+[34m│[39m                         [34m│[39m
+[34m╰─────────────────────────╯[39m"
+`;
+
+exports[`VerboseCardBuilder snapshots > should match snapshot for success style 1`] = `
+"[32m╭ Test success ───────────╮[39m
+[32m│[39m                         [32m│[39m
+[32m│[39m   This is a test card   [32m│[39m
+[32m│[39m                         [32m│[39m
+[32m╰─────────────────────────╯[39m"
+`;
+
+exports[`VerboseCardBuilder snapshots > should match snapshot for warning style 1`] = `
+"[33m╭ Test warning ───────────╮[39m
+[33m│[39m                         [33m│[39m
+[33m│[39m   This is a test card   [33m│[39m
+[33m│[39m                         [33m│[39m
+[33m╰─────────────────────────╯[39m"
+`;

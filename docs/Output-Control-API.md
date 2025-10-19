@@ -5,7 +5,10 @@ This document provides comprehensive API documentation for the output control sy
 ## Table of Contents
 
 - [Overview](#overview)
-- [IOutputBuilder Interface](#ioutputbuilder-interface)
+## ICardBuilder Interface
+
+- [ICardBuilder Interface](#icardbuilder-interface)
+- [CardStyle Type](#cardstyle-type)
 - [Output Builder Implementations](#output-builder-implementations)
 - [Factory Function](#factory-function)
 - [Helper Utilities](#helper-utilities)
@@ -24,41 +27,50 @@ The output control system provides a flexible way to control command output verb
 
 ## IOutputBuilder Interface
 
-The `IOutputBuilder` interface defines the contract for building formatted command output.
+The `ICardBuilder` interface defines the contract for building command-specific formatted content.
 
 ```typescript
-interface IOutputBuilder {
+interface ICardBuilder {
   /**
-   * Add a section to the output (for verbose/stream modes)
-   * Sections group related information under a title
+   * Add a progress message (shown based on verbosity level)
    */
-  addSection?(title: string, content: string): void;
-
+  addProgress(message: string): void;
+  
   /**
-   * Add summary data for command execution
-   * Displayed at the end of command execution
+   * Add a custom card to the output
+   * Cards are formatted sections that display command-specific content
+   * @param title - The title of the card
+   * @param content - The content of the card
+   * @param style - The visual style of the card (optional)
    */
-  addSummary(data: SummaryData): void;
-
+  addCard(title: string, content: CardContent, style?: CardStyle): void;
+  
   /**
-   * Add a progress message (for stream mode)
-   * Shown in real-time during command execution
-   */
-  addProgress?(message: string): void;
-
-  /**
-   * Add error information to output
-   * Includes error message, stack trace, and context
-   */
-  addError?(error: Error, context?: Record<string, any>): void;
-
-  /**
-   * Build final output string
-   * Returns formatted output based on verbosity level
+   * Build and return the formatted cards as a string
+   * Called by framework, not by commands
    */
   build(): string;
 }
 ```
+
+### CardStyle Type
+
+The `CardStyle` type allows you to specify a visual style for a card.
+
+```typescript
+export type CardStyle = 'info' | 'success' | 'warning' | 'error' | 'dim' | 'default';
+```
+
+**Example of a styled card:**
+
+```typescript
+cardBuilder.addCard('⚙️ Processing Details', {
+  'Value Length': value.length,
+  'Size': formatFileSize(valueSize),
+}, 'info');
+```
+
+This will render a card with a blue border in verbose mode.
 
 ### SummaryData Type
 

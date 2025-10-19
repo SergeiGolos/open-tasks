@@ -1,9 +1,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
-import { CommandHandler, ExecutionContext, ReferenceHandle } from '../types.js';
+import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
 import { getDefaultConfig } from '../config-loader.js';
-import { addProcessingDetails } from '../output-utils.js';
 
 /**
  * Init command - initializes a new open-tasks project
@@ -21,7 +20,8 @@ export default class InitCommand extends CommandHandler {
   protected async executeCommand(
     args: string[],
     refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext
+    context: ExecutionContext,
+    cardBuilder: ICardBuilder
   ): Promise<ReferenceHandle> {
     const force = args.includes('--force');
     const openTasksDir = path.join(context.cwd, '.open-tasks');
@@ -29,11 +29,8 @@ export default class InitCommand extends CommandHandler {
     const outputsDir = path.join(openTasksDir, 'outputs');
     const configPath = path.join(openTasksDir, 'config.json');
 
-    // Get output builder for progress reporting
-    const builder = this.createOutputBuilder(context);
-
     // Check if .open-tasks already exists
-    builder.addProgress('Checking for existing project...');
+    cardBuilder.addProgress('Checking for existing project...');
     const exists = await fse.pathExists(openTasksDir);
     if (exists && !force) {
       throw new Error(
@@ -44,26 +41,26 @@ export default class InitCommand extends CommandHandler {
     const results: string[] = [];
 
     // Create directory structure
-    builder.addProgress('Creating .open-tasks/commands/ directory...');
+    cardBuilder.addProgress('Creating .open-tasks/commands/ directory...');
     await fse.ensureDir(commandsDir);
-    results.push('Created .open-tasks/commands/');
+    results.push('✓ .open-tasks/commands/');
 
-    builder.addProgress('Creating .open-tasks/outputs/ directory...');
+    cardBuilder.addProgress('Creating .open-tasks/outputs/ directory...');
     await fse.ensureDir(outputsDir);
-    results.push('Created .open-tasks/outputs/');
+    results.push('✓ .open-tasks/outputs/');
 
     // Create config.json
-    builder.addProgress('Creating configuration file...');
+    cardBuilder.addProgress('Creating configuration file...');
     const config = getDefaultConfig();
     await fs.writeFile(
       configPath,
       JSON.stringify(config, null, 2),
       'utf-8'
     );
-    results.push('Created .open-tasks/config.json');
+    results.push('✓ .open-tasks/config.json');
 
     // Check if package.json exists in .open-tasks directory (for custom commands)
-    builder.addProgress('Checking for .open-tasks/package.json...');
+    cardBuilder.addProgress('Checking for .open-tasks/package.json...');
     const commandsPackageJsonPath = path.join(openTasksDir, 'package.json');
     const commandsPackageJsonExists = await fse.pathExists(commandsPackageJsonPath);
 
@@ -78,16 +75,16 @@ export default class InitCommand extends CommandHandler {
         JSON.stringify(commandsPackageJson, null, 2),
         'utf-8'
       );
-      results.push('Created .open-tasks/package.json (for ES module support)');
+      results.push('✓ .open-tasks/package.json (ES module support)');
     }
 
     // Check if package.json exists in root
-    builder.addProgress('Checking for root package.json...');
+    cardBuilder.addProgress('Checking for root package.json...');
     const packageJsonPath = path.join(context.cwd, 'package.json');
     const packageJsonExists = await fse.pathExists(packageJsonPath);
 
     if (!packageJsonExists) {
-      builder.addProgress('Creating root package.json...');
+      cardBuilder.addProgress('Creating root package.json...');
       // Create basic package.json
       const packageJson = {
         name: path.basename(context.cwd),
@@ -104,22 +101,28 @@ export default class InitCommand extends CommandHandler {
         JSON.stringify(packageJson, null, 2),
         'utf-8'
       );
-      results.push('Created package.json');
+      results.push('✓ package.json');
     }
 
-    builder.addProgress('Initialization complete!');
+    cardBuilder.addProgress('Initialization complete!');
 
-    // Add verbose details about what was created
-    if (context.verbosity === 'verbose') {
-      addProcessingDetails(builder, {
-        'Project Directory': context.cwd,
-        'Open Tasks Directory': openTasksDir,
-        'Files Created': results.length,
-        'Force Mode': force,
-      });
-      
-      builder.addSection('📋 Created Files', results.join('\n'));
-    }
+    // Add card with initialization details
+    const details = [
+      `Project Directory: ${path.basename(context.cwd)}`,
+      `Open Tasks Directory: ${openTasksDir}`,
+      `Files Created: ${results.length}`,
+      `Force Mode: ${force ? 'Yes' : 'No'}`,
+      ``,
+      `Created Files:`,
+      ...results,
+      ``,
+      `Next Steps:`,
+      `  1. npm install open-tasks-cli`,
+      `  2. open-tasks create my-command`,
+      `  3. open-tasks my-command`,
+    ].join('\n');
+    
+    cardBuilder.addCard('🎉 Project Initialized', details, 'success');
 
     const message = [
       'Project initialized successfully!',

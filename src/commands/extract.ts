@@ -1,4 +1,4 @@
-import { CommandHandler, ExecutionContext, ReferenceHandle } from '../types.js';
+import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
 import { TokenDecorator } from '../workflow/decorators.js';
 
 /**
@@ -12,10 +12,11 @@ export default class ExtractCommand extends CommandHandler {
     'open-tasks extract "\\w+@\\w+\\.\\w+" --ref text --all',
   ];
 
-  async execute(
+  protected async executeCommand(
     args: string[],
     refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext
+    context: ExecutionContext,
+    cardBuilder: ICardBuilder
   ): Promise<ReferenceHandle> {
     if (args.length === 0) {
       throw new Error('Extract command requires a regex pattern argument');
@@ -38,6 +39,8 @@ export default class ExtractCommand extends CommandHandler {
 
     const input = String(inputRef.content);
 
+    cardBuilder.addProgress(`Applying pattern: ${pattern}`);
+
     // Create regex
     let regex: RegExp;
     try {
@@ -48,8 +51,11 @@ export default class ExtractCommand extends CommandHandler {
 
     // Extract matches
     let result: string;
+    let matchCount = 0;
+    
     if (extractAll) {
       const matches = Array.from(input.matchAll(regex));
+      matchCount = matches.length;
       if (matches.length === 0) {
         result = 'No matches found';
       } else {
@@ -65,6 +71,7 @@ export default class ExtractCommand extends CommandHandler {
       }
     } else {
       const match = input.match(regex);
+      matchCount = match ? 1 : 0;
       if (!match) {
         result = 'No match found';
       } else {
@@ -76,6 +83,8 @@ export default class ExtractCommand extends CommandHandler {
         }
       }
     }
+
+    cardBuilder.addProgress('Storing extracted result...');
 
     // Store the result
     const decorators = token ? [new TokenDecorator(token)] : [];
@@ -91,6 +100,27 @@ export default class ExtractCommand extends CommandHandler {
       token,
       outputFile
     );
+
+    // Add card with extraction details
+    const resultPreview = result.length > 100 
+      ? result.substring(0, 100) + '...' 
+      : result;
+    
+    const details = [
+      `Pattern: ${pattern}`,
+      `Mode: ${extractAll ? 'Extract all matches' : 'Extract first match'}`,
+      `Input Length: ${input.length} chars`,
+      `Matches Found: ${matchCount}`,
+      `Result Length: ${result.length} chars`,
+      `Token: ${token || 'none'}`,
+      `Reference ID: ${ref.id.substring(0, 8)}...`,
+      ``,
+      `Extracted:`,
+      resultPreview,
+    ].join('\n');
+    
+    const cardStyle = matchCount > 0 ? 'success' : 'warning';
+    cardBuilder.addCard('🔍 Text Extraction', details, cardStyle);
 
     return ref;
   }

@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
-import { CommandHandler, ExecutionContext, ReferenceHandle } from '../types.js';
+import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
 import { TokenDecorator } from '../workflow/decorators.js';
 
 interface AiCliConfig {
@@ -22,10 +22,11 @@ export default class AiCliCommand extends CommandHandler {
     'open-tasks ai-cli "Compare these files" --ref file1 --ref file2',
   ];
 
-  async execute(
+  protected async executeCommand(
     args: string[],
     refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext
+    context: ExecutionContext,
+    cardBuilder: ICardBuilder
   ): Promise<ReferenceHandle> {
     if (args.length === 0) {
       throw new Error('AI CLI command requires a prompt argument');
@@ -35,6 +36,7 @@ export default class AiCliCommand extends CommandHandler {
     const token = args.find((arg, i) => args[i - 1] === '--token');
 
     // Load AI CLI configuration
+    cardBuilder.addProgress('Loading AI CLI configuration...');
     const config = await this.loadConfig(context.cwd);
 
     // Build command with context files
@@ -42,8 +44,20 @@ export default class AiCliCommand extends CommandHandler {
       .map((ref) => ref.outputFile)
       .filter((file): file is string => file !== undefined);
 
+    cardBuilder.addProgress(`Executing AI CLI with ${contextFiles.length} context file(s)...`);
+
     // Execute AI CLI
-    const result = await this.executeAiCli(config, prompt, contextFiles);
+    let exitCode = 0;
+    let result: string;
+    let executionError: string | undefined;
+
+    try {
+      result = await this.executeAiCli(config, prompt, contextFiles);
+    } catch (error) {
+      exitCode = 1;
+      executionError = error instanceof Error ? error.message : String(error);
+      result = executionError;
+    }
 
     // Store the result
     const decorators = token ? [new TokenDecorator(token)] : [];
@@ -59,6 +73,35 @@ export default class AiCliCommand extends CommandHandler {
       token,
       outputFile
     );
+
+    // Add visual card
+    const cardStyle = exitCode === 0 ? 'success' : 'error';
+    const cardTitle = exitCode === 0 ? '🤖 AI CLI Executed' : '❌ AI CLI Failed';
+    
+    const details: Record<string, string> = {
+      'Command': config.command,
+      'Prompt': prompt.length > 100 ? prompt.substring(0, 100) + '...' : prompt,
+      'Context Files': contextFiles.length > 0 ? contextFiles.join(', ') : 'None',
+      'Exit Code': String(exitCode),
+      'Response Length': `${result.length} characters`,
+    };
+
+    if (token) {
+      details['Token'] = token;
+    }
+
+    if (outputFile) {
+      details['Output File'] = outputFile;
+    }
+
+    if (executionError) {
+      details['Error'] = executionError;
+    } else {
+      const preview = result.length > 200 ? result.substring(0, 200) + '...' : result;
+      details['Response Preview'] = preview;
+    }
+
+    cardBuilder.addCard(cardTitle, details, cardStyle);
 
     return ref;
   }

@@ -1,3 +1,4 @@
+import path from 'path';
 import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
 import { TokenDecorator } from '../workflow/decorators.js';
 import { formatFileSize } from '../output-utils.js';
@@ -51,13 +52,17 @@ export default class StoreCommand extends CommandHandler {
 
     // Add card with processing details (shown in verbose mode)
     const valueSize = new TextEncoder().encode(value).length;
-    cardBuilder.addCard('⚙️  Processing Details', {
-      'Value Length': value.length,
-      'Size': formatFileSize(valueSize),
-      'Token': token || 'none',
-      'Reference ID': ref.id,
-      'Output File': outputFile || 'none',
-    });
+    
+    // Format details as a clean key-value display
+    const details = [
+      `Value Length: ${value.length}`,
+      `Size: ${formatFileSize(valueSize)}`,
+      `Token: ${token || 'none'}`,
+      `Reference ID: ${ref.id.substring(0, 8)}...`,
+      `Output File: ${outputFile ? path.basename(outputFile) : 'none'}`,
+    ].join('\n');
+    
+    cardBuilder.addCard('⚙️  Processing Details', details, 'info');
 
     return ref;
   }

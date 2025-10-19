@@ -189,13 +189,15 @@ async function main() {
     // Execute command
     const result = await router.execute(commandName, cleanArgs, refs, context);
 
-    // Display result
-    console.log(formatSuccess('Command executed successfully'));
-    console.log(formatReferenceHandle(result));
+    // Display result only in quiet mode (other modes show cards with embedded summary)
+    if (verbosity === 'quiet') {
+      console.log(formatSuccess('Command executed successfully'));
+      console.log(formatReferenceHandle(result));
 
-    if (result.content && typeof result.content === 'string') {
-      console.log('\nOutput:');
-      console.log(result.content);
+      if (result.content && typeof result.content === 'string') {
+        console.log('\nOutput:');
+        console.log(result.content);
+      }
     }
   } catch (error) {
     const err = error as Error;

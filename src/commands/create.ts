@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
-import { CommandHandler, ExecutionContext, ReferenceHandle } from '../types.js';
+import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
 
 /**
  * Create command - scaffolds a new custom command template
@@ -15,10 +15,11 @@ export default class CreateCommand extends CommandHandler {
     'open-tasks create my-command --description "My custom command"',
   ];
 
-  async execute(
+  protected async executeCommand(
     args: string[],
     refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext
+    context: ExecutionContext,
+    cardBuilder: ICardBuilder
   ): Promise<ReferenceHandle> {
     if (args.length === 0) {
       throw new Error('Create command requires a command name argument');
@@ -33,6 +34,7 @@ export default class CreateCommand extends CommandHandler {
         : 'Custom command';
 
     // Validate command name
+    cardBuilder.addProgress('Validating command name...');
     if (!/^[a-z0-9-]+$/.test(commandName)) {
       throw new Error(
         'Command name must be kebab-case (lowercase letters, numbers, and hyphens only)'
@@ -42,6 +44,7 @@ export default class CreateCommand extends CommandHandler {
     const commandsDir = path.join(context.cwd, '.open-tasks', 'commands');
 
     // Check if commands directory exists
+    cardBuilder.addProgress('Checking project initialization...');
     const commandsDirExists = await fse.pathExists(commandsDir);
     if (!commandsDirExists) {
       throw new Error(
@@ -53,6 +56,7 @@ export default class CreateCommand extends CommandHandler {
     const commandPath = path.join(commandsDir, `${commandName}.${extension}`);
 
     // Check if command already exists
+    cardBuilder.addProgress('Checking if command exists...');
     const exists = await fse.pathExists(commandPath);
     if (exists) {
       throw new Error(
@@ -61,6 +65,7 @@ export default class CreateCommand extends CommandHandler {
     }
 
     // Generate template
+    cardBuilder.addProgress('Generating command template...');
     const template = this.generateTemplate(
       commandName,
       description,
@@ -68,6 +73,7 @@ export default class CreateCommand extends CommandHandler {
     );
 
     // Write template file
+    cardBuilder.addProgress('Writing template file...');
     await fs.writeFile(commandPath, template, 'utf-8');
 
     const message = [
@@ -85,6 +91,22 @@ export default class CreateCommand extends CommandHandler {
       'create'
     );
 
+    // Add visual card
+    const details: Record<string, string> = {
+      'Command Name': commandName,
+      'Language': typescript ? 'TypeScript' : 'JavaScript',
+      'Description': description,
+      'Location': commandPath,
+      'Template Size': `${template.length} characters`,
+      'Next Steps': [
+        `1. Edit ${commandPath}`,
+        `2. Implement command logic`,
+        `3. Run: open-tasks ${commandName}`,
+      ].join('\n'),
+    };
+
+    cardBuilder.addCard('🎨 Command Created', details, 'success');
+
     return ref;
   }
 
@@ -94,43 +116,63 @@ export default class CreateCommand extends CommandHandler {
     typescript: boolean
   ): string {
     if (typescript) {
-      return `import { CommandHandler, ExecutionContext, ReferenceHandle } from 'open-tasks-cli';
+      return `import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from 'open-tasks-cli';
 
 /**
  * ${description}
+ * 
+ * This is a demo command that shows how to:
+ * - Accept command arguments
+ * - Use the card builder to create visual output
+ * - Store and return results
  */
 export default class ${this.toPascalCase(name)}Command extends CommandHandler {
   name = '${name}';
   description = '${description}';
   examples = [
     'open-tasks ${name}',
-    'open-tasks ${name} arg1 --token mytoken',
+    'open-tasks ${name} "Alice"',
+    'open-tasks ${name} "Bob" --token greeting',
   ];
 
-  async execute(
+  protected async executeCommand(
     args: string[],
     refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext
+    context: ExecutionContext,
+    cardBuilder: ICardBuilder
   ): Promise<ReferenceHandle> {
-    // TODO: Implement your command logic here
+    // Get the name from arguments (default to "World")
+    const userName = args[0] || 'World';
     
-    // Example: Access arguments
-    const firstArg = args[0];
+    cardBuilder.addProgress('Creating greeting...');
     
-    // Example: Access references
-    const tokenValue = args.find((arg, i) => args[i - 1] === '--ref');
-    if (tokenValue) {
-      const ref = refs.get(tokenValue);
-      console.log('Reference content:', ref?.content);
-    }
+    // Create the hello world template
+    const template = 'Hello, {{name}}! Welcome to open-tasks CLI.';
     
-    // Example: Store a result
-    const result = 'Command executed successfully!';
+    cardBuilder.addProgress('Replacing name placeholder...');
+    
+    // Replace the placeholder with the actual name
+    const greeting = template.replace('{{name}}', userName);
+    
+    cardBuilder.addProgress('Building result...');
+    
+    // Store the result
+    const token = args.find((arg, i) => args[i - 1] === '--token');
     const ref = context.referenceManager.createReference(
       '${name}-result',
-      result,
-      '${name}'
+      greeting,
+      token || '${name}'
     );
+    
+    // Create a visual card showing what we did
+    const details: Record<string, string> = {
+      'Template': template,
+      'User Name': userName,
+      'Result': greeting,
+      'Token': token || 'none',
+    };
+    
+    cardBuilder.addCard('👋 Hello World Demo', details, 'success');
     
     return ref;
   }
@@ -139,35 +181,51 @@ export default class ${this.toPascalCase(name)}Command extends CommandHandler {
     } else {
       return `/**
  * ${description}
+ * 
+ * This is a demo command that shows how to:
+ * - Accept command arguments
+ * - Use the card builder to create visual output
+ * - Store and return results
  */
 export default class ${this.toPascalCase(name)}Command {
   name = '${name}';
   description = '${description}';
   examples = [
     'open-tasks ${name}',
-    'open-tasks ${name} arg1 --token mytoken',
+    'open-tasks ${name} "Alice"',
+    'open-tasks ${name} "Bob" --token greeting',
   ];
 
+  /**
+   * Main execute method called by the framework
+   * For JavaScript commands, implement this method directly
+   */
   async execute(args, refs, context) {
-    // TODO: Implement your command logic here
+    // Get the name from arguments (default to "World")
+    const userName = args[0] || 'World';
     
-    // Example: Access arguments
-    const firstArg = args[0];
+    // Create the hello world template
+    const template = 'Hello, {{name}}! Welcome to open-tasks CLI.';
     
-    // Example: Access references
-    const tokenValue = args.find((arg, i) => args[i - 1] === '--ref');
-    if (tokenValue) {
-      const ref = refs.get(tokenValue);
-      console.log('Reference content:', ref?.content);
-    }
+    // Replace the placeholder with the actual name
+    const greeting = template.replace('{{name}}', userName);
     
-    // Example: Store a result
-    const result = 'Command executed successfully!';
+    // Store the result
+    const token = args.find((arg, i) => args[i - 1] === '--token');
     const ref = context.referenceManager.createReference(
       '${name}-result',
-      result,
-      '${name}'
+      greeting,
+      token || '${name}'
     );
+    
+    // Print the result (for JavaScript commands without card builder)
+    console.log('👋 Hello World Demo');
+    console.log('─'.repeat(60));
+    console.log('Template:', template);
+    console.log('User Name:', userName);
+    console.log('Result:', greeting);
+    console.log('Token:', token || 'none');
+    console.log('─'.repeat(60));
     
     return ref;
   }

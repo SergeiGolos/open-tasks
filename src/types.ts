@@ -72,6 +72,11 @@ export type CardContent =
   | TreeCard;                 // Hierarchical tree
 
 /**
+ * Visual style for a card
+ */
+export type CardStyle = 'info' | 'success' | 'warning' | 'error' | 'dim' | 'default';
+
+/**
  * Interface for building command-specific formatted content
  * Created and managed by the framework based on ExecutionContext verbosity
  * Commands receive this and use it without worrying about output format
@@ -85,8 +90,17 @@ export interface ICardBuilder {
   /**
    * Add a custom card to the output
    * Cards are formatted sections that display command-specific content
+   * @param title - The title of the card
+   * @param content - The content of the card
+   * @param style - The visual style of the card (optional)
    */
-  addCard(title: string, content: CardContent): void;
+  addCard(title: string, content: CardContent, style?: CardStyle): void;
+  
+  /**
+   * Set execution summary to append to the last card
+   * Called by framework before build()
+   */
+  setSummary(summary: SummaryData): void;
   
   /**
    * Build and return the formatted cards as a string
@@ -410,17 +424,24 @@ export abstract class CommandHandler {
       outputFile: result.outputFile,
       referenceToken: result.token,
       success: true,
+      metadata: {
+        referenceId: result.id,
+        timestamp: new Date().toISOString(),
+      },
     };
 
-    // Add summary to output builder
+    // Set summary on card builder (will be appended to last card)
+    cardBuilder.setSummary(summaryData);
+
+    // Add summary to output builder (for external summary output)
     outputBuilder.addSummary(summaryData);
 
-    // Build final output: cards first, then summary
+    // Build final output: cards with embedded summary
     const cards = cardBuilder.build();
-    const summary = outputBuilder.build();
     
-    // Combine cards and summary (cards appear before summary)
-    const finalOutput = cards ? `${cards}\n\n${summary}` : summary;
+    // Only show the old-style summary if no cards were generated
+    const summary = cards ? '' : outputBuilder.build();
+    const finalOutput = cards || summary;
     
     // Route output to appropriate destination
     if (finalOutput) {

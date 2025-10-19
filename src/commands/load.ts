@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { CommandHandler, ExecutionContext, ReferenceHandle } from '../types.js';
+import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
 import { TokenDecorator } from '../workflow/decorators.js';
-import { addFileInfoSection, addProcessingDetails } from '../output-utils.js';
+import { formatFileSize } from '../output-utils.js';
 
 /**
  * Load command - loads content from a file
@@ -20,7 +20,8 @@ export default class LoadCommand extends CommandHandler {
   protected async executeCommand(
     args: string[],
     refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext
+    context: ExecutionContext,
+    cardBuilder: ICardBuilder
   ): Promise<ReferenceHandle> {
     if (args.length === 0) {
       throw new Error('Load command requires a file path argument');
@@ -29,15 +30,12 @@ export default class LoadCommand extends CommandHandler {
     const filePath = args[0];
     const token = args.find((arg, i) => args[i - 1] === '--token');
 
-    // Get output builder for progress reporting
-    const builder = this.createOutputBuilder(context);
-
     // Resolve file path relative to cwd
     const absolutePath = path.isAbsolute(filePath)
       ? filePath
       : path.join(context.cwd, filePath);
 
-    builder.addProgress(`Checking file: ${filePath}`);
+    cardBuilder.addProgress(`Checking file: ${filePath}`);
 
     // Check if file exists and get stats
     let stats;
@@ -47,17 +45,12 @@ export default class LoadCommand extends CommandHandler {
       throw new Error(`File not found: ${filePath}`);
     }
 
-    // Add file information in verbose mode
-    if (context.verbosity === 'verbose') {
-      addFileInfoSection(builder, absolutePath, stats.size);
-    }
-
-    builder.addProgress('Reading file content...');
+    cardBuilder.addProgress('Reading file content...');
 
     // Load using workflow context
     const memoryRef = await context.workflowContext.load(absolutePath, token);
 
-    builder.addProgress('File loaded successfully');
+    cardBuilder.addProgress('File loaded successfully');
 
     // Create reference handle
     const ref = context.referenceManager.createReference(
@@ -67,18 +60,28 @@ export default class LoadCommand extends CommandHandler {
       absolutePath
     );
 
-    // Add processing details in verbose mode
-    if (context.verbosity === 'verbose') {
-      const contentLength = typeof memoryRef.content === 'string' 
-        ? memoryRef.content.length 
-        : JSON.stringify(memoryRef.content).length;
-      
-      addProcessingDetails(builder, {
-        'Content Length': contentLength,
-        'Token': token || 'none',
-        'Reference ID': ref.id,
-      });
-    }
+    // Add card with file details
+    const contentLength = typeof memoryRef.content === 'string' 
+      ? memoryRef.content.length 
+      : JSON.stringify(memoryRef.content).length;
+    
+    const contentPreview = typeof memoryRef.content === 'string'
+      ? memoryRef.content.substring(0, 100) + (memoryRef.content.length > 100 ? '...' : '')
+      : JSON.stringify(memoryRef.content, null, 2).substring(0, 100) + '...';
+    
+    const details = [
+      `File: ${path.basename(absolutePath)}`,
+      `Path: ${path.dirname(absolutePath)}`,
+      `Size: ${formatFileSize(stats.size)}`,
+      `Content Length: ${contentLength} chars`,
+      `Token: ${token || 'none'}`,
+      `Reference ID: ${ref.id.substring(0, 8)}...`,
+      ``,
+      `Preview:`,
+      contentPreview,
+    ].join('\n');
+    
+    cardBuilder.addCard('📂 File Loaded', details, 'success');
 
     return ref;
   }
