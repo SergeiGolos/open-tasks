@@ -11,8 +11,6 @@ export function createOutputBuilder(verbosity: VerbosityLevel = 'summary'): IOut
       return new SummaryOutputBuilder();
     case 'verbose':
       return new VerboseOutputBuilder();
-    case 'stream':
-      return new StreamingOutputBuilder();
     default:
       // Fallback to summary for unknown levels
       console.warn(`Unknown verbosity level: ${verbosity}. Using 'summary' mode.`);
@@ -120,8 +118,8 @@ export class VerboseOutputBuilder implements IOutputBuilder {
   }
 
   addProgress(_message: string): void {
-    // Verbose mode doesn't show live progress (use stream for that)
-    // Progress is shown after completion as part of sections
+    // Verbose mode collects progress but shows it after completion
+    // Commands can implement progressive output if they choose to output immediately
   }
 
   addError(error: Error, context?: Record<string, any>): void {

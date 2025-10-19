@@ -12,11 +12,12 @@ Provides standardized output control for CLI command execution, including verbos
 
 ### Requirement: Multiple Verbosity Levels
 
-The system MUST support four verbosity levels for command output:
+The system MUST support three verbosity levels for command output:
 - `quiet`: Minimal output (success/failure + time only)
 - `summary`: Default formatted summary (command, time, file, reference)
 - `verbose`: Detailed output with progress and metadata
-- `stream`: Real-time streaming output during execution
+
+Each command implements its own output behavior for these levels. Commands MAY output progressively (stream-like) or all at once - this is an implementation detail of each command, not a separate verbosity level.
 
 **ID:** COC-001  
 **Priority:** High
@@ -134,61 +135,90 @@ The system MUST provide a consistent summary format across all commands includin
 
 ### Requirement: Verbosity Hierarchy
 
-The system MUST resolve verbosity from: command-level override → global application default → hardcoded default (summary).
+The system MUST resolve verbosity from: CLI flag override → command-level default → application default → hardcoded default (summary).
+
+Commands MAY specify their preferred default verbosity level via constructor configuration. Application-level CLI flags override all command preferences.
 
 **ID:** COC-006  
 **Priority:** Medium
 
-#### Scenario: Command-level override takes precedence
-**Given** the global verbosity is set to 'verbose'  
-**When** a command is executed with '--quiet' flag  
+#### Scenario: CLI flag override takes precedence over command default
+**Given** a command has a default verbosity of 'verbose' set in its constructor  
+**When** the command is executed with '--quiet' flag  
 **Then** the command uses quiet verbosity  
-**And** other commands still use verbose verbosity
+**And** the command's default preference is ignored
 
-#### Scenario: Global default is used when no override
-**Given** the global verbosity is set to 'verbose' via CLI or config  
-**When** a command is executed without verbosity flags  
+#### Scenario: Command-level default is used when no CLI override
+**Given** a command has a default verbosity of 'verbose' set in its constructor  
+**When** the command is executed without verbosity flags  
 **Then** the command uses verbose verbosity  
-**And** detailed output is displayed
+**And** the command's preference is respected
+
+#### Scenario: Application default is used when command has no preference
+**Given** a command has no default verbosity configured  
+**And** the application default verbosity is set to 'quiet' via config  
+**When** the command is executed without verbosity flags  
+**Then** the command uses quiet verbosity  
+**And** the application default is applied
 
 #### Scenario: Hardcoded default when nothing specified
-**Given** no global verbosity is configured  
-**When** a command is executed without verbosity flags  
+**Given** no CLI flags are provided  
+**And** the command has no default verbosity configured  
+**And** no application-level default is set  
+**When** the command is executed  
 **Then** the command uses 'summary' verbosity  
 **And** the standard summary format is displayed
 
-### Requirement: Real-time Streaming Output
+### Requirement: Command-Level Verbosity Configuration
 
-The system MUST support streaming output for long-running commands, displaying progress updates in real-time.
+The system MUST allow commands to declare their preferred default verbosity level via constructor argument using an enum.
 
 **ID:** COC-007  
 **Priority:** Medium
 
-#### Scenario: Streaming command shows real-time progress
-**Given** a command is executed with '--stream' flag  
-**When** the command processes data incrementally  
-**Then** progress updates are displayed immediately without buffering  
-**And** each progress update includes a timestamp or elapsed time  
-**And** the terminal updates dynamically
+#### Scenario: Command specifies verbose as default
+**Given** a command is created with default verbosity 'verbose' in constructor  
+**When** the command is executed without CLI verbosity flags  
+**Then** the command uses verbose verbosity  
+**And** detailed output is displayed by default
 
-#### Scenario: Streaming completes with final summary
-**Given** a streaming command is running  
-**When** the command completes all processing  
-**Then** a final summary is displayed  
-**And** the summary includes total execution time  
-**And** the summary includes total items processed
+#### Scenario: Command default is overridden by CLI flag
+**Given** a command is created with default verbosity 'verbose' in constructor  
+**When** the command is executed with '--quiet' flag  
+**Then** the CLI flag takes precedence  
+**And** the command uses quiet verbosity
+
+### Requirement: Real-time Progress Output
+
+Commands MAY output progress updates in real-time during execution. This is an implementation detail of individual commands, not a separate verbosity mode.
+
+**ID:** COC-008  
+**Priority:** Low
+
+#### Scenario: Command streams progress during execution
+**Given** a command implements progressive output  
+**When** the command processes data incrementally with verbose verbosity  
+**Then** progress updates are displayed in real-time  
+**And** each progress update may include a timestamp or elapsed time  
+**And** the implementation is specific to that command's needs
+
+#### Scenario: Command outputs all at once
+**Given** a command implements batch output  
+**When** the command completes processing  
+**Then** all output is displayed at the end  
+**And** the output format matches the selected verbosity level
 
 ### Requirement: ExecutionContext Extension
 
 The system MUST extend ExecutionContext interface with verbosity and output target properties without breaking existing code.
 
-**ID:** COC-008  
+**ID:** COC-009  
 **Priority:** High
 
 #### Scenario: New context properties are accessible
 **Given** a command receives an ExecutionContext  
 **When** the command accesses context.verbosity  
-**Then** the verbosity level is available ('quiet' | 'summary' | 'verbose' | 'stream')  
+**Then** the verbosity level is available ('quiet' | 'summary' | 'verbose')  
 **And** the command accesses context.outputTarget  
 **And** the output target is available ('screen-only' | 'log-only' | 'both' | 'file')
 
@@ -203,7 +233,7 @@ The system MUST extend ExecutionContext interface with verbosity and output targ
 
 The system MUST validate and sanitize custom output file paths to prevent directory traversal attacks and respect filesystem permissions.
 
-**ID:** COC-009  
+**ID:** COC-010  
 **Priority:** High
 
 #### Scenario: Directory traversal is prevented

@@ -3,8 +3,9 @@ import { createOutputBuilder as createOutputBuilderFactory } from './output-buil
 
 /**
  * Verbosity levels for command output
+ * Commands implement their own output behavior for these levels (e.g., progressive vs batch output)
  */
-export type VerbosityLevel = 'quiet' | 'summary' | 'verbose' | 'stream';
+export type VerbosityLevel = 'quiet' | 'summary' | 'verbose';
 
 /**
  * Output destination targets
@@ -28,7 +29,7 @@ export interface SummaryData {
  */
 export interface IOutputBuilder {
   /**
-   * Add a section to the output (for verbose/stream modes)
+   * Add a section to the output (for verbose mode)
    */
   addSection(title: string, content: string): void;
   
@@ -38,7 +39,7 @@ export interface IOutputBuilder {
   addSummary(data: SummaryData): void;
   
   /**
-   * Add a progress message (for stream mode)
+   * Add a progress message (for verbose mode, optional progressive output)
    */
   addProgress(message: string): void;
   
@@ -242,6 +243,12 @@ export abstract class CommandHandler {
   abstract name: string;
   abstract description: string;
   abstract examples: string[];
+  
+  /**
+   * Optional default verbosity level for this command
+   * Can be overridden by CLI flags
+   */
+  protected defaultVerbosity?: VerbosityLevel;
 
   /**
    * Main execute method - can be overridden for backward compatibility
@@ -290,9 +297,11 @@ export abstract class CommandHandler {
 
   /**
    * Create appropriate output builder based on verbosity level
+   * Resolution hierarchy: context.verbosity (CLI flag) → command defaultVerbosity → 'summary'
    */
   protected createOutputBuilder(context: ExecutionContext): IOutputBuilder {
-    return createOutputBuilderFactory(context.verbosity || 'summary');
+    const verbosity = context.verbosity || this.defaultVerbosity || 'summary';
+    return createOutputBuilderFactory(verbosity);
   }
 
   /**

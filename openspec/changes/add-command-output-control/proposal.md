@@ -6,39 +6,42 @@
 
 ## Summary
 
-Enhance the CLI command system with flexible output control features including verbosity levels, summary views, and output redirection options. This allows users to control how command execution results are displayed and saved, from minimal quiet mode to detailed verbose/streaming modes.
+Enhance the CLI command system with flexible output control features including verbosity levels, summary views, and output redirection options. This allows users to control how command execution results are displayed and saved, from minimal quiet mode to detailed verbose modes.
 
 **Key Features:**
-1. **Verbosity Levels**: `--quiet`, `--summary` (default), `--verbose`, `--stream`
-2. **Output Redirection**: `--log-only`, `--screen-only`, `--both` (default), `--file <path>`
-3. **Summary Views**: Consistent formatted summaries with execution time, output location, and reference tokens
-4. **Application & Command-Level Control**: Global defaults with per-command overrides
+1. **Verbosity Levels**: `--quiet`, `--summary` (default), `--verbose`
+2. **Command-Level Defaults**: Commands can specify preferred verbosity via constructor enum
+3. **Output Redirection**: `--log-only`, `--screen-only`, `--both` (default), `--file <path>`
+4. **Summary Views**: Consistent formatted summaries with execution time, output location, and reference tokens
+5. **Hierarchical Control**: CLI flags override command defaults, which override application defaults
 
 ## Motivation
 
 Currently, all commands output directly to console with inconsistent formatting and no control over verbosity or destination. Users need:
 - **Quiet mode** for CI/CD pipelines and scripting
 - **Verbose mode** for debugging and understanding long-running operations
-- **Stream mode** for real-time feedback during processing
 - **Output redirection** for integration with other tools
 - **Consistent summaries** across all commands for predictable parsing
 
 The current `ExecutionContext` and `CommandHandler` architecture provides no standardized way to:
 - Control output verbosity per command
-- Stream progress updates during execution
+- Allow commands to specify their preferred output style
 - Format consistent summaries with timing information
 - Redirect output to different destinations
 
+Commands should be able to declare their preferred verbosity level (e.g., a data processing command might default to verbose), while users can override this preference via CLI flags.
+
 ## Goals
 
-1. **Verbosity Control**: Support 4 levels (quiet, summary, verbose, stream) with global and per-command settings
-2. **Output Builders**: Introduce `IOutputBuilder` abstraction for constructing formatted output
-3. **Summary Format**: Standardize summary output with command name, execution time, output file, reference token
-4. **Output Redirection**: Support screen-only, log-only, both, and custom file destinations
-5. **Backward Compatibility**: Maintain existing command behavior as default (summary mode)
-6. **Streaming Support**: Enable real-time progress reporting for long operations
-7. **ExecutionContext Extension**: Add output control properties without breaking existing code
-8. **CommandHandler Enhancement**: Add timing, output building, and summary formatting capabilities
+1. **Verbosity Control**: Support 3 levels (quiet, summary, verbose) with hierarchical resolution
+2. **Command Defaults**: Allow commands to specify preferred verbosity via constructor enum
+3. **CLI Override**: Application-level flags override command preferences
+4. **Output Builders**: Introduce `IOutputBuilder` abstraction for constructing formatted output
+5. **Summary Format**: Standardize summary output with command name, execution time, output file, reference token
+6. **Output Redirection**: Support screen-only, log-only, both, and custom file destinations
+7. **Backward Compatibility**: Maintain existing command behavior as default (summary mode)
+8. **ExecutionContext Extension**: Add output control properties without breaking existing code
+9. **CommandHandler Enhancement**: Add timing, output building, and summary formatting capabilities
 
 ## Non-Goals
 

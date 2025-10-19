@@ -110,9 +110,12 @@ async function main() {
     const cleanArgs: string[] = [];
     
     // Parse verbosity and output target flags
-    let verbosity: 'quiet' | 'summary' | 'verbose' | 'stream' = 'summary';
+    let verbosity: 'quiet' | 'summary' | 'verbose' | undefined;
     let outputTarget: 'screen-only' | 'log-only' | 'both' | 'file' = 'both';
     let customOutputPath: string | undefined;
+    
+    let verbosityFlagCount = 0;
+    let outputTargetFlagCount = 0;
     
     for (let i = 0; i < commandArgs.length; i++) {
       const arg = commandArgs[i];
@@ -128,25 +131,46 @@ async function main() {
         i++; // Skip the token value
       } else if (arg === '--quiet' || arg === '-q') {
         verbosity = 'quiet';
+        verbosityFlagCount++;
       } else if (arg === '--summary' || arg === '-s') {
         verbosity = 'summary';
+        verbosityFlagCount++;
       } else if (arg === '--verbose' || arg === '-v') {
         verbosity = 'verbose';
-      } else if (arg === '--stream') {
-        verbosity = 'stream';
+        verbosityFlagCount++;
       } else if (arg === '--screen-only') {
         outputTarget = 'screen-only';
+        outputTargetFlagCount++;
       } else if (arg === '--log-only') {
         outputTarget = 'log-only';
+        outputTargetFlagCount++;
       } else if (arg === '--both') {
         outputTarget = 'both';
+        outputTargetFlagCount++;
       } else if (arg === '--file' && i + 1 < commandArgs.length) {
         outputTarget = 'file';
         customOutputPath = commandArgs[i + 1];
+        outputTargetFlagCount++;
         i++; // Skip the path value
       } else {
         cleanArgs.push(arg);
       }
+    }
+    
+    // Validate flag usage
+    if (verbosityFlagCount > 1) {
+      console.error(formatError('Error: Only one verbosity flag (--quiet, --summary, --verbose) can be specified'));
+      process.exit(1);
+    }
+    
+    if (outputTargetFlagCount > 1) {
+      console.error(formatError('Error: Only one output target flag (--screen-only, --log-only, --both, --file) can be specified'));
+      process.exit(1);
+    }
+    
+    if (outputTarget === 'file' && !customOutputPath) {
+      console.error(formatError('Error: --file flag requires a path argument'));
+      process.exit(1);
     }
 
     // Create execution context

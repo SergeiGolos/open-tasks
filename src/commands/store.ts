@@ -4,7 +4,7 @@ import { addProcessingDetails, formatFileSize } from '../output-utils.js';
 
 /**
  * Store command - stores a value and creates a reference
- * Now supports enhanced output control (quiet, summary, verbose, stream)
+ * Supports enhanced output control (quiet, summary, verbose)
  */
 export default class StoreCommand extends CommandHandler {
   name = 'store';
@@ -30,7 +30,7 @@ export default class StoreCommand extends CommandHandler {
     // Get output builder for progress reporting
     const builder = this.createOutputBuilder(context);
     
-    // Add progress in stream mode
+    // Add progress (shown in verbose mode if command implements progressive output)
     builder.addProgress('Preparing to store value...');
 
     // Store using workflow context
@@ -52,7 +52,7 @@ export default class StoreCommand extends CommandHandler {
     );
 
     // Add verbose details
-    if (context.verbosity === 'verbose' || context.verbosity === 'stream') {
+    if (context.verbosity === 'verbose') {
       const valueSize = new TextEncoder().encode(value).length;
       addProcessingDetails(builder, {
         'Value Length': value.length,

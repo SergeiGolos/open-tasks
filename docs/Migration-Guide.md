@@ -15,7 +15,8 @@ This guide shows how to update existing commands to use the new output control s
 ## Overview
 
 The output control system adds:
-- ✅ Multiple verbosity levels (quiet, summary, verbose, stream)
+- ✅ Multiple verbosity levels (quiet, summary, verbose)
+- ✅ Command-level default verbosity configuration
 - ✅ Output routing (screen, logs, custom files)
 - ✅ Consistent formatting across commands
 - ✅ Progress reporting for long operations
@@ -544,7 +545,6 @@ if (context.verbosity === 'verbose') {
 - [ ] Command works with default verbosity (summary)
 - [ ] `--quiet` shows minimal output
 - [ ] `--verbose` shows detailed sections
-- [ ] `--stream` shows progress messages
 - [ ] `--screen-only` doesn't create files
 - [ ] `--log-only` creates logs but shows nothing
 - [ ] Errors display properly
@@ -558,7 +558,6 @@ if (context.verbosity === 'verbose') {
 $ open-tasks yourcommand args --quiet
 $ open-tasks yourcommand args --summary
 $ open-tasks yourcommand args --verbose
-$ open-tasks yourcommand args --stream
 
 # Test output targets
 $ open-tasks yourcommand args --screen-only
@@ -567,7 +566,7 @@ $ open-tasks yourcommand args --both
 
 # Test combinations
 $ open-tasks yourcommand args --verbose --log-only
-$ open-tasks yourcommand args --stream --file output.log
+$ open-tasks yourcommand args --quiet --file output.log
 ```
 
 ### Verification
@@ -598,18 +597,6 @@ Output: 123 bytes
 ────────────────────────────────────────────────────────────────────────────────
 ✓ Command: yourcommand
 ⏱️  Duration: 45ms
-```
-
-**Stream mode:**
-```bash
-$ open-tasks yourcommand test --stream
-[0ms] ⏳ Starting...
-[15ms] ⏳ Processing...
-[40ms] ⏳ Finishing...
-
-[45ms] 📊 Summary
-────────────────────────────────────────────────────────────────────────────────
-✓ yourcommand completed in 45ms
 ```
 
 ## Rollback Strategy

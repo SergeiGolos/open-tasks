@@ -21,7 +21,7 @@ For comprehensive documentation, visit the [Open Tasks Wiki](../open-tasks-wiki/
 - 🔌 **Extensible**: Add custom commands in `.open-tasks/commands/` that are auto-discovered
 - 🌊 **Workflow Context**: Internal `IWorkflowContext` API for orchestrating multi-step workflows
 - 📁 **File Output**: Automatically saves outputs to `.open-tasks/outputs/{timestamp}-{command}/` with per-execution isolation
-- 🎨 **Output Control**: Four verbosity levels (quiet, summary, verbose, stream) with flexible routing (screen, logs, custom files)
+- 🎨 **Output Control**: Three verbosity levels (quiet, summary, verbose) with flexible routing (screen, logs, custom files)
 - 🎯 **Decorators**: Transform MemoryRef objects before file creation (tokens, filenames, metadata)
 - ⚡ **TypeScript**: Fully typed for excellent IDE support
 
@@ -107,19 +107,14 @@ open-tasks store "data"
 # Verbose mode - detailed information (good for debugging)
 open-tasks store "data" --verbose
 (shows processing details, file info, metadata)
-
-# Stream mode - real-time progress (good for long operations)
-open-tasks init --stream
-[0ms] ⏳ Creating .open-tasks directory...
-[15ms] ⏳ Writing config...
-[45ms] 📊 Summary
 ```
 
 **Flags:**
 - `--quiet` or `-q` - Minimal single-line output
 - `--summary` or `-s` - Default, brief formatted summary
 - `--verbose` or `-v` - Detailed sections and metadata
-- `--stream` - Real-time progress with timestamps
+
+**Note:** Individual commands control how they output (progressively or all at once). Some commands may display real-time progress in verbose mode.
 
 ### Output Targets
 
@@ -156,8 +151,8 @@ open-tasks store "data" --quiet --screen-only
 # Verbose logs, clean terminal
 open-tasks store "data" --verbose --log-only
 
-# Stream progress to custom file
-open-tasks long-operation --stream --file progress.log
+# Verbose output to custom file
+open-tasks long-operation --verbose --file progress.log
 ```
 
 ### Documentation

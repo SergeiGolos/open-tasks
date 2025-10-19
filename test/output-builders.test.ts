@@ -208,11 +208,6 @@ describe('createOutputBuilder factory', () => {
     expect(builder).toBeInstanceOf(VerboseOutputBuilder);
   });
 
-  it('should create StreamingOutputBuilder for stream level', () => {
-    const builder = createOutputBuilder('stream');
-    expect(builder).toBeInstanceOf(StreamingOutputBuilder);
-  });
-
   it('should default to SummaryOutputBuilder for undefined', () => {
     const builder = createOutputBuilder(undefined as any);
     expect(builder).toBeInstanceOf(SummaryOutputBuilder);

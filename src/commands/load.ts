@@ -6,7 +6,7 @@ import { addFileInfoSection, addProcessingDetails } from '../output-utils.js';
 
 /**
  * Load command - loads content from a file
- * Now supports enhanced output control (quiet, summary, verbose, stream)
+ * Supports enhanced output control (quiet, summary, verbose)
  */
 export default class LoadCommand extends CommandHandler {
   name = 'load';
@@ -48,7 +48,7 @@ export default class LoadCommand extends CommandHandler {
     }
 
     // Add file information in verbose mode
-    if (context.verbosity === 'verbose' || context.verbosity === 'stream') {
+    if (context.verbosity === 'verbose') {
       addFileInfoSection(builder, absolutePath, stats.size);
     }
 
@@ -68,7 +68,7 @@ export default class LoadCommand extends CommandHandler {
     );
 
     // Add processing details in verbose mode
-    if (context.verbosity === 'verbose' || context.verbosity === 'stream') {
+    if (context.verbosity === 'verbose') {
       const contentLength = typeof memoryRef.content === 'string' 
         ? memoryRef.content.length 
         : JSON.stringify(memoryRef.content).length;

@@ -7,7 +7,7 @@ import { addProcessingDetails } from '../output-utils.js';
 
 /**
  * Init command - initializes a new open-tasks project
- * Now supports enhanced output control (quiet, summary, verbose, stream)
+ * Supports enhanced output control (quiet, summary, verbose)
  */
 export default class InitCommand extends CommandHandler {
   name = 'init';
@@ -110,7 +110,7 @@ export default class InitCommand extends CommandHandler {
     builder.addProgress('Initialization complete!');
 
     // Add verbose details about what was created
-    if (context.verbosity === 'verbose' || context.verbosity === 'stream') {
+    if (context.verbosity === 'verbose') {
       addProcessingDetails(builder, {
         'Project Directory': context.cwd,
         'Open Tasks Directory': openTasksDir,
