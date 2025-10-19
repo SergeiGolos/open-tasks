@@ -1,14 +1,180 @@
 ---
-title: "Architecture"
+title: "Architecture & Core Concepts"
 ---
 
-# Architecture
+# Architecture & Core Concepts
 
-Understanding the design and structure of Open Tasks CLI.
+High-level developer overview of Open Tasks CLI design and structure.
 
 ## Overview
 
-Open Tasks CLI is built on a **three-layer architecture** that provides clear separation between internal APIs, user-facing commands, and composable operations.
+Open Tasks CLI is built to enable quick creation of AI-powered command-line workflows. The architecture is designed to make it easy to build context for AI tools without depending on the LLM to figure out what it needs.
+
+```mermaid
+graph TB
+    subgraph "User Experience"
+        CLI[CLI Interface<br/>open-tasks command]
+    end
+    
+    subgraph "Command Layer"
+        HANDLER[CommandHandler<br/>The Box Format]
+        STORE[store]
+        LOAD[load]
+        EXTRACT[extract]
+        REPLACE[replace]
+        PS[powershell]
+        AI[ai-cli]
+    end
+    
+    subgraph "Context Management"
+        WF[Workflow Context<br/>Memory & References]
+        REF[Reference Manager<br/>Token & UUID Tracking]
+        OUT[Output Handler<br/>File System]
+    end
+    
+    subgraph "Storage"
+        FILES[File System<br/>.open-tasks/outputs/]
+    end
+    
+    CLI --> HANDLER
+    HANDLER --> STORE
+    HANDLER --> LOAD
+    HANDLER --> EXTRACT
+    HANDLER --> REPLACE
+    HANDLER --> PS
+    HANDLER --> AI
+    
+    STORE --> WF
+    LOAD --> WF
+    EXTRACT --> WF
+    REPLACE --> WF
+    PS --> WF
+    AI --> WF
+    
+    WF --> REF
+    WF --> OUT
+    OUT --> FILES
+    
+    style CLI fill:#2196F3,color:#fff
+    style HANDLER fill:#4CAF50,color:#fff
+    style WF fill:#FF9800,color:#fff
+    style FILES fill:#9C27B0,color:#fff
+```
+
+## Core Concepts
+
+### 1. The Box Format
+
+Commands follow a consistent pattern called the "box format":
+
+```mermaid
+graph LR
+    A[Inputs<br/>args + refs] --> B[Command Box<br/>Processing]
+    B --> C[Output<br/>ReferenceHandle]
+    
+    style A fill:#E3F2FD
+    style B fill:#FFF3E0
+    style C fill:#E8F5E9
+```
+
+Every command is a box with:
+- **Inputs** - Arguments and references from previous commands
+- **Processing** - Your custom logic
+- **Output** - A reference that can be used by next commands
+
+This makes commands:
+- **Composable** - Chain together easily
+- **Predictable** - Same interface for all
+- **Testable** - Clear inputs and outputs
+
+### 2. References & Memory
+
+The system uses references to pass data between commands:
+
+```mermaid
+graph TD
+    A[Command 1] --> B[Store Output]
+    B --> C[MemoryRef<br/>UUID + Token]
+    C --> D[File System<br/>.open-tasks/outputs/]
+    C --> E[Reference Manager<br/>In-Memory Index]
+    E --> F[Command 2 Input]
+    
+    style C fill:#FFF3E0
+    style E fill:#E3F2FD
+```
+
+**ReferenceHandle Structure:**
+```typescript
+{
+  id: 'uuid-1234',           // Unique identifier
+  token: 'my-token',          // Optional named token
+  content: 'data...',         // Actual content
+  outputFile: '.open-tasks/outputs/...',  // File path
+  timestamp: Date             // When created
+}
+```
+
+**Two Ways to Reference:**
+1. **By Token** - Named references: `--ref my-token`
+2. **By UUID** - Unique IDs: `--ref uuid-1234`
+
+### 3. Workflow Context
+
+The Workflow Context manages the flow of data:
+
+```mermaid
+sequenceDiagram
+    participant Command
+    participant Context
+    participant Storage
+    participant RefMgr
+    
+    Command->>Context: store(data, decorators)
+    Context->>Storage: Write file
+    Storage-->>Context: File path
+    Context->>RefMgr: Create reference
+    RefMgr-->>Context: ReferenceHandle
+    Context-->>Command: MemoryRef
+```
+
+**Key Responsibilities:**
+- Store command outputs
+- Create references with tokens
+- Manage file system operations
+- Track reference metadata
+
+### 4. Command Chaining
+
+Commands chain by passing references:
+
+```mermaid
+graph LR
+    A[load file.txt] --> B[ref: content]
+    B --> C[extract pattern]
+    C --> D[ref: matches]
+    D --> E[ai-cli analyze]
+    E --> F[ref: analysis]
+    
+    style B fill:#FFF3E0
+    style D fill:#FFF3E0
+    style F fill:#FFF3E0
+```
+
+**Example Flow:**
+```bash
+# Step 1: Load file → creates reference
+open-tasks load data.txt --token content
+
+# Step 2: Extract data → uses reference, creates new reference
+open-tasks extract "[a-z]+@[a-z.]+" --ref content --token emails
+
+# Step 3: Analyze with AI → uses reference
+open-tasks ai-cli "Categorize these emails" --ref emails
+```
+
+## Architecture Layers
+
+Open Tasks has a clean three-layer architecture:
 
 ## Three-Layer Design
 
