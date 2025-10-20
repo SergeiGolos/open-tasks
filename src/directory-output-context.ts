@@ -17,7 +17,7 @@ export class DirectoryOutputContext implements IFlow {
   public Tokens: Map<string, StringRef>;
   private outputDir: string;
 
-  constructor(public cwd: string, outputDir: string = '.open-tasks/outputs') {
+  constructor(public cwd: string, outputDir: string = '.open-tasks/logs') {
     this.outputDir = outputDir;
     this.Tokens = new Map();
   }

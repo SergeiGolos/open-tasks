@@ -6,8 +6,8 @@ import os from 'os';
  * Default configuration
  */
 const DEFAULT_CONFIG = {
-  outputDir: '.open-tasks/outputs',
-  customCommandsDir: '.open-tasks/tasks',
+  outputDir: '.open-tasks/logs',
+  customCommandsDir: ['.open-tasks', path.join(os.homedir(), '.open-tasks')],
   timestampFormat: 'YYYYMMDD-HHmmss-SSS',
   defaultFileExtension: 'txt',
   colors: true,
@@ -21,7 +21,7 @@ export async function loadConfig(cwd: string): Promise<Record<string, any>> {
 
   // Try to load user-level config
   try {
-    const userConfigPath = path.join(os.homedir(), '.open-tasks', 'config.json');
+    const userConfigPath = path.join(os.homedir(), '.open-tasks', '.config.json');
     const userConfigData = await fs.readFile(userConfigPath, 'utf-8');
     const userConfig = JSON.parse(userConfigData);
     config = { ...config, ...userConfig };
@@ -31,7 +31,7 @@ export async function loadConfig(cwd: string): Promise<Record<string, any>> {
 
   // Try to load project-level config
   try {
-    const projectConfigPath = path.join(cwd, '.open-tasks', 'config.json');
+    const projectConfigPath = path.join(cwd, '.open-tasks', '.config.json');
     const projectConfigData = await fs.readFile(projectConfigPath, 'utf-8');
     const projectConfig = JSON.parse(projectConfigData);
     config = { ...config, ...projectConfig };

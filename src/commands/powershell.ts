@@ -47,7 +47,7 @@ export default class PowerShellCommand extends TaskHandler {
     const StringRef = await workflowContext.set(result, decorators);
 
     const outputFile = StringRef.fileName
-      ? `${workflowContext.cwd}/.open-tasks/outputs/${StringRef.fileName}`
+      ? `${workflowContext.cwd}/${config.outputDir}/${StringRef.fileName}`
       : undefined;
 
     const ref: ReferenceHandle = {
