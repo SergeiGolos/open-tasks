@@ -16,7 +16,8 @@ describe('Built-in Commands', () => {
   let testDir: string;
 
   beforeEach(async () => {
-    testDir = path.join(process.cwd(), '.test-output');
+    testDir = path.join(process.cwd(), '.test-output-commands');
+    await fs.rm(testDir, { recursive: true, force: true }).catch(() => {});
     await fs.mkdir(testDir, { recursive: true });
     context = new DirectoryOutputContext(process.cwd(), testDir);
   });
