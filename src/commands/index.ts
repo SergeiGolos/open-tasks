@@ -15,3 +15,6 @@ export { JsonTransformCommand } from './json-transform.js';
 // Utility commands
 export { JoinCommand } from './join.js';
 export { QuestionCommand } from './question.js';
+
+// Agent commands - specific command classes for each tool
+export * from './agents/index.js';

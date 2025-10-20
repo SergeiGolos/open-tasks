@@ -1,0 +1,83 @@
+{
+  "$schema": "../schemas/config.schema.json",
+  "outputDir": ".open-tasks/logs",
+  "customCommandsDir": [".open-tasks", "~/.open-tasks"],
+  "timestampFormat": "YYYYMMDD-HHmmss-SSS",
+  "defaultFileExtension": "txt",
+  "colors": true,
+  "agents": [
+    {
+      "name": "gemini-default",
+      "type": "gemini",
+      "timeout": 300000,
+      "config": {
+        "model": "gemini-2.0-flash-exp",
+        "enableSearch": false
+      }
+    },
+    {
+      "name": "gemini-research",
+      "type": "gemini",
+      "timeout": 300000,
+      "config": {
+        "model": "gemini-1.5-pro",
+        "enableSearch": true,
+        "contextFiles": ["docs/**/*.md"]
+      }
+    },
+    {
+      "name": "claude-default",
+      "type": "claude",
+      "timeout": 300000,
+      "config": {
+        "model": "claude-3-5-sonnet-20241022",
+        "allowAllTools": false
+      }
+    },
+    {
+      "name": "claude-thinking",
+      "type": "claude",
+      "timeout": 600000,
+      "config": {
+        "model": "claude-3-5-sonnet-20241022",
+        "allowAllTools": true,
+        "enableThinking": true
+      }
+    },
+    {
+      "name": "copilot-default",
+      "type": "copilot",
+      "timeout": 300000,
+      "config": {
+        "model": "gpt-4o",
+        "allowAllTools": false
+      }
+    },
+    {
+      "name": "aider-simple",
+      "type": "aider",
+      "timeout": 300000,
+      "config": {
+        "noAutoCommits": true,
+        "yesAlways": false
+      }
+    },
+    {
+      "name": "qwen-default",
+      "type": "qwen",
+      "timeout": 300000,
+      "config": {
+        "enablePlan": true
+      }
+    },
+    {
+      "name": "llm-gpt4",
+      "type": "llm",
+      "timeout": 120000,
+      "config": {
+        "model": "gpt-4",
+        "temperature": 0.7
+      }
+    }
+  ]
+}

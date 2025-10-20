@@ -1,0 +1,224 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/SergeiGolos/open-tasks/schemas/config.schema.json",
+  "title": "Open Tasks Configuration",
+  "description": "Configuration file for open-tasks CLI tool",
+  "type": "object",
+  "properties": {
+    "outputDir": {
+      "type": "string",
+      "description": "Directory for storing output files",
+      "default": ".open-tasks/logs"
+    },
+    "customCommandsDir": {
+      "type": "array",
+      "description": "Directories to search for custom commands",
+      "items": {
+        "type": "string"
+      },
+      "default": [".open-tasks", "~/.open-tasks"]
+    },
+    "timestampFormat": {
+      "type": "string",
+      "description": "Format for timestamps in output files",
+      "default": "YYYYMMDD-HHmmss-SSS"
+    },
+    "defaultFileExtension": {
+      "type": "string",
+      "description": "Default file extension for output files",
+      "default": "txt"
+    },
+    "colors": {
+      "type": "boolean",
+      "description": "Enable colored output",
+      "default": true
+    },
+    "agents": {
+      "type": "array",
+      "description": "Agent CLI tool configurations",
+      "items": {
+        "$ref": "#/definitions/agentConfig"
+      }
+    }
+  },
+  "definitions": {
+    "agentConfig": {
+      "type": "object",
+      "required": ["name", "type", "config"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique name for this agent configuration"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["gemini", "claude", "copilot", "aider", "qwen", "llm"],
+          "description": "Type of agent CLI tool"
+        },
+        "workingDirectory": {
+          "type": "string",
+          "description": "Working directory for agent execution"
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds",
+          "minimum": 0
+        },
+        "config": {
+          "description": "Tool-specific configuration",
+          "oneOf": [
+            { "$ref": "#/definitions/geminiConfig" },
+            { "$ref": "#/definitions/claudeConfig" },
+            { "$ref": "#/definitions/copilotConfig" },
+            { "$ref": "#/definitions/aiderConfig" },
+            { "$ref": "#/definitions/qwenConfig" },
+            { "$ref": "#/definitions/llmConfig" }
+          ]
+        }
+      }
+    },
+    "geminiConfig": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "enum": [
+            "gemini-2.0-flash-exp",
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-8b",
+            "gemini-1.5-pro",
+            "gemini-exp-1206"
+          ],
+          "description": "Gemini model to use"
+        },
+        "contextFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Files to include as context"
+        },
+        "enableSearch": {
+          "type": "boolean",
+          "description": "Enable web search capability",
+          "default": false
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "Google AI API key"
+        }
+      }
+    },
+    "claudeConfig": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "enum": [
+            "claude-3-5-sonnet-20241022",
+            "claude-3-5-haiku-20241022",
+            "claude-3-opus-20240229"
+          ],
+          "description": "Claude model to use"
+        },
+        "allowAllTools": {
+          "type": "boolean",
+          "description": "Allow all tools without confirmation",
+          "default": false
+        },
+        "enableThinking": {
+          "type": "boolean",
+          "description": "Enable extended thinking mode",
+          "default": false
+        }
+      }
+    },
+    "copilotConfig": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "enum": [
+            "gpt-4o",
+            "gpt-4-turbo",
+            "o1-preview",
+            "o1-mini"
+          ],
+          "description": "GitHub Copilot model to use"
+        },
+        "allowAllTools": {
+          "type": "boolean",
+          "description": "Allow all tools without confirmation",
+          "default": false
+        }
+      }
+    },
+    "aiderConfig": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Files to edit"
+        },
+        "noAutoCommits": {
+          "type": "boolean",
+          "description": "Disable automatic commits",
+          "default": false
+        },
+        "yesAlways": {
+          "type": "boolean",
+          "description": "Automatically confirm all prompts",
+          "default": false
+        },
+        "model": {
+          "type": "string",
+          "description": "Model to use (e.g., gpt-4, claude-3-opus)"
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "API key for the model provider"
+        }
+      }
+    },
+    "qwenConfig": {
+      "type": "object",
+      "properties": {
+        "enablePlan": {
+          "type": "boolean",
+          "description": "Enable planning mode",
+          "default": false
+        },
+        "model": {
+          "type": "string",
+          "description": "Qwen model to use"
+        }
+      }
+    },
+    "llmConfig": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Model name (e.g., gpt-4, claude-3-opus)"
+        },
+        "temperature": {
+          "type": "number",
+          "description": "Sampling temperature",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "system": {
+          "type": "string",
+          "description": "System prompt"
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "API key for the model provider"
+        }
+      }
+    }
+  }
+}
