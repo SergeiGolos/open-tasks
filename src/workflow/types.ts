@@ -3,6 +3,8 @@
  * Defines core types for the workflow processing system
  */
 
+import { ICardBuilder } from "../types";
+
 /**
  * Metadata about a transform or operation applied to content
  */
@@ -20,7 +22,7 @@ export interface TransformMetadata {
 /**
  * Reference to a stored memory value with metadata
  */
-export interface MemoryRef {
+export interface StringRef {
   /** Unique identifier (UUID or user-provided token) */
   id: string;
   /** Optional user-friendly token */
@@ -47,49 +49,35 @@ export interface ICommand {
    * @returns Array of memory references produced by the command
    */
   execute(
-    context: IWorkflowContext, 
+    context: IFlow, 
     args: any[],
-    cardBuilder?: import('../types.js').ICardBuilder
-  ): Promise<MemoryRef[]>;
+    cardBuilder?: ICardBuilder
+  ): Promise<StringRef[]>;
 }
-
+  
 /**
- * Interface for decorators that transform MemoryRef objects during storage
+ * Interface for decorators that transform StringRef objects during storage
  */
-export interface IMemoryDecorator {
+export interface IRefDecorator {
   /**
-   * Apply transformation to a MemoryRef
+   * Apply transformation to a StringRef
    * @param ref - The memory reference to transform
    * @returns Transformed memory reference
    */
-  decorate(ref: MemoryRef): MemoryRef;
+  decorate(ref: StringRef): StringRef;
 }
 
 /**
  * Core workflow context interface for storing, retrieving, and executing operations
  */
-export interface IWorkflowContext {
-  /**
-   * Store a value with optional decorators
-   * @param value - The value to store
-   * @param decorators - Optional decorators to apply
-   * @returns Memory reference to the stored value
-   */
-  store(value: any, decorators?: IMemoryDecorator[]): Promise<MemoryRef>;
-
-  /**
-   * Retrieve the latest value for a given token (synchronous)
-   * @param name - Token name to lookup
-   * @returns The stored value or undefined if not found
-   */
-  token(name: string): any;
-
+export interface IFlow {
+  
   /**
    * Execute a command with this context
    * @param command - The command to execute
    * @returns Array of memory references produced by the command
    */
-  run(command: ICommand): Promise<MemoryRef[]>;
+  with(command: ICommand): Promise<StringRef[]>;
 }
 
 /**
@@ -107,7 +95,7 @@ export interface TaskOutcome {
   /** Success status */
   success: boolean;
   /** Output references */
-  outputs: MemoryRef[];
+  outputs: StringRef[];
 }
 
 /**
@@ -121,7 +109,7 @@ export interface TaskLog {
   /** Command arguments */
   args: any[];
   /** Memory references used */
-  refs: MemoryRef[];
+  refs: StringRef[];
   /** Start timestamp */
   startTime: Date;
   /** End timestamp */

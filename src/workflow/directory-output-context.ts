@@ -3,18 +3,18 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fse from 'fs-extra';
 import {
-  IWorkflowContext,
+  IFlow,
   ICommand,
-  IMemoryDecorator,
-  MemoryRef,
+  IRefDecorator,
+  StringRef,
 } from './types.js';
 import { TimestampedFileNameDecorator } from './decorators.js';
 
 /**
  * Workflow context that writes outputs to timestamped files in a directory
  */
-export class DirectoryOutputContext implements IWorkflowContext {
-  private memory: Map<string, MemoryRef>;
+export class DirectoryOutputContext implements IFlow {
+  private memory: Map<string, StringRef>;
   private tokenIndex: Map<string, string>;
   private outputDir: string;
 
@@ -24,9 +24,9 @@ export class DirectoryOutputContext implements IWorkflowContext {
     this.outputDir = outputDir;
   }
 
-  async store(value: any, decorators?: IMemoryDecorator[]): Promise<MemoryRef> {
+  private async store(value: any, decorators?: IRefDecorator[]): Promise<StringRef> {
     const id = uuidv4();
-    let ref: MemoryRef = {
+    let ref: StringRef = {
       id,
       content: value,
       timestamp: new Date(),
@@ -110,14 +110,14 @@ export class DirectoryOutputContext implements IWorkflowContext {
     return ref?.content;
   }
 
-  async run(command: ICommand): Promise<MemoryRef[]> {
+  async run(command: ICommand): Promise<StringRef[]> {
     return await command.execute(this, []);
   }
 
   /**
    * Get a memory reference by ID or token
    */
-  get(idOrToken: string): MemoryRef | undefined {
+  get(idOrToken: string): StringRef | undefined {
     let ref = this.memory.get(idOrToken);
     if (ref) {
       return ref;
@@ -132,13 +132,13 @@ export class DirectoryOutputContext implements IWorkflowContext {
   }
 
   /**
-   * Load content from a file and create a MemoryRef
+   * Load content from a file and create a StringRef
    */
-  async load(filePath: string, token?: string): Promise<MemoryRef> {
+  async load(filePath: string, token?: string): Promise<StringRef> {
     const content = await fs.readFile(filePath, 'utf-8');
     const id = uuidv4();
     
-    const ref: MemoryRef = {
+    const ref: StringRef = {
       id,
       content,
       timestamp: new Date(),
@@ -164,7 +164,7 @@ export class DirectoryOutputContext implements IWorkflowContext {
   /**
    * List all stored references
    */
-  list(): MemoryRef[] {
+  list(): StringRef[] {
     return Array.from(this.memory.values());
   }
 

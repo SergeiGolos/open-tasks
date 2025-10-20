@@ -3,7 +3,7 @@ import path from 'path';
 import fse from 'fs-extra';
 import { ExecutionContext, ReferenceHandle, ICardBuilder, IOutputSynk } from '../types.js';
 import { TaskHandler } from '../task-handler.js';
-import { IWorkflowContext } from '../workflow/types.js';
+import { IFlow } from '../workflow/types.js';
 
 /**
  * Create command - scaffolds a new custom command template
@@ -20,7 +20,7 @@ export default class CreateCommand extends TaskHandler {
   protected override async executeCommand(
     args: string[],
     config: Record<string, any>,
-    workflowContext: IWorkflowContext,
+    workflowContext: IFlow,
     outputBuilder: IOutputSynk
   ): Promise<ReferenceHandle> {
     if (args.length === 0) {

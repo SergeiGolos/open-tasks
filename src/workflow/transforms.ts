@@ -1,4 +1,4 @@
-import { ICommand, IWorkflowContext, MemoryRef, TransformMetadata } from './types.js';
+import { ICommand, IFlow, StringRef, TransformMetadata } from './types.js';
 import { TokenDecorator, MetadataDecorator } from './decorators.js';
 
 /**
@@ -10,10 +10,10 @@ abstract class BaseTransformCommand implements ICommand {
   protected abstract getTransformParams(): Record<string, any>;
 
   abstract execute(
-    context: IWorkflowContext,
+    context: IFlow,
     args: any[],
     cardBuilder?: import('../types.js').ICardBuilder
-  ): Promise<MemoryRef[]>;
+  ): Promise<StringRef[]>;
 
   /**
    * Create metadata for this transform
@@ -31,11 +31,11 @@ abstract class BaseTransformCommand implements ICommand {
    * Store result with metadata tracking
    */
   protected async storeWithMetadata(
-    context: IWorkflowContext,
+    context: IFlow,
     content: any,
     outputToken?: string,
     additionalParams?: Record<string, any>
-  ): Promise<MemoryRef> {
+  ): Promise<StringRef> {
     const metadata = this.createMetadata();
     
     // Merge additional params if provided
@@ -77,10 +77,10 @@ export class TokenReplaceCommand extends BaseTransformCommand {
   }
 
   async execute(
-    context: IWorkflowContext,
+    context: IFlow,
     args: any[],
     cardBuilder?: import('../types.js').ICardBuilder
-  ): Promise<MemoryRef[]> {
+  ): Promise<StringRef[]> {
     // Get input content from context by token
     const input = context.token(this.inputToken);
     
@@ -151,10 +151,10 @@ export class ExtractCommand extends BaseTransformCommand {
   }
 
   async execute(
-    context: IWorkflowContext,
+    context: IFlow,
     args: any[],
     cardBuilder?: import('../types.js').ICardBuilder
-  ): Promise<MemoryRef[]> {
+  ): Promise<StringRef[]> {
     const input = context.token(this.inputToken);
     
     if (input === undefined) {
@@ -204,10 +204,10 @@ export class RegexMatchCommand extends BaseTransformCommand {
   }
 
   async execute(
-    context: IWorkflowContext,
+    context: IFlow,
     args: any[],
     cardBuilder?: import('../types.js').ICardBuilder
-  ): Promise<MemoryRef[]> {
+  ): Promise<StringRef[]> {
     const input = context.token(this.inputToken);
     
     if (input === undefined) {
@@ -274,10 +274,10 @@ export class SplitCommand extends BaseTransformCommand {
   }
 
   async execute(
-    context: IWorkflowContext,
+    context: IFlow,
     args: any[],
     cardBuilder?: import('../types.js').ICardBuilder
-  ): Promise<MemoryRef[]> {
+  ): Promise<StringRef[]> {
     const input = context.token(this.inputToken);
     
     if (input === undefined) {
@@ -287,8 +287,8 @@ export class SplitCommand extends BaseTransformCommand {
     const inputStr = typeof input === 'string' ? input : JSON.stringify(input);
     const parts = inputStr.split(this.delimiter);
 
-    // Store each part as a separate MemoryRef with metadata
-    const refs: MemoryRef[] = [];
+    // Store each part as a separate StringRef with metadata
+    const refs: StringRef[] = [];
     for (let i = 0; i < parts.length; i++) {
       const token = this.outputTokenPrefix 
         ? `${this.outputTokenPrefix}-${i + 1}`
@@ -336,10 +336,10 @@ export class JoinCommand extends BaseTransformCommand {
   }
 
   async execute(
-    context: IWorkflowContext,
+    context: IFlow,
     args: any[],
     cardBuilder?: import('../types.js').ICardBuilder
-  ): Promise<MemoryRef[]> {
+  ): Promise<StringRef[]> {
     const values: string[] = [];
     
     for (const tokenName of this.inputTokens) {

@@ -1,6 +1,6 @@
 import { OutputBuilder } from './output-builders.js';
 import { VerbosityLevel, ExecutionContext, ReferenceHandle, ICardBuilder, IOutputSynk, SummaryData } from './types.js';
-import { IWorkflowContext } from './workflow/types.js';
+import { IFlow } from './workflow/types.js';
 
 /**
  * Base class for command handlers
@@ -47,7 +47,7 @@ export abstract class TaskHandler {
   protected abstract executeCommand(
     args: string[],
     config: Record<string, any>,
-    workflowContext: IWorkflowContext,
+    workflowContext: IFlow,
     outputBuilder: IOutputSynk    
   ): Promise<ReferenceHandle>;
 }

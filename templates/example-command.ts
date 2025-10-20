@@ -127,19 +127,19 @@ export default class ExampleCommand extends TaskHandler {
     // Decorators are applied BEFORE file creation
     // Output is written to: .open-tasks/outputs/{timestamp}-example-command/
     const decorators = token ? [new TokenDecorator(token)] : [];
-    const memoryRef = await context.workflowContext.store(result, decorators);
+    const StringRef = await context.workflowContext.store(result, decorators);
     
     // ========================================
     // 5. CREATE REFERENCE HANDLE
     // ========================================
     
     // Create a reference handle for command chaining
-    const outputFile = memoryRef.fileName
-      ? `${context.outputDir}/${memoryRef.fileName}`
+    const outputFile = StringRef.fileName
+      ? `${context.outputDir}/${StringRef.fileName}`
       : undefined;
     
     const referenceHandle = context.referenceManager.createReference(
-      memoryRef.id,
+      StringRef.id,
       result,
       token,
       outputFile
@@ -156,7 +156,7 @@ export default class ExampleCommand extends TaskHandler {
       details: `Processed "${inputValue.substring(0, 20)}${inputValue.length > 20 ? '...' : ''}"`,
       metadata: {
         outputLength: result.length,
-        token: token || memoryRef.id,
+        token: token || StringRef.id,
       },
     });
     

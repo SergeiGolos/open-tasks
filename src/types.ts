@@ -1,4 +1,4 @@
-import { DirectoryOutputContext, IWorkflowContext } from './workflow/index.js';
+import { DirectoryOutputContext, IFlow } from './workflow/index.js';
 import { OutputHandler } from './OutputHandler.js';
 import { TaskHandler } from './task-handler.js';
 
@@ -41,7 +41,7 @@ export interface ExecutionContext {
   /** Output handler instance */
   outputHandler: OutputHandler;
   /** Workflow context */
-  workflowContext: IWorkflowContext;
+  workflowContext: IFlow;
   /** Configuration object */
   config: Record<string, any>;
   /** Verbosity level (default: 'summary') */

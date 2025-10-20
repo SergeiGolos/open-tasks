@@ -4,10 +4,10 @@ import {
   FileNameDecorator,
   TimestampedFileNameDecorator,
 } from '../src/workflow/decorators';
-import { MemoryRef } from '../src/workflow/types';
+import { StringRef } from '../src/workflow/types';
 
 describe('Decorators', () => {
-  const baseRef: MemoryRef = {
+  const baseRef: StringRef = {
     id: 'test-id',
     content: 'test content',
     timestamp: new Date('2025-10-18T12:30:45.678Z'),

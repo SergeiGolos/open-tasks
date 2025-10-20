@@ -1,12 +1,12 @@
-import { IMemoryDecorator, MemoryRef, TransformMetadata } from './types.js';
+import { IRefDecorator, StringRef, TransformMetadata } from './types.js';
 
 /**
- * Decorator that adds a user-friendly token to a MemoryRef
+ * Decorator that adds a user-friendly token to a StringRef
  */
-export class TokenDecorator implements IMemoryDecorator {
+export class TokenDecorator implements IRefDecorator {
   constructor(private tokenName: string) {}
 
-  decorate(ref: MemoryRef): MemoryRef {
+  decorate(ref: StringRef): StringRef {
     return {
       ...ref,
       token: this.tokenName,
@@ -15,12 +15,12 @@ export class TokenDecorator implements IMemoryDecorator {
 }
 
 /**
- * Decorator that adds a file name to a MemoryRef
+ * Decorator that adds a file name to a StringRef
  */
-export class FileNameDecorator implements IMemoryDecorator {
+export class FileNameDecorator implements IRefDecorator {
   constructor(private fileName: string) {}
 
-  decorate(ref: MemoryRef): MemoryRef {
+  decorate(ref: StringRef): StringRef {
     return {
       ...ref,
       fileName: this.fileName,
@@ -31,13 +31,13 @@ export class FileNameDecorator implements IMemoryDecorator {
 /**
  * Decorator that generates a timestamped file name
  */
-export class TimestampedFileNameDecorator implements IMemoryDecorator {
+export class TimestampedFileNameDecorator implements IRefDecorator {
   constructor(
     private tokenOrId: string,
     private extension: string = 'txt'
   ) {}
 
-  decorate(ref: MemoryRef): MemoryRef {
+  decorate(ref: StringRef): StringRef {
     const timestamp = ref.timestamp || new Date();
     const dateStr = timestamp.toISOString().replace(/[-:]/g, '').split('.')[0];
     const ms = timestamp.getMilliseconds().toString().padStart(3, '0');
@@ -51,12 +51,12 @@ export class TimestampedFileNameDecorator implements IMemoryDecorator {
 }
 
 /**
- * Decorator that adds transform metadata to a MemoryRef
+ * Decorator that adds transform metadata to a StringRef
  */
-export class MetadataDecorator implements IMemoryDecorator {
+export class MetadataDecorator implements IRefDecorator {
   constructor(private metadata: TransformMetadata) {}
 
-  decorate(ref: MemoryRef): MemoryRef {
+  decorate(ref: StringRef): StringRef {
     const existingMetadata = ref.metadata || [];
     return {
       ...ref,

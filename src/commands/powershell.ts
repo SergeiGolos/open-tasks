@@ -50,14 +50,14 @@ export default class PowerShellCommand extends TaskHandler {
 
     // Store the result
     const decorators = token ? [new TokenDecorator(token)] : [];
-    const memoryRef = await context.workflowContext.store(result, decorators);
+    const StringRef = await context.workflowContext.store(result, decorators);
 
-    const outputFile = memoryRef.fileName
-      ? `${context.outputDir}/${memoryRef.fileName}`
+    const outputFile = StringRef.fileName
+      ? `${context.outputDir}/${StringRef.fileName}`
       : undefined;
 
     const ref = context.referenceManager.createReference(
-      memoryRef.id,
+      StringRef.id,
       result,
       token,
       outputFile

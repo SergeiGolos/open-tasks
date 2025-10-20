@@ -245,7 +245,7 @@ describe('Transform Commands', () => {
   });
 
   describe('Metadata Tracking', () => {
-    it('should track transform metadata in MemoryRef', async () => {
+    it('should track transform metadata in StringRef', async () => {
       // Store initial data
       await context.store('Hello World', [new TokenDecorator('greeting')]);
 

@@ -1,17 +1,17 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
-  IWorkflowContext,
+  IFlow,
   ICommand,
-  IMemoryDecorator,
-  MemoryRef,
+  IRefDecorator,
+  StringRef,
 } from './types.js';
 
 /**
  * In-memory implementation of workflow context
  * Stores values in a Map with token-based lookup
  */
-export class InMemoryWorkflowContext implements IWorkflowContext {
-  private memory: Map<string, MemoryRef>;
+export class InMemoryWorkflowContext implements IFlow {
+  private memory: Map<string, StringRef>;
   private tokenIndex: Map<string, string>; // token -> latest id
 
   constructor() {
@@ -19,48 +19,10 @@ export class InMemoryWorkflowContext implements IWorkflowContext {
     this.tokenIndex = new Map();
   }
 
-  async store(value: any, decorators?: IMemoryDecorator[]): Promise<MemoryRef> {
-    let ref: MemoryRef = {
-      id: uuidv4(),
-      content: value,
-      timestamp: new Date(),
-    };
-
-    // Apply decorators
-    if (decorators) {
-      for (const decorator of decorators) {
-        ref = decorator.decorate(ref);
-      }
-    }
-
-    // Store in memory
-    this.memory.set(ref.id, ref);
-
-    // Update token index if token is present
-    if (ref.token) {
-      this.tokenIndex.set(ref.token, ref.id);
-    }
-
-    return ref;
-  }
-
-  token(name: string): any {
-    const id = this.tokenIndex.get(name);
-    if (!id) {
-      return undefined;
-    }
-    const ref = this.memory.get(id);
-    return ref?.content;
-  }
-
-  async run(command: ICommand): Promise<MemoryRef[]> {
-    return await command.execute(this, []);
-  }
-
   /**
    * Get a memory reference by ID or token
    */
-  get(idOrToken: string): MemoryRef | undefined {
+  with(idOrToken: string): StringRef | undefined {
     // Try direct ID lookup first
     let ref = this.memory.get(idOrToken);
     if (ref) {
@@ -79,7 +41,7 @@ export class InMemoryWorkflowContext implements IWorkflowContext {
   /**
    * List all stored references
    */
-  list(): MemoryRef[] {
+  list(): StringRef[] {
     return Array.from(this.memory.values());
   }
 

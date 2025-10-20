@@ -49,11 +49,11 @@ export default class LoadCommand extends TaskHandler {
     const content = await fs.readFile(absolutePath, 'utf-8');
 
     // Store using workflow context
-    const memoryRef = await context.workflowContext.store(content, token ? [new TokenDecorator(token)] : []);
+    const StringRef = await context.workflowContext.store(content, token ? [new TokenDecorator(token)] : []);
 
     // Create reference handle
     const ref: ReferenceHandle = {
-      id: memoryRef.id,
+      id: StringRef.id,
       content: content,
       token: token,
       timestamp: new Date(),
