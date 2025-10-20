@@ -7,4 +7,5 @@ test-workspace/
 pnpm-lock.yaml
 .open-tasks/
 .test-output/
+.test-output-*/
 .example-output/

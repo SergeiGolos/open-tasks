@@ -226,6 +226,12 @@ export interface IRefDecorator {
  */
 export interface IFlow {
   cwd: string;
+  
+  /**
+   * Configuration object with runtime options (verbosity, dryRun, etc.)
+   */
+  config?: Record<string, any>;
+  
   /**
    * Stores a value with optional decorators
    * @param value - The value to store

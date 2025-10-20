@@ -25,6 +25,9 @@ export class CopilotConfig implements IAgentConfig {
   /** Use AGENTS.md file for project context */
   useAgentsFile?: boolean;
 
+  /** Dry-run mode - echo command instead of executing it */
+  dryRun?: boolean;
+
   /**
    * Build command-line arguments for GitHub Copilot CLI
    */
@@ -78,6 +81,11 @@ export class CopilotConfigBuilder {
 
   withAgentsFile(): this {
     this.config.useAgentsFile = true;
+    return this;
+  }
+
+  withDryRun(): this {
+    this.config.dryRun = true;
     return this;
   }
 

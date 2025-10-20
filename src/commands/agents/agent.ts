@@ -57,13 +57,20 @@ export class AgentCommand implements ICommand {
     // Get environment variables from config (tool-specific)
     const env = this.config.getEnvironment();
     
+    // Get runtime options from context config
+    const runtimeConfig = context.config || {};
+    const verbose = runtimeConfig.verbosity === 'verbose';
+    const dryRun = this.config.dryRun || runtimeConfig.dryRun || false;
+    
     // Execute the CLI tool
     const result = await executeAgent(
       command,
       cmdArgs,
       this.config.workingDirectory || context.cwd,
       env,
-      this.config.timeout
+      this.config.timeout,
+      dryRun,
+      verbose
     );
 
     // Return the result

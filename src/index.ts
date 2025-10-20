@@ -77,6 +77,7 @@ async function main() {
     .option('-q, --quiet', 'Minimal output (quiet mode)')
     .option('-s, --summary', 'Summary output with cards (default)')
     .option('-v, --verbose', 'Detailed output with progress')
+    .option('--dry-run', 'Show what would be executed without running it')
     .option('--ref <token...>', 'Reference token(s) to load')
     .option('--dir <path>', 'Write output to custom directory path');
 
@@ -105,9 +106,10 @@ async function main() {
         // Resolve options
         const verbosity = optionResolver.resolveVerbosity(globalOpts);
         const outputDir = optionResolver.resolveOutputDir(cwd, globalOpts, config);
+        const dryRun = globalOpts.dryRun || false;
         
         // Build execution context
-        const context = contextBuilder.build(outputDir, verbosity);
+        const context = contextBuilder.build(outputDir, verbosity, dryRun);
         
         try {
           // Get remaining arguments (Commander puts them in commandArgs)

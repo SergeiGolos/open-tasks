@@ -11,6 +11,9 @@ export interface IAgentConfig {
   /** Timeout in milliseconds */
   timeout?: number;
   
+  /** Dry-run mode - echo command instead of executing it */
+  dryRun?: boolean;
+  
   /**
    * Build the command-line arguments for this agent
    * @param prompt - The complete prompt text to execute
@@ -32,15 +35,39 @@ export interface IAgentConfig {
  * @param cwd - Working directory
  * @param env - Environment variables
  * @param timeout - Timeout in milliseconds
+ * @param dryRun - If true, echo command instead of executing
+ * @param verbose - If true, stream output to console
  */
 export function executeAgent(
   command: string,
   args: string[],
   cwd: string,
   env: Record<string, string>,
-  timeout?: number
+  timeout?: number,
+  dryRun?: boolean,
+  verbose?: boolean
 ): Promise<string> {
   return new Promise((resolve, reject) => {
+    // Build the full command string for dry-run display
+    const escapedArgs = args.map(arg => {
+      // Quote arguments that contain spaces or special characters
+      if (arg.includes(' ') || arg.includes('"') || arg.includes("'")) {
+        return `"${arg.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+      }
+      return arg;
+    });
+    const fullCommand = `${command} ${escapedArgs.join(' ')}`;
+    
+    // In dry-run mode, echo the command instead of executing
+    if (dryRun) {
+      const dryRunOutput = `[DRY-RUN] Would execute:\ncd ${cwd}\n${fullCommand}`;
+      if (verbose) {
+        console.log(dryRunOutput);
+      }
+      resolve(dryRunOutput);
+      return;
+    }
+    
     const processEnv = { ...process.env, ...env };
     
     const child = spawn(command, args, {
@@ -53,11 +80,21 @@ export function executeAgent(
     let stderr = '';
 
     child.stdout?.on('data', (data) => {
-      stdout += data.toString();
+      const text = data.toString();
+      stdout += text;
+      // Stream to console in verbose mode
+      if (verbose) {
+        process.stdout.write(text);
+      }
     });
 
     child.stderr?.on('data', (data) => {
-      stderr += data.toString();
+      const text = data.toString();
+      stderr += text;
+      // Stream to console in verbose mode
+      if (verbose) {
+        process.stderr.write(text);
+      }
     });
 
     let timeoutId: NodeJS.Timeout | undefined;

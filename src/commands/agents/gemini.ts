@@ -34,6 +34,9 @@ export class GeminiConfig implements IAgentConfig {
   /** Enable Google Search grounding */
   enableSearch?: boolean;
 
+  /** Dry-run mode - echo command instead of executing it */
+  dryRun?: boolean;
+
   /**
    * Build command-line arguments for Gemini CLI
    */
@@ -118,6 +121,11 @@ export class GeminiConfigBuilder {
 
   enableSearch(): this {
     this.config.enableSearch = true;
+    return this;
+  }
+
+  withDryRun(): this {
+    this.config.dryRun = true;
     return this;
   }
 
