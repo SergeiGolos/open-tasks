@@ -5,3 +5,5 @@ coverage/
 package-lock.json
 test-workspace/
 pnpm-lock.yaml
+.test-output/
+.example-output/
