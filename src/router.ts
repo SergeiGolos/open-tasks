@@ -1,4 +1,5 @@
-import { CommandHandler, ExecutionContext, ReferenceHandle } from './types.js';
+import { ExecutionContext, ReferenceHandle } from './types.js';
+import { CommandHandler } from './CommandHandler.js';
 
 /**
  * Command router for discovering and executing commands
@@ -29,8 +30,7 @@ export class CommandRouter {
    */
   async execute(
     commandName: string,
-    args: string[],
-    refs: Map<string, ReferenceHandle>,
+    args: string[],    
     context: ExecutionContext
   ): Promise<ReferenceHandle> {
     const handler = this.commands.get(commandName);
@@ -42,7 +42,7 @@ export class CommandRouter {
       );
     }
 
-    return await handler.execute(args, refs, context);
+    return await handler.execute(args, context);
   }
 
   /**

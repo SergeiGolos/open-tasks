@@ -7,11 +7,11 @@ import { promises as fs } from 'fs';
 import { CommandRouter } from './router.js';
 import { CommandLoader } from './command-loader.js';
 import {
-  ReferenceManager,
-  OutputHandler,
   ExecutionContext,
   ReferenceHandle,
 } from './types.js';
+import { OutputHandler } from './OutputHandler.js';
+import { ReferenceManager } from './ReferenceManager.js';
 import { DirectoryOutputContext } from './workflow/index.js';
 import { loadConfig } from './config-loader.js';
 import {
@@ -55,8 +55,7 @@ async function main() {
   // Initialize core components
   const router = new CommandRouter();
   const loader = new CommandLoader();
-  const referenceManager = new ReferenceManager();
-  
+    
   // Build paths for built-in and custom commands
   const __filename = fileURLToPath(import.meta.url);
   const commandsDir = path.join(path.dirname(__filename), 'commands');
@@ -125,26 +124,11 @@ async function main() {
           if (globalOpts.quiet) verbosity = 'quiet';
           else if (globalOpts.summary) verbosity = 'summary';
           else if (globalOpts.verbose) verbosity = 'verbose';
-          
-          // Parse references from --ref option
-          const refs = new Map<string, ReferenceHandle>();
-          if (globalOpts.ref) {
-            const refTokens = Array.isArray(globalOpts.ref) ? globalOpts.ref : [globalOpts.ref];
-            for (const refToken of refTokens) {
-              const ref = referenceManager.getReference(refToken);
-              if (ref) {
-                refs.set(refToken, ref);
-              } else {
-                console.warn(formatError(`Reference not found: ${refToken}`));
-              }
-            }
-          }
-          
+                    
           // Create execution context
           const context: ExecutionContext = {
             cwd,
             outputDir,
-            referenceManager,
             outputHandler,
             workflowContext,
             config,
@@ -155,7 +139,7 @@ async function main() {
           const remainingArgs = commandObj.args || [];
           
           // Execute command
-          const result = await router.execute(cmd.name, remainingArgs, refs, context);
+          const result = await router.execute(cmd.name, remainingArgs, context);
 
           // Display result only in quiet mode (other modes show cards with embedded summary)
           if (verbosity === 'quiet') {

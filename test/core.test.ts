@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ReferenceManager, OutputHandler } from '../src/types.js';
+import { OutputHandler } from '../src/types.js';
+import { ReferenceManager } from '../src/ReferenceManager.js';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

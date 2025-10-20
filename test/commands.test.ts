@@ -3,11 +3,11 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
-  ReferenceManager,
   OutputHandler,
   ExecutionContext,
   ReferenceHandle,
 } from '../src/types.js';
+import { ReferenceManager } from '../src/ReferenceManager.js';
 import { DirectoryOutputContext } from '../src/workflow/index.js';
 import StoreCommand from '../src/commands/store.js';
 import LoadCommand from '../src/commands/load.js';
