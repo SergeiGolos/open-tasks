@@ -9,11 +9,6 @@ import { createCardBuilder as createCardBuilderFactory } from './card-builders.j
 export type VerbosityLevel = 'quiet' | 'summary' | 'verbose';
 
 /**
- * Output destination targets
- */
-export type OutputTarget = 'screen-only' | 'log-only' | 'both' | 'file';
-
-/**
  * Summary data for command execution
  */
 export interface SummaryData {
@@ -171,8 +166,6 @@ export interface ExecutionContext {
   config: Record<string, any>;
   /** Verbosity level (default: 'summary') */
   verbosity?: VerbosityLevel;
-  /** Output target (default: 'both') */
-  outputTarget?: OutputTarget;
   /** Custom output file path (for 'file' target) */
   customOutputPath?: string;
 }

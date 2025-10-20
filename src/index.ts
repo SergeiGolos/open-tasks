@@ -59,13 +59,25 @@ async function main() {
   const referenceManager = new ReferenceManager();
   const outputHandler = new OutputHandler(outputDir);
   const workflowContext = new DirectoryOutputContext(outputDir);
+  
+  // Build paths for built-in and custom commands
+  const __filename = fileURLToPath(import.meta.url);
+  const commandsDir = path.join(path.dirname(__filename), 'commands');
+  
+  // Normalize customCommandsDir to array
+  const customCommandsDirs = Array.isArray(config.customCommandsDir)
+    ? config.customCommandsDir
+    : [config.customCommandsDir];
+  
+  // Load built-in commands (warn if missing, though this shouldn't happen)
+  await loader.loadCommandSource(commandsDir, { warnOnMissing: true });
+  
+  // Load custom commands from all configured directories (don't warn if missing, as they're optional)
+  for (const customDir of customCommandsDirs) {
+    const customCommandsDir = path.join(cwd, customDir);
+    await loader.loadCommandSource(customCommandsDir, { warnOnMissing: false });
+  }
 
-  // Load built-in commands
-  await loader.loadBuiltinCommands();
-
-  // Load custom commands
-  const customCommandsDir = path.join(cwd, config.customCommandsDir);
-  await loader.loadCustomCommands(customCommandsDir);
 
   // Add dynamic command handling
   program.action(async () => {
@@ -110,8 +122,7 @@ async function main() {
     const cleanArgs: string[] = [];
     
     // Parse verbosity and output target flags
-    let verbosity: 'quiet' | 'summary' | 'verbose' | undefined;
-    let outputTarget: 'screen-only' | 'log-only' | 'both' | 'file' = 'both';
+    let verbosity: 'quiet' | 'summary' | 'verbose' | undefined;    
     let customOutputPath: string | undefined;
     
     let verbosityFlagCount = 0;
@@ -138,20 +149,6 @@ async function main() {
       } else if (arg === '--verbose' || arg === '-v') {
         verbosity = 'verbose';
         verbosityFlagCount++;
-      } else if (arg === '--screen-only') {
-        outputTarget = 'screen-only';
-        outputTargetFlagCount++;
-      } else if (arg === '--log-only') {
-        outputTarget = 'log-only';
-        outputTargetFlagCount++;
-      } else if (arg === '--both') {
-        outputTarget = 'both';
-        outputTargetFlagCount++;
-      } else if (arg === '--file' && i + 1 < commandArgs.length) {
-        outputTarget = 'file';
-        customOutputPath = commandArgs[i + 1];
-        outputTargetFlagCount++;
-        i++; // Skip the path value
       } else {
         cleanArgs.push(arg);
       }
@@ -167,12 +164,7 @@ async function main() {
       console.error(formatError('Error: Only one output target flag (--screen-only, --log-only, --both, --file) can be specified'));
       process.exit(1);
     }
-    
-    if (outputTarget === 'file' && !customOutputPath) {
-      console.error(formatError('Error: --file flag requires a path argument'));
-      process.exit(1);
-    }
-
+      
     // Create execution context
     const context: ExecutionContext = {
       cwd,
@@ -182,7 +174,6 @@ async function main() {
       workflowContext,
       config,
       verbosity,
-      outputTarget,
       customOutputPath,
     };
 

@@ -1,8 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { fileURLToPath, pathToFileURL } from 'url';
+import { pathToFileURL } from 'url';
 import { CommandRouter } from './router.js';
-import { CommandHandler } from './types.js';
 
 /**
  * Command loader for discovering and registering commands
@@ -11,53 +10,44 @@ export class CommandLoader {
   constructor(private router: CommandRouter) {}
 
   /**
-   * Load built-in commands from the commands directory
+   * Load commands from a source directory
+   * @param sourceDir - The directory to load commands from
+   * @param options - Configuration options for loading
    */
-  async loadBuiltinCommands(): Promise<void> {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const commandsDir = path.join(__dirname, 'commands');
+  async loadCommandSource(
+    sourceDir: string,
+    options: { warnOnMissing?: boolean } = {}
+  ): Promise<void> {
+    const { warnOnMissing = true } = options;
 
-    try {
-      const files = await fs.readdir(commandsDir);
-      
-      for (const file of files) {
-        if (file.endsWith('.js')) {
-          const commandPath = path.join(commandsDir, file);
-          await this.loadCommand(commandPath);
-        }
-      }
-    } catch (error) {
-      // Commands directory might not exist yet, that's okay
-      console.warn('No built-in commands directory found');
-    }
-  }
-
-  /**
-   * Load custom commands from .open-tasks/commands directory
-   */
-  async loadCustomCommands(customCommandsDir: string): Promise<void> {
     try {
       const exists = await fs
-        .access(customCommandsDir)
+        .access(sourceDir)
         .then(() => true)
         .catch(() => false);
 
       if (!exists) {
-        return; // No custom commands directory
+        if (warnOnMissing) {        
+          console.warn(`No command found at ${sourceDir}`);
+        }
+        return;
       }
 
-      const files = await fs.readdir(customCommandsDir);
+      const files = await fs.readdir(sourceDir);
 
       for (const file of files) {
-        if (file.endsWith('.js') || file.endsWith('.ts')) {
-          const commandPath = path.join(customCommandsDir, file);
-          const commandName = path.basename(file, path.extname(file));
-          await this.loadCommand(commandPath, commandName);
+        // Load .js and .ts files
+        const isValidFile = file.endsWith('.js') || file.endsWith('.ts');
+        if (!isValidFile) {
+          continue;
         }
+
+        const commandPath = path.join(sourceDir, file);
+        const commandName = path.basename(file, path.extname(file));
+        await this.loadCommand(commandPath, commandName);
       }
     } catch (error) {
-      console.warn(`Error loading custom commands: ${error}`);
+      console.warn(`Error loading commands from ${sourceDir}: ${error}`);
     }
   }
 
