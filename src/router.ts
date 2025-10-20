@@ -1,11 +1,11 @@
 import { ExecutionContext, ReferenceHandle } from './types.js';
-import { CommandHandler } from './CommandHandler.js';
+import { TaskHandler } from './task-handler.js';
 
 /**
  * Command router for discovering and executing commands
  */
 export class CommandRouter {
-  private commands: Map<string, CommandHandler>;
+  private commands: Map<string, TaskHandler>;
 
   constructor() {
     this.commands = new Map();
@@ -14,14 +14,14 @@ export class CommandRouter {
   /**
    * Register a command handler
    */
-  register(name: string, handler: CommandHandler): void {
+  register(name: string, handler: TaskHandler): void {
     this.commands.set(name, handler);
   }
 
   /**
    * Get a command handler by name
    */
-  get(name: string): CommandHandler | undefined {
+  get(name: string): TaskHandler | undefined {
     return this.commands.get(name);
   }
 

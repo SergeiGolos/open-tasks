@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { CommandRouter } from '../src/router';
-import { CommandHandler, ExecutionContext, ReferenceHandle } from '../src/types';
+import { TaskHandler, ExecutionContext, ReferenceHandle } from '../src/types';
 
-class TestCommand extends CommandHandler {
+class TestCommand extends TaskHandler {
   name = 'test';
   description = 'Test command';
   examples = ['test example'];

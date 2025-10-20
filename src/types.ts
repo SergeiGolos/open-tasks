@@ -1,6 +1,6 @@
 import { DirectoryOutputContext, IWorkflowContext } from './workflow/index.js';
 import { OutputHandler } from './OutputHandler.js';
-import { CommandHandler } from './CommandHandler.js';
+import { TaskHandler } from './task-handler.js';
 
 /**
  * Verbosity levels for command output
@@ -76,26 +76,9 @@ export type CardStyle = 'info' | 'success' | 'warning' | 'error' | 'dim' | 'defa
  * Created and managed by the framework based on ExecutionContext verbosity
  * Commands receive this and use it without worrying about output format
  */
-export interface ICardBuilder {
-  /**
-   * Add a progress message (shown based on verbosity level)
-   */
-  addProgress(message: string): void;
-  
-  /**
-   * Add a custom card to the output
-   * Cards are formatted sections that display command-specific content
-   * @param title - The title of the card
-   * @param content - The content of the card
-   * @param style - The visual style of the card (optional)
-   */
-  addCard(title: string, content: CardContent, style?: CardStyle): void;
-  
-  /**
-   * Set execution summary to append to the last card
-   * Called by framework before build()
-   */
-  setSummary(summary: SummaryData): void;
+export interface ICardBuilder {    
+  name: string;  
+  verbosity?: VerbosityLevel
   
   /**
    * Build and return the formatted cards as a string
@@ -109,28 +92,12 @@ export interface ICardBuilder {
  * Handles system-level execution reporting: timing, status, files, errors
  */
 export interface IOutputBuilder {
+    
   /**
-   * Add a section to the output (for verbose mode)
-   * @deprecated Use ICardBuilder.addCard() instead for command content
+   * writes a card to the output
    */
-  addSection(title: string, content: string): void;
-  
-  /**
-   * Add summary information (execution metadata)
-   */
-  addSummary(data: SummaryData): void;
-  
-  /**
-   * Add a progress message (for verbose mode, optional progressive output)
-   * @deprecated Use ICardBuilder.addProgress() instead for command progress
-   */
-  addProgress(message: string): void;
-  
-  /**
-   * Add an error message
-   */
-  addError(error: Error, context?: Record<string, any>): void;
-  
+  write(card: ICardBuilder, verbosity: VerbosityLevel): void;
+
   /**
    * Build and return the formatted output string
    */
@@ -154,7 +121,7 @@ export interface ReferenceHandle {
  */
 export interface LoadedCommand {
   name: string;
-  handler: CommandHandler;
+  handler: TaskHandler;
 }
 
 /**

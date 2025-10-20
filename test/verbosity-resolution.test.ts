@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { CommandHandler, ExecutionContext, ReferenceHandle } from '../src/types.js';
+import { TaskHandler, ExecutionContext, ReferenceHandle } from '../src/types.js';
 import { createOutputBuilder } from '../src/output-builders.js';
 
 // Mock command with no default verbosity
-class BasicCommand extends CommandHandler {
+class BasicCommand extends TaskHandler {
   name = 'basic';
   description = 'Basic test command';
   examples = ['basic test'];
@@ -22,7 +22,7 @@ class BasicCommand extends CommandHandler {
 }
 
 // Mock command with verbose default
-class VerboseDefaultCommand extends CommandHandler {
+class VerboseDefaultCommand extends TaskHandler {
   name = 'verbose-default';
   description = 'Command with verbose default';
   examples = ['verbose-default test'];
@@ -43,7 +43,7 @@ class VerboseDefaultCommand extends CommandHandler {
 }
 
 // Mock command with quiet default
-class QuietDefaultCommand extends CommandHandler {
+class QuietDefaultCommand extends TaskHandler {
   name = 'quiet-default';
   description = 'Command with quiet default';
   examples = ['quiet-default test'];

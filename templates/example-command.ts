@@ -1,4 +1,4 @@
-import { CommandHandler, ExecutionContext, ReferenceHandle, IOutputBuilder } from '../types.js';
+import { TaskHandler, ExecutionContext, ReferenceHandle, IOutputBuilder } from '../types.js';
 import { TokenDecorator } from '../workflow/decorators.js';
 import { addFormattedSection, addProcessingDetails } from '../output-utils.js';
 
@@ -17,7 +17,7 @@ import { addFormattedSection, addProcessingDetails } from '../output-utils.js';
  * - verbose: Detailed information with metadata
  * - stream: Real-time progress updates
  */
-export default class ExampleCommand extends CommandHandler {
+export default class ExampleCommand extends TaskHandler {
   // REQUIRED: The command name (used in CLI: open-tasks example-command)
   name = 'example-command';
   

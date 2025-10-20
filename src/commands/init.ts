@@ -1,14 +1,14 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
-import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
+import { TaskHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
 import { getDefaultConfig } from '../config-loader.js';
 
 /**
  * Init command - initializes a new open-tasks project
  * Supports enhanced output control (quiet, summary, verbose)
  */
-export default class InitCommand extends CommandHandler {
+export default class InitCommand extends TaskHandler {
   name = 'init';
   description = 'Initialize a new open-tasks project';
   examples = [

@@ -1,13 +1,12 @@
-import { createCardBuilder as createCardBuilderFactory } from './card-builders';
-import { createOutputBuilder as createOutputBuilderFactory } from './output-builders';
-import { VerbosityLevel, ExecutionContext, ReferenceHandle, ICardBuilder, IOutputBuilder, SummaryData } from './types';
+import { OutputBuilder } from './output-builders.js';
+import { VerbosityLevel, ExecutionContext, ReferenceHandle, ICardBuilder, IOutputBuilder, SummaryData } from './types.js';
 import { IWorkflowContext } from './workflow/types.js';
 
 /**
  * Base class for command handlers
  */
 
-export abstract class CommandHandler {
+export abstract class TaskHandler {
   abstract name: string;
   abstract description: string;
   abstract examples: string[];
@@ -26,25 +25,16 @@ export abstract class CommandHandler {
     args: string[],
     context: ExecutionContext
   ): Promise<ReferenceHandle> {
-
-    const startTime = Date.now();
+    
     const verbosity = context.verbosity || this.defaultVerbosity || 'summary';
-    const outputBuilder: IOutputBuilder = createOutputBuilderFactory(verbosity);
+    const outputBuilder: IOutputBuilder = new OutputBuilder(verbosity);
 
-    try {
-      return await this.executeCommand(
-        args,
-        context.config,
-        context.workflowContext,
-        outputBuilder
-      );
-    } catch (error: any) {
-      outputBuilder.addError(error, {
-        command: this.name ,  
-        startTime: startTime
-     }); 
-     return { id: 'error-id', content: error.message, timestamp: new Date() };
-    }    
+    return await this.executeCommand(
+      args,
+      context.config,
+      context.workflowContext,
+      outputBuilder
+    );    
   }
 
   /**

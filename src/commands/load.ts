@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
+import { TaskHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
 import { TokenDecorator } from '../workflow/decorators.js';
 import { formatFileSize } from '../output-utils.js';
 
@@ -8,7 +8,7 @@ import { formatFileSize } from '../output-utils.js';
  * Load command - loads content from a file
  * Supports enhanced output control (quiet, summary, verbose)
  */
-export default class LoadCommand extends CommandHandler {
+export default class LoadCommand extends TaskHandler {
   name = 'load';
   description = 'Load content from a file';
   examples = [

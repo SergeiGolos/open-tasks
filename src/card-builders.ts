@@ -5,50 +5,10 @@ import {
   TableCard, 
   ListCard, 
   TreeCard,
-  TreeNode,
-  VerbosityLevel, 
+  TreeNode, 
   CardStyle
 } from './types.js';
 
-/**
- * Factory function to create appropriate CardBuilder based on verbosity level
- * Called by the framework (router/context), not by commands
- */
-export function createCardBuilder(verbosity: VerbosityLevel = 'summary'): ICardBuilder {
-  switch (verbosity) {
-    case 'quiet':
-      return new QuietCardBuilder();
-    case 'summary':
-      return new SummaryCardBuilder();
-    case 'verbose':
-      return new VerboseCardBuilder();
-    default:
-      console.warn(`Unknown verbosity level: ${verbosity}. Using 'summary' mode.`);
-      return new SummaryCardBuilder();
-  }
-}
-
-/**
- * QuietCardBuilder - ignores all cards for minimal output
- * Used when verbosity = 'quiet'
- */
-export class QuietCardBuilder implements ICardBuilder {
-  addProgress(_message: string): void {
-    // Quiet mode ignores progress
-  }
-
-  addCard(_title: string, _content: CardContent, _style?: CardStyle): void {
-  }
-
-  setSummary(_summary: any): void {
-    // Quiet mode ignores summary
-  }
-
-  build(): string {
-    // No cards in quiet mode
-    return '';
-  }
-}
 
 /**
  * SummaryCardBuilder - shows cards without progress messages

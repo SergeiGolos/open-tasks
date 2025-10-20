@@ -1,11 +1,12 @@
 import { spawn } from 'child_process';
-import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
+import {  ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
 import { TokenDecorator } from '../workflow/decorators.js';
+import { TaskHandler } from '../task-handler.js';
 
 /**
  * PowerShell command - executes PowerShell scripts
  */
-export default class PowerShellCommand extends CommandHandler {
+export default class PowerShellCommand extends TaskHandler {
   name = 'powershell';
   description = 'Execute a PowerShell script';
   examples = [

@@ -1,12 +1,14 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
-import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
+import { ExecutionContext, ReferenceHandle, ICardBuilder, IOutputBuilder } from '../types.js';
+import { TaskHandler } from '../task-handler.js';
+import { IWorkflowContext } from '../workflow/types.js';
 
 /**
  * Create command - scaffolds a new custom command template
  */
-export default class CreateCommand extends CommandHandler {
+export default class CreateCommand extends TaskHandler {
   name = 'create';
   description = 'Create a new custom command template';
   examples = [
@@ -15,11 +17,11 @@ export default class CreateCommand extends CommandHandler {
     'open-tasks create my-command --description "My custom command"',
   ];
 
-  protected async executeCommand(
+  protected override async executeCommand(
     args: string[],
-    refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext,
-    cardBuilder: ICardBuilder
+    config: Record<string, any>,
+    workflowContext: IWorkflowContext,
+    outputBuilder: IOutputBuilder
   ): Promise<ReferenceHandle> {
     if (args.length === 0) {
       throw new Error('Create command requires a command name argument');
@@ -116,7 +118,7 @@ export default class CreateCommand extends CommandHandler {
     typescript: boolean
   ): string {
     if (typescript) {
-      return `import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from 'open-tasks-cli';
+      return `import { TaskHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from 'open-tasks-cli';
 
 /**
  * ${description}
@@ -126,7 +128,7 @@ export default class CreateCommand extends CommandHandler {
  * - Use the card builder to create visual output
  * - Store and return results
  */
-export default class ${this.toPascalCase(name)}Command extends CommandHandler {
+export default class ${this.toPascalCase(name)}Command extends TaskHandler {
   name = '${name}';
   description = '${description}';
   examples = [
