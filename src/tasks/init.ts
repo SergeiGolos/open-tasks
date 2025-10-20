@@ -10,9 +10,9 @@ export default class InitCommand implements ITaskHandler {
   name = 'init';
   description = 'Initialize a new open-tasks project';
   examples = [
-    'open-tasks init',
-    'open-tasks init --force',
-    'open-tasks init --verbose',
+    'ot init',
+    'ot init --force',
+    'ot init --verbose',
   ];
 
   async execute(args: string[], context: ExecutionContext): Promise<ReferenceHandle> {
@@ -53,7 +53,7 @@ export default class InitCommand implements ITaskHandler {
         name: path.basename(context.cwd),
         version: '1.0.0',
         type: 'module',
-        scripts: { 'open-tasks': 'open-tasks' },
+        scripts: { 'ot': 'ot' },
         dependencies: {},
       };
       await fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf-8');
@@ -70,9 +70,9 @@ export default class InitCommand implements ITaskHandler {
       ...results,
       ``,
       `Next Steps:`,
-      `  1. npm install open-tasks-cli`,
-      `  2. open-tasks create my-command`,
-      `  3. open-tasks my-command`,
+      `  1. npm install @bitcobblers/open-tasks`,
+      `  2. ot create my-command`,
+      `  3. ot my-command`,
     ].join('\n');
     
     if (verbosity !== 'quiet') {
@@ -86,9 +86,9 @@ export default class InitCommand implements ITaskHandler {
       ...results.map((r) => `  - ${r}`),
       '',
       'Next steps:',
-      '  1. Run: npm install open-tasks-cli',
-      '  2. Create a command: open-tasks create my-command',
-      '  3. Run your command: open-tasks my-command',
+      '  1. Run: npm install @bitcobblers/open-tasks',
+      '  2. Create a command: ot create my-command',
+      '  3. Run your command: ot my-command',
     ].join('\n');
 
     const ref: ReferenceHandle = {

@@ -8,7 +8,7 @@ Open Tasks CLI distinguishes between **Tasks** and **Commands** based on their p
 
 ### Tasks
 **Tasks** are high-level operations that:
-- Can be invoked directly from the command line (e.g., `open-tasks init`, `open-tasks create`)
+- Can be invoked directly from the command line (e.g., `ot init`, `ot create`)
 - Implement the `ITaskHandler` interface with `execute(args, context)` method
 - Receive full `ExecutionContext` with all workflow components
 - Are stored in `src/tasks/` for built-in tasks or `.open-tasks/tasks/` for custom tasks
@@ -18,7 +18,7 @@ Open Tasks CLI distinguishes between **Tasks** and **Commands** based on their p
 
 ### Commands  
 **Commands** are lower-level operations that:
-- Can be invoked directly from the command line like tasks (e.g., `open-tasks load`, `open-tasks powershell`)
+- Can be invoked directly from the command line like tasks (e.g., `ot load`, `ot powershell`)
 - Can either implement `ITaskHandler` directly or extend `TaskHandler` base class
 - May use the simpler `executeCommand(config, args, flow, synk)` signature when extending `TaskHandler`
 - Are stored in `src/commands/` for built-in commands
@@ -34,7 +34,7 @@ Open Tasks CLI distinguishes between **Tasks** and **Commands** based on their p
 | **Interface** | `ITaskHandler.execute(args, context)` | `ITaskHandler` or `TaskHandler.executeCommand(config, args, flow, synk)` |
 | **Location** | `src/tasks/` or `.open-tasks/tasks/` | `src/commands/` |
 | **Complexity** | Can be complex workflows | Focused, atomic operations |
-| **Usage** | `open-tasks <task-name>` | `open-tasks <command-name>` |
+| **Usage** | `ot <task-name>` | `ot <command-name>` |
 
 **Note:** From a user perspective, both tasks and commands are invoked the same way from the CLI. The distinction is primarily architectural.
 
@@ -46,7 +46,7 @@ Create the `.open-tasks` directory structure and configuration.
 
 **Syntax:**
 ```bash
-open-tasks init
+ot init
 ```
 
 **Creates:**
@@ -58,7 +58,7 @@ open-tasks init
 **Example:**
 ```bash
 cd /path/to/your/project
-open-tasks init
+ot init
 ```
 
 ---
@@ -69,7 +69,7 @@ Create a new custom task template.
 
 **Syntax:**
 ```bash
-open-tasks create <task-name> [--typescript] [--description "description"]
+ot create <task-name> [--typescript] [--description "description"]
 ```
 
 **Arguments:**
@@ -81,7 +81,7 @@ open-tasks create <task-name> [--typescript] [--description "description"]
 
 **Example:**
 ```bash
-open-tasks create validate-email --typescript --description "Validate email addresses"
+ot create validate-email --typescript --description "Validate email addresses"
 ```
 
 **Output:**
@@ -100,7 +100,7 @@ Load content from a file and create a reference.
 
 **Syntax:**
 ```bash
-open-tasks load <filepath> [--token <name>]
+ot load <filepath> [--token <name>]
 ```
 
 **Arguments:**
@@ -113,16 +113,16 @@ open-tasks load <filepath> [--token <name>]
 
 ```bash
 # Load a text file
-open-tasks load ./data.txt
+ot load ./data.txt
 
 # Load with token for later reference
-open-tasks load ./template.html --token template
+ot load ./template.html --token template
 
 # Load JSON file
-open-tasks load ./config.json --token config
+ot load ./config.json --token config
 
 # Load source code
-open-tasks load ./src/api.ts --token source
+ot load ./src/api.ts --token source
 ```
 
 **Output:**
@@ -138,7 +138,7 @@ Execute PowerShell scripts and capture output.
 
 **Syntax:**
 ```bash
-open-tasks powershell <script> [--token <name>]
+ot powershell <script> [--token <name>]
 ```
 
 **Arguments:**
@@ -151,13 +151,13 @@ open-tasks powershell <script> [--token <name>]
 
 ```bash
 # Simple command
-open-tasks powershell "Get-Date"
+ot powershell "Get-Date"
 
 # Capture output for later use
-open-tasks powershell "Get-Process | Select-Object -First 5" --token processes
+ot powershell "Get-Process | Select-Object -First 5" --token processes
 
 # API call
-open-tasks powershell "Invoke-RestMethod 'https://api.example.com/data'" --token api-data
+ot powershell "Invoke-RestMethod 'https://api.example.com/data'" --token api-data
 ```
 
 **Requirements:**
@@ -185,7 +185,7 @@ The following commands are planned for future releases:
 
 **Syntax:**
 ```bash
-open-tasks replace <template> --ref <token1> [--ref <token2> ...]
+ot replace <template> --ref <token1> [--ref <token2> ...]
 ```
 
 **Arguments:**
@@ -203,18 +203,18 @@ open-tasks replace <template> --ref <token1> [--ref <token2> ...]
 
 ```bash
 # Simple replacement
-open-tasks store "World" --token name
-open-tasks replace "Hello {{name}}!" --ref name
+ot store "World" --token name
+ot replace "Hello {{name}}!" --ref name
 
 # Multiple replacements
-open-tasks store "John" --token first
-open-tasks store "Doe" --token last
-open-tasks replace "Name: {{first}} {{last}}" --ref first --ref last
+ot store "John" --token first
+ot store "Doe" --token last
+ot replace "Name: {{first}} {{last}}" --ref first --ref last
 
 # Template from file
-open-tasks load ./email-template.txt --token template
-open-tasks store "user@example.com" --token email
-open-tasks replace "{{template}}" --ref template --ref email
+ot load ./email-template.txt --token template
+ot store "user@example.com" --token email
+ot replace "{{template}}" --ref template --ref email
 ```
 
 **Output:**
@@ -227,7 +227,7 @@ open-tasks replace "{{template}}" --ref template --ref email
 
 **Syntax:**
 ```bash
-open-tasks extract <pattern> --ref <input> [--all] [--token <name>]
+ot extract <pattern> --ref <input> [--all] [--token <name>]
 ```
 
 **Arguments:**
@@ -247,20 +247,20 @@ open-tasks extract <pattern> --ref <input> [--all] [--token <name>]
 
 ```bash
 # Extract first email
-open-tasks store "Contact: support@example.com" --token contact
-open-tasks extract "[a-z]+@[a-z.]+" --ref contact
+ot store "Contact: support@example.com" --token contact
+ot extract "[a-z]+@[a-z.]+" --ref contact
 
 # Extract all function names
-open-tasks load ./api.ts --token source
-open-tasks extract "export function ([a-zA-Z]+)" --ref source --all --token functions
+ot load ./api.ts --token source
+ot extract "export function ([a-zA-Z]+)" --ref source --all --token functions
 
 # Extract with capture groups
-open-tasks store "Name: John Doe" --token name
-open-tasks extract "Name: ([A-Z][a-z]+) ([A-Z][a-z]+)" --ref name
+ot store "Name: John Doe" --token name
+ot extract "Name: ([A-Z][a-z]+) ([A-Z][a-z]+)" --ref name
 
 # Extract numbers
-open-tasks store "Price: $42.99" --token price
-open-tasks extract "\$([0-9.]+)" --ref price --token amount
+ot store "Price: $42.99" --token price
+ot extract "\$([0-9.]+)" --ref price --token amount
 ```
 
 **Output:**
@@ -277,7 +277,7 @@ Execute PowerShell scripts and capture output.
 
 **Syntax:**
 ```bash
-open-tasks powershell <script> [--ref <token1> ...] [--token <name>]
+ot powershell <script> [--ref <token1> ...] [--token <name>]
 ```
 
 **Arguments:**
@@ -291,17 +291,17 @@ open-tasks powershell <script> [--ref <token1> ...] [--token <name>]
 
 ```bash
 # Simple command
-open-tasks powershell "Get-Date"
+ot powershell "Get-Date"
 
 # With reference substitution
-open-tasks store "C:\Users" --token path
-open-tasks powershell "Get-ChildItem {{path}}" --ref path
+ot store "C:\Users" --token path
+ot powershell "Get-ChildItem {{path}}" --ref path
 
 # Capture output for later use
-open-tasks powershell "Get-Process | Select-Object -First 5" --token processes
+ot powershell "Get-Process | Select-Object -First 5" --token processes
 
 # API call
-open-tasks powershell "Invoke-RestMethod 'https://api.example.com/data'" --token api-data
+ot powershell "Invoke-RestMethod 'https://api.example.com/data'" --token api-data
 ```
 
 **Requirements:**
@@ -314,7 +314,7 @@ open-tasks powershell "Invoke-RestMethod 'https://api.example.com/data'" --token
 
 **Syntax:**
 ```bash
-open-tasks ai-cli <prompt> [--ref <context1> ...] [--token <name>]
+ot ai-cli <prompt> [--ref <context1> ...] [--token <name>]
 ```
 
 **Arguments:**
@@ -358,19 +358,19 @@ open-tasks ai-cli <prompt> [--ref <context1> ...] [--token <name>]
 
 ```bash
 # Simple AI query
-open-tasks ai-cli "How do I list files in PowerShell?"
+ot ai-cli "How do I list files in PowerShell?"
 
 # With context from file
-open-tasks load ./code.ts --token code
-open-tasks ai-cli "Explain this code" --ref code
+ot load ./code.ts --token code
+ot ai-cli "Explain this code" --ref code
 
 # With multiple context files
-open-tasks load ./api.ts --token api
-open-tasks load ./types.ts --token types
-open-tasks ai-cli "How do these files work together?" --ref api --ref types
+ot load ./api.ts --token api
+ot load ./types.ts --token types
+ot ai-cli "How do these files work together?" --ref api --ref types
 
 # Save AI response for later use
-open-tasks ai-cli "Suggest improvements" --ref code --token suggestions
+ot ai-cli "Suggest improvements" --ref code --token suggestions
 ```
 
 **Context File Passing:**
@@ -378,7 +378,7 @@ open-tasks ai-cli "Suggest improvements" --ref code --token suggestions
 When you use `--ref` flags, the AI CLI receives context files:
 ```bash
 # This command:
-open-tasks ai-cli "Explain this" --ref code
+ot ai-cli "Explain this" --ref code
 
 # Executes (approximately):
 gh copilot suggest "Explain this" -t /path/to/code-file.txt
@@ -403,9 +403,9 @@ These options work with all commands:
 
 **Examples:**
 ```bash
-open-tasks store "data" --quiet
-open-tasks store "data" --summary
-open-tasks store "data" --verbose
+ot store "data" --quiet
+ot store "data" --summary
+ot store "data" --verbose
 ```
 
 ### Reference Flags
@@ -416,10 +416,10 @@ open-tasks store "data" --verbose
 **Examples:**
 ```bash
 # Store with token
-open-tasks store "value" --token mydata
+ot store "value" --token mydata
 
 # Use reference in another command
-open-tasks replace "{{mydata}}" --ref mydata
+ot replace "{{mydata}}" --ref mydata
 ```
 
 ### Output Directory
@@ -428,7 +428,7 @@ open-tasks replace "{{mydata}}" --ref mydata
 
 **Example:**
 ```bash
-open-tasks store "data" --dir ./custom-output
+ot store "data" --dir ./custom-output
 ```
 
 ---

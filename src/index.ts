@@ -32,7 +32,7 @@ async function main() {
   const program = new Command();
 
   program
-    .name('open-tasks')
+    .name('ot')
     .description('CLI tool for executing tasks with explicit workflow context')
     .version(version);
 
@@ -130,7 +130,7 @@ async function main() {
   program.action(() => {
     console.log('Available commands:\n');
     console.log(formatCommandList(commands));
-    console.log('\nRun "open-tasks <command> --help" for more information on a command.');
+    console.log('\nRun "ot <command> --help" for more information on a command.');
   });
 
   // Parse command line arguments

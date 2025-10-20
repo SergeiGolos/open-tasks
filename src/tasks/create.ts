@@ -13,9 +13,9 @@ export default class CreateCommand extends TaskHandler {
   name = 'create';
   description = 'Create a new custom command template';
   examples = [
-    'open-tasks create my-command',
-    'open-tasks create my-command --typescript',
-    'open-tasks create my-command --description "My custom command"',
+    'ot create my-command',
+    'ot create my-command --typescript',
+    'ot create my-command --description "My custom command"',
   ];
 
   protected override async executeCommand(
@@ -51,7 +51,7 @@ export default class CreateCommand extends TaskHandler {
     const commandsDirExists = await fse.pathExists(commandsDir);
     if (!commandsDirExists) {
       throw new Error(
-        'Commands directory does not exist. Run "open-tasks init" first.'
+        'Commands directory does not exist. Run "ot init" first.'
       );
     }
 
@@ -85,7 +85,7 @@ export default class CreateCommand extends TaskHandler {
       '',
       'Next steps:',
       `  1. Edit ${commandPath} to implement your command logic`,
-      `  2. Run your command: open-tasks ${commandName}`,
+      `  2. Run your command: ot ${commandName}`,
     ].join('\n');
 
     const ref: ReferenceHandle = {
@@ -106,7 +106,7 @@ export default class CreateCommand extends TaskHandler {
       `Next Steps:`,
       `  1. Edit ${commandPath}`,
       `  2. Implement command logic`,
-      `  3. Run: open-tasks ${commandName}`,
+      `  3. Run: ot ${commandName}`,
     ].join('\n');
 
     outputBuilder.write(new MessageCard('🎨 Command Created', details, 'success'));
@@ -212,7 +212,7 @@ export default class ${this.toPascalCase(name)}Command {
   name = '${name}';
   description = '${description}';
   examples = [
-    'open-tasks ${name}',
+    'ot ${name}',
     'open-tasks ${name} "Alice"',
     'open-tasks ${name} "Bob" --token greeting',
   ];
@@ -224,7 +224,7 @@ export default class ${this.toPascalCase(name)}Command {
     context.outputSynk.write('Step 1: Storing template in memory...');
     
     // Step 1: Store template
-    const template = 'Hello, {{name}}! Welcome to open-tasks CLI.';
+    const template = 'Hello, {{name}}! Welcome to Open Tasks CLI.';
     const templateRefs = await flow.run(new SetCommand(template, 'template'));
     const templateRef = templateRefs[0];
 
@@ -360,7 +360,7 @@ export default class ${this.toPascalCase(name)}Command {
   name = '${name}';
   description = '${description}';
   examples = [
-    'open-tasks ${name}',
+    'ot ${name}',
     'open-tasks ${name} "Alice"',
     'open-tasks ${name} "Bob" --token greeting',
   ];
@@ -372,7 +372,7 @@ export default class ${this.toPascalCase(name)}Command {
     context.outputSynk.write('Step 1: Storing template in memory...');
     
     // Step 1: Store template
-    const template = 'Hello, {{name}}! Welcome to open-tasks CLI.';
+    const template = 'Hello, {{name}}! Welcome to Open Tasks CLI.';
     const templateRefs = await flow.run(new SetCommand(template, 'template'));
     const templateRef = templateRefs[0];
 

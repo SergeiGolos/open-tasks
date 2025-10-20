@@ -1,11 +1,11 @@
 {
-  "name": "open-tasks-cli",
+  "name": "@bitcobblers/open-tasks",
   "version": "1.0.0",
   "description": "CLI tool for executing tasks with explicit workflow context",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "open-tasks": "./dist/index.js"
+    "ot": "./dist/index.js"
   },
   "scripts": {
     "build": "tsup",

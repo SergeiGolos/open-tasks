@@ -26,8 +26,8 @@ export default class MyTask {
   name = 'my-task';
   description = 'Description of what this task does';
   examples = [
-    'open-tasks my-task',
-    'open-tasks my-task arg1 arg2 --token result',
+    'ot my-task',
+    'ot my-task arg1 arg2 --token result',
   ];
 
   async execute(args: string[], context: any): Promise<any> {
@@ -42,7 +42,7 @@ export default class MyTask {
 ### Step 1: Scaffold the Task
 
 ```bash
-open-tasks create code-review-task --typescript
+ot create code-review-task --typescript
 ```
 
 This creates `.open-tasks/tasks/code-review-task.ts` with a template.
@@ -56,8 +56,8 @@ export default class CodeReviewTask {
   name = 'code-review-task';
   description = 'Review code files with AI';
   examples = [
-    'open-tasks code-review-task ./src/api.ts',
-    'open-tasks code-review-task ./src/api.ts --verbose',
+    'ot code-review-task ./src/api.ts',
+    'ot code-review-task ./src/api.ts --verbose',
   ];
 
   async execute(args: string[], context: any): Promise<any> {
@@ -97,7 +97,7 @@ export default class CodeReviewTask {
 ### Step 3: Run Your Task
 
 ```bash
-open-tasks code-review-task ./src/api.ts
+ot code-review-task ./src/api.ts
 ```
 
 ## Passing Outputs as Inputs
@@ -177,7 +177,7 @@ Decorators modify references before they're stored. Common decorators:
 ### Example with Decorators
 
 ```typescript
-import { TokenDecorator, FileNameDecorator } from 'open-tasks-cli';
+import { TokenDecorator, FileNameDecorator } from '@bitcobblers/open-tasks';
 
 async execute(args: string[], context: any): Promise<any> {
   const flow = context.workflowContext;
@@ -217,7 +217,7 @@ context.outputSynk.write('Complete!');
 ### Message Cards
 
 ```typescript
-import { MessageCard } from 'open-tasks-cli';
+import { MessageCard } from '@bitcobblers/open-tasks';
 
 context.outputSynk.write(
   new MessageCard(
@@ -231,7 +231,7 @@ context.outputSynk.write(
 ### Table Cards
 
 ```typescript
-import { TableCard } from 'open-tasks-cli';
+import { TableCard } from '@bitcobblers/open-tasks';
 
 context.outputSynk.write(
   new TableCard(
@@ -251,7 +251,7 @@ context.outputSynk.write(
 ### List Cards
 
 ```typescript
-import { ListCard } from 'open-tasks-cli';
+import { ListCard } from '@bitcobblers/open-tasks';
 
 context.outputSynk.write(
   new ListCard(
@@ -330,7 +330,7 @@ export default class MultiFileReviewTask {
   name = 'multi-review';
   description = 'Review multiple related files together';
   examples = [
-    'open-tasks multi-review ./src/api.ts ./src/types.ts',
+    'ot multi-review ./src/api.ts ./src/types.ts',
   ];
 
   async execute(args: string[], context: any): Promise<any> {
@@ -377,7 +377,7 @@ export default class DataPipelineTask {
   name = 'data-pipeline';
   description = 'Load, transform, and save data';
   examples = [
-    'open-tasks data-pipeline ./input.csv',
+    'ot data-pipeline ./input.csv',
   ];
 
   async execute(args: string[], context: any): Promise<any> {
