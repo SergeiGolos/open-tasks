@@ -1,5 +1,5 @@
 import { OutputBuilder } from './output-builders.js';
-import { VerbosityLevel, ExecutionContext, ReferenceHandle, ICardBuilder, IOutputBuilder, SummaryData } from './types.js';
+import { VerbosityLevel, ExecutionContext, ReferenceHandle, ICardBuilder, IOutputSynk, SummaryData } from './types.js';
 import { IWorkflowContext } from './workflow/types.js';
 
 /**
@@ -27,7 +27,7 @@ export abstract class TaskHandler {
   ): Promise<ReferenceHandle> {
     
     const verbosity = context.verbosity || this.defaultVerbosity || 'summary';
-    const outputBuilder: IOutputBuilder = new OutputBuilder(verbosity);
+    const outputBuilder: IOutputSynk = new OutputBuilder(verbosity);
 
     return await this.executeCommand(
       args,
@@ -48,6 +48,6 @@ export abstract class TaskHandler {
     args: string[],
     config: Record<string, any>,
     workflowContext: IWorkflowContext,
-    outputBuilder: IOutputBuilder    
+    outputBuilder: IOutputSynk    
   ): Promise<ReferenceHandle>;
 }

@@ -1,8 +1,10 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { TaskHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
+import { ExecutionContext, ReferenceHandle, IOutputSynk } from '../types.js';
+import { TaskHandler } from '../task-handler.js';
 import { TokenDecorator } from '../workflow/decorators.js';
 import { formatFileSize } from '../output-utils.js';
+import { MessageCard, KeyValueCard } from '../cards/index.js';
 
 /**
  * Load command - loads content from a file
@@ -17,12 +19,12 @@ export default class LoadCommand extends TaskHandler {
     'open-tasks load ./large-file.json --verbose',
   ];
 
-  protected async executeCommand(
+  async execute(
     args: string[],
-    refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext,
-    cardBuilder: ICardBuilder
+    context: ExecutionContext
   ): Promise<ReferenceHandle> {
+    const verbosity = context.verbosity || this.defaultVerbosity || 'summary';
+    
     if (args.length === 0) {
       throw new Error('Load command requires a file path argument');
     }
@@ -35,8 +37,6 @@ export default class LoadCommand extends TaskHandler {
       ? filePath
       : path.join(context.cwd, filePath);
 
-    cardBuilder.addProgress(`Checking file: ${filePath}`);
-
     // Check if file exists and get stats
     let stats;
     try {
@@ -45,29 +45,27 @@ export default class LoadCommand extends TaskHandler {
       throw new Error(`File not found: ${filePath}`);
     }
 
-    cardBuilder.addProgress('Reading file content...');
+    // Read file content
+    const content = await fs.readFile(absolutePath, 'utf-8');
 
-    // Load using workflow context
-    const memoryRef = await context.workflowContext.load(absolutePath, token);
-
-    cardBuilder.addProgress('File loaded successfully');
+    // Store using workflow context
+    const memoryRef = await context.workflowContext.store(content, token ? [new TokenDecorator(token)] : []);
 
     // Create reference handle
-    const ref = context.referenceManager.createReference(
-      memoryRef.id,
-      memoryRef.content,
-      token,
-      absolutePath
-    );
+    const ref: ReferenceHandle = {
+      id: memoryRef.id,
+      content: content,
+      token: token,
+      timestamp: new Date(),
+      outputFile: absolutePath,
+    };
 
     // Add card with file details
-    const contentLength = typeof memoryRef.content === 'string' 
-      ? memoryRef.content.length 
-      : JSON.stringify(memoryRef.content).length;
+    const contentLength = content.length;
     
-    const contentPreview = typeof memoryRef.content === 'string'
-      ? memoryRef.content.substring(0, 100) + (memoryRef.content.length > 100 ? '...' : '')
-      : JSON.stringify(memoryRef.content, null, 2).substring(0, 100) + '...';
+    const contentPreview = content.length > 100 
+      ? content.substring(0, 100) + '...'
+      : content;
     
     const details = [
       `File: ${path.basename(absolutePath)}`,
@@ -81,8 +79,18 @@ export default class LoadCommand extends TaskHandler {
       contentPreview,
     ].join('\n');
     
-    cardBuilder.addCard('📂 File Loaded', details, 'success');
+    if (verbosity !== 'quiet') {
+      console.log(new MessageCard('📂 File Loaded', details, 'success').build());
+    }
 
     return ref;
+  }
+
+  protected override async executeCommand(
+    args: string[],
+    context: ExecutionContext,
+    outputBuilder: IOutputSynk
+  ): Promise<ReferenceHandle> {
+    throw new Error('This method should not be called. Use execute() instead.');
   }
 }

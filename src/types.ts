@@ -9,6 +9,57 @@ import { TaskHandler } from './task-handler.js';
 export type VerbosityLevel = 'quiet' | 'summary' | 'verbose';
 
 /**
+ * Loaded command representation
+ * Returned by CommandLoader to be registered by the router
+ */
+export interface LoadedCommand {
+  name: string;
+  handler: TaskHandler;
+}
+
+
+/**
+ * Reference handle for command outputs
+ */
+export interface ReferenceHandle {
+  id: string;
+  token?: string;
+  content: any;
+  timestamp: Date;
+  outputFile?: string;
+}
+
+
+/**
+ * Execution context passed to all command handlers
+ */
+export interface ExecutionContext {
+  /** Current working directory */
+  cwd: string;
+  /** Output directory for files */
+  outputDir: string;
+  /** Output handler instance */
+  outputHandler: OutputHandler;
+  /** Workflow context */
+  workflowContext: IWorkflowContext;
+  /** Configuration object */
+  config: Record<string, any>;
+  /** Verbosity level (default: 'summary') */
+  verbosity?: VerbosityLevel;  
+}
+
+
+
+
+/*************************/
+/*************************/
+/**  Output Interfaces  **/
+/*************************/
+/*************************/
+/*************************/
+
+
+/**
  * Summary data for command execution
  */
 export interface SummaryData {
@@ -91,53 +142,13 @@ export interface ICardBuilder {
  * Interface for building framework-level formatted output
  * Handles system-level execution reporting: timing, status, files, errors
  */
-export interface IOutputBuilder {
+export interface IOutputSynk {
     
+  /// writes a message to the output
+  write(message: string, verbosity: VerbosityLevel): void;
+  
   /**
    * writes a card to the output
    */
-  write(card: ICardBuilder, verbosity: VerbosityLevel): void;
-
-  /**
-   * Build and return the formatted output string
-   */
-  build(): string;
-}
-
-/**
- * Reference handle for command outputs
- */
-export interface ReferenceHandle {
-  id: string;
-  token?: string;
-  content: any;
-  timestamp: Date;
-  outputFile?: string;
-}
-
-/**
- * Loaded command representation
- * Returned by CommandLoader to be registered by the router
- */
-export interface LoadedCommand {
-  name: string;
-  handler: TaskHandler;
-}
-
-/**
- * Execution context passed to all command handlers
- */
-export interface ExecutionContext {
-  /** Current working directory */
-  cwd: string;
-  /** Output directory for files */
-  outputDir: string;
-  /** Output handler instance */
-  outputHandler: OutputHandler;
-  /** Workflow context */
-  workflowContext: IWorkflowContext;
-  /** Configuration object */
-  config: Record<string, any>;
-  /** Verbosity level (default: 'summary') */
-  verbosity?: VerbosityLevel;  
+  write(card: ICardBuilder, verbosity: VerbosityLevel): void;  
 }

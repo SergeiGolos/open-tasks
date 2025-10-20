@@ -1,4 +1,4 @@
-import { IOutputBuilder, SummaryData } from './types.js';
+import { IOutputSynk, SummaryData } from './types.js';
 
 /**
  * Utility functions for working with output builders
@@ -8,7 +8,7 @@ import { IOutputBuilder, SummaryData } from './types.js';
  * Add a formatted section to the output builder
  */
 export function addFormattedSection(
-  builder: IOutputBuilder,
+  builder: IOutputSynk,
   title: string,
   content: string | Record<string, any>
 ): void {
@@ -23,7 +23,7 @@ export function addFormattedSection(
  * Add file information section (useful for verbose mode)
  */
 export function addFileInfoSection(
-  builder: IOutputBuilder,
+  builder: IOutputSynk,
   filePath: string,
   size?: number,
   mimeType?: string
@@ -48,7 +48,7 @@ export function addFileInfoSection(
  * Add processing details section
  */
 export function addProcessingDetails(
-  builder: IOutputBuilder,
+  builder: IOutputSynk,
   details: Record<string, any>
 ): void {
   addFormattedSection(builder, '⚙️  Processing Details', details);
@@ -58,7 +58,7 @@ export function addProcessingDetails(
  * Add progress message with timestamp
  */
 export function addProgressWithTime(
-  builder: IOutputBuilder,
+  builder: IOutputSynk,
   message: string,
   startTime: number
 ): void {

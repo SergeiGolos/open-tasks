@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
-import { ExecutionContext, ReferenceHandle, ICardBuilder, IOutputBuilder } from '../types.js';
+import { ExecutionContext, ReferenceHandle, ICardBuilder, IOutputSynk } from '../types.js';
 import { TaskHandler } from '../task-handler.js';
 import { IWorkflowContext } from '../workflow/types.js';
 
@@ -21,7 +21,7 @@ export default class CreateCommand extends TaskHandler {
     args: string[],
     config: Record<string, any>,
     workflowContext: IWorkflowContext,
-    outputBuilder: IOutputBuilder
+    outputBuilder: IOutputSynk
   ): Promise<ReferenceHandle> {
     if (args.length === 0) {
       throw new Error('Create command requires a command name argument');
@@ -36,7 +36,7 @@ export default class CreateCommand extends TaskHandler {
         : 'Custom command';
 
     // Validate command name
-    cardBuilder.addProgress('Validating command name...');
+    outputBuilder.addProgress('Validating command name...');
     if (!/^[a-z0-9-]+$/.test(commandName)) {
       throw new Error(
         'Command name must be kebab-case (lowercase letters, numbers, and hyphens only)'

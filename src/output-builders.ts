@@ -1,13 +1,43 @@
-import { ICardBuilder, IOutputBuilder, VerbosityLevel } from "./types";
+import { ICardBuilder, IOutputSynk, VerbosityLevel } from "./types";
 
-export class OutputBuilder implements IOutputBuilder {
+export class ConsoleOutputBuilder implements IOutputSynk {
   private cards: ICardBuilder[];
   constructor(private verbosity: VerbosityLevel) {
     this.cards = [];
   }
 
-  write(card: ICardBuilder, verbosity: VerbosityLevel): void {
-    this.cards.push(card);
+  write(card: ICardBuilder | string, verbosity: VerbosityLevel): void {
+       
+    if (typeof card === 'string') {
+        console.log(card);
+        return;
+    }
+
+    if (this.shouldWrite(verbosity)) {
+      this.cards.push(card);
+      console.log(card.build());
+    }
+  }
+
+  private shouldWrite(verbosity: VerbosityLevel): boolean {
+    // Verbosity hierarchy:
+    // - quiet: Only show cards marked as 'quiet'
+    // - summary: Show cards marked as 'summary' or 'quiet'
+    // - verbose: Show all cards
+    
+    if (this.verbosity === 'verbose') {
+      return true; // Show all cards
+    }
+    
+    if (this.verbosity === 'summary') {
+      return verbosity === 'summary' || verbosity === 'quiet';
+    }
+    
+    if (this.verbosity === 'quiet') {
+      return verbosity === 'quiet';
+    }
+    
+    return false;
   }
 
   build(): string {      
