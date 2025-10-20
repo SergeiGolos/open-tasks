@@ -110,64 +110,11 @@ export class DirectoryOutputContext implements IFlow {
     return ref?.content;
   }
 
-  async run(command: ICommand): Promise<StringRef[]> {
+  async with(command: ICommand): Promise<StringRef[]> {
     return await command.execute(this, []);
   }
-
-  /**
-   * Get a memory reference by ID or token
-   */
-  get(idOrToken: string): StringRef | undefined {
-    let ref = this.memory.get(idOrToken);
-    if (ref) {
-      return ref;
-    }
-
-    const id = this.tokenIndex.get(idOrToken);
-    if (id) {
-      return this.memory.get(id);
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Load content from a file and create a StringRef
-   */
-  async load(filePath: string, token?: string): Promise<StringRef> {
-    const content = await fs.readFile(filePath, 'utf-8');
-    const id = uuidv4();
-    
-    const ref: StringRef = {
-      id,
-      content,
-      timestamp: new Date(),
-      token,
-      fileName: path.basename(filePath),
-    };
-
-    this.memory.set(id, ref);
-    if (token) {
-      this.tokenIndex.set(token, id);
-    }
-
-    return ref;
-  }
-
-  /**
-   * Get the output directory path
-   */
-  getOutputDir(): string {
-    return this.outputDir;
-  }
-
-  /**
-   * List all stored references
-   */
-  list(): StringRef[] {
-    return Array.from(this.memory.values());
-  }
-
+  
+  
   /**
    * Clear all stored values
    */

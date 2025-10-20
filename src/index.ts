@@ -8,19 +8,19 @@ import { CommandRouter } from './router.js';
 import { CommandLoader } from './command-loader.js';
 import {
   ExecutionContext,
-  ReferenceHandle,
+  IOutputSynk,
+  VerbosityLevel,
 } from './types.js';
-import { OutputHandler } from './OutputHandler.js';
-import { ReferenceManager } from './ReferenceManager.js';
 import { DirectoryOutputContext } from './workflow/index.js';
 import { loadConfig } from './config-loader.js';
 import {
   formatSuccess,
   formatError,
   formatReferenceHandle,
-  formatCommandList,
-  formatCommandHelp,
+  formatCommandList,  
 } from './formatters.js';
+import { ConsoleOutputBuilder } from './output-builders.js';
+import { MessageCard } from './cards/MessageCard.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -107,30 +107,32 @@ async function main() {
         // Determine output directory (--dir overrides config)
         const outputDir = globalOpts.dir 
           ? path.resolve(cwd, globalOpts.dir)
-          : path.join(cwd, config.outputDir);
-        const outputHandler = new OutputHandler(outputDir);
+          : path.join(cwd, config.outputDir);        
         const workflowContext = new DirectoryOutputContext(outputDir);
+              
+
+      
+        // Resolve verbosity (mutual exclusivity handled by checking multiple flags)
+        let verbosity: VerbosityLevel | undefined;
+        const verbosityFlags = [globalOpts.quiet, globalOpts.summary, globalOpts.verbose].filter(Boolean);
         
+        if (verbosityFlags.length > 1) {
+          console.error(formatError('Error: Only one verbosity flag (--quiet, --summary, --verbose) can be specified'));
+          process.exit(1);
+        }
+        
+        if (globalOpts.quiet) verbosity = 'quiet';
+        else if (globalOpts.summary) verbosity = 'summary';
+        else if (globalOpts.verbose) verbosity = 'verbose';
+                        
+        const outputSynk: IOutputSynk = new ConsoleOutputBuilder(verbosity || 'summary');
         try {
-          // Resolve verbosity (mutual exclusivity handled by checking multiple flags)
-          let verbosity: 'quiet' | 'summary' | 'verbose' | undefined;
-          const verbosityFlags = [globalOpts.quiet, globalOpts.summary, globalOpts.verbose].filter(Boolean);
-          
-          if (verbosityFlags.length > 1) {
-            console.error(formatError('Error: Only one verbosity flag (--quiet, --summary, --verbose) can be specified'));
-            process.exit(1);
-          }
-          
-          if (globalOpts.quiet) verbosity = 'quiet';
-          else if (globalOpts.summary) verbosity = 'summary';
-          else if (globalOpts.verbose) verbosity = 'verbose';
-                    
           // Create execution context
           const context: ExecutionContext = {
             cwd,
-            outputDir,
-            outputHandler,
+            outputDir,            
             workflowContext,
+            outputSynk,
             config,
             verbosity            
           };
@@ -151,22 +153,15 @@ async function main() {
               console.log(result.content);
             }
           }
-        } catch (error) {
-          const err = error as Error;
-          console.error(formatError(err.message));
-
-          // Write error file
-          try {
-            await outputHandler.writeError(err, {
+        } catch (error: any) {
+          // Write error file         
+            /* {
               command: cmd.name,
               args: commandArgs,
               cwd,
-            });
-          } catch (writeError) {
-            console.error('Failed to write error file:', writeError);
-          }
-
-          process.exit(1);
+            } */
+            await outputSynk.write(new MessageCard("Error", error.toString(), "error"), 'quiet');
+            process.exit(1);
         }
       });
     

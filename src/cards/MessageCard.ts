@@ -17,6 +17,7 @@ export class MessageCard implements ICardBuilder {
     this.name = `MessageCard:${title}`;
     this.verbosity = verbosity;
   }
+  type: string = "MessageCard";
 
   build(): string {
     const options = this.getBoxenOptions(this.title, this.style);

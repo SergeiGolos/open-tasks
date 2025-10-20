@@ -1,12 +1,11 @@
-import { OutputBuilder } from './output-builders.js';
-import { VerbosityLevel, ExecutionContext, ReferenceHandle, ICardBuilder, IOutputSynk, SummaryData } from './types.js';
-import { IFlow } from './workflow/types.js';
+import { VerbosityLevel, ExecutionContext, ReferenceHandle, IOutputSynk, ITaskHandler } from './types.js';
+import { IFlow } from './types.js';
 
 /**
  * Base class for command handlers
  */
 
-export abstract class TaskHandler {
+export abstract class TaskHandler implements ITaskHandler {
   abstract name: string;
   abstract description: string;
   abstract examples: string[];
@@ -22,18 +21,15 @@ export abstract class TaskHandler {
    * or use the new executeCommand pattern for enhanced output control
    */
   async execute(
-    args: string[],
+    args: string[],    
     context: ExecutionContext
   ): Promise<ReferenceHandle> {
     
-    const verbosity = context.verbosity || this.defaultVerbosity || 'summary';
-    const outputBuilder: IOutputSynk = new OutputBuilder(verbosity);
-
     return await this.executeCommand(
-      args,
       context.config,
+      args,      
       context.workflowContext,
-      outputBuilder
+      context.outputSynk
     );    
   }
 
@@ -45,9 +41,9 @@ export abstract class TaskHandler {
    * @param cardBuilder - Card builder for creating command-specific output (managed by framework)
    */
   protected abstract executeCommand(
-    args: string[],
     config: Record<string, any>,
-    workflowContext: IFlow,
-    outputBuilder: IOutputSynk    
+    args: string[],    
+    flow: IFlow,
+    synk: IOutputSynk    
   ): Promise<ReferenceHandle>;
 }
