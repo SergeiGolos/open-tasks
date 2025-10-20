@@ -376,7 +376,7 @@ $ open-tasks replace "{{name}} is awesome" --ref name --verbose
 ### Text File with Metadata
 
 ```
-# open-tasks-cli output
+# @bitcobblers/open-tasks output
 # Command: store
 # Arguments: ["Hello World"]
 # Reference: greeting
@@ -402,7 +402,7 @@ Hello World
 ### Error File
 
 ```
-# open-tasks-cli error
+# @bitcobblers/open-tasks error
 # Command: load
 # Arguments: ["./missing.txt"]
 # Timestamp: 2025-10-17T14:31:00.001Z

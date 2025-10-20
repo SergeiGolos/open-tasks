@@ -15,8 +15,8 @@ Review a single file for best practices:
 **Step 1: Create the custom task** (`.open-tasks/tasks/code-review.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -24,7 +24,7 @@ export default class CodeReviewTask extends TaskHandler {
   name = 'code-review';
   description = 'Review a source code file for best practices';
   examples = [
-    'open-tasks code-review ./src/api.ts',
+    'ot code-review ./src/api.ts',
   ];
 
   protected async executeCommand(
@@ -77,7 +77,7 @@ export default class CodeReviewTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks code-review ./src/api.ts
+ot code-review ./src/api.ts
 ```
 
 ### Multi-File Code Review
@@ -87,8 +87,8 @@ Review multiple related files together:
 **Step 1: Create the custom task** (`.open-tasks/tasks/multi-file-review.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, ListCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, ListCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -96,7 +96,7 @@ export default class MultiFileReviewTask extends TaskHandler {
   name = 'multi-file-review';
   description = 'Review multiple related files together';
   examples = [
-    'open-tasks multi-file-review ./src/api.ts ./src/types.ts ./src/utils.ts',
+    'ot multi-file-review ./src/api.ts ./src/types.ts ./src/utils.ts',
   ];
 
   protected async executeCommand(
@@ -166,7 +166,7 @@ export default class MultiFileReviewTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks multi-file-review ./src/api.ts ./src/types.ts ./src/utils.ts
+ot multi-file-review ./src/api.ts ./src/types.ts ./src/utils.ts
 ```
 
 ### Extract and Review Specific Functions
@@ -176,8 +176,8 @@ Review only specific functions from a large file:
 **Step 1: Create the custom task** (`.open-tasks/tasks/extract-review-functions.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -185,7 +185,7 @@ export default class ExtractReviewFunctionsTask extends TaskHandler {
   name = 'extract-review-functions';
   description = 'Extract and review functions from a source file';
   examples = [
-    'open-tasks extract-review-functions ./src/large-file.ts',
+    'ot extract-review-functions ./src/large-file.ts',
   ];
 
   protected async executeCommand(
@@ -244,7 +244,7 @@ export default class ExtractReviewFunctionsTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks extract-review-functions ./src/large-file.ts
+ot extract-review-functions ./src/large-file.ts
 ```
 
 ### Review with Context from Documentation
@@ -254,8 +254,8 @@ Review code against its documentation:
 **Step 1: Create the custom task** (`.open-tasks/tasks/review-with-spec.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -263,7 +263,7 @@ export default class ReviewWithSpecTask extends TaskHandler {
   name = 'review-with-spec';
   description = 'Review implementation against specification';
   examples = [
-    'open-tasks review-with-spec ./src/authentication.ts ./docs/auth-spec.md',
+    'ot review-with-spec ./src/authentication.ts ./docs/auth-spec.md',
   ];
 
   protected async executeCommand(
@@ -327,7 +327,7 @@ export default class ReviewWithSpecTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks review-with-spec ./src/authentication.ts ./docs/auth-spec.md
+ot review-with-spec ./src/authentication.ts ./docs/auth-spec.md
 ```
 
 ### Review Git Diff
@@ -337,16 +337,16 @@ Review changes in a git diff:
 **Step 1: Create the custom task** (`.open-tasks/tasks/review-git-diff.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard } from '@bitcobblers/open-tasks';
 import { spawn } from 'child_process';
 
 export default class ReviewGitDiffTask extends TaskHandler {
   name = 'review-git-diff';
   description = 'Review changes in a git diff';
   examples = [
-    'open-tasks review-git-diff',
-    'open-tasks review-git-diff HEAD~1',
+    'ot review-git-diff',
+    'ot review-git-diff HEAD~1',
   ];
 
   protected async executeCommand(
@@ -422,9 +422,9 @@ export default class ReviewGitDiffTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks review-git-diff
+ot review-git-diff
 # Or specify a commit
-open-tasks review-git-diff HEAD~5
+ot review-git-diff HEAD~5
 ```
 
 ---
@@ -440,16 +440,16 @@ Fetch news from an API and create a summary:
 **Step 1: Create the custom task** (`.open-tasks/tasks/news-summary.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, ListCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, ListCard } from '@bitcobblers/open-tasks';
 import { spawn } from 'child_process';
 
 export default class NewsSummaryTask extends TaskHandler {
   name = 'news-summary';
   description = 'Fetch and summarize news from an API';
   examples = [
-    'open-tasks news-summary',
-    'open-tasks news-summary --api-key YOUR_API_KEY',
+    'ot news-summary',
+    'ot news-summary --api-key YOUR_API_KEY',
   ];
 
   protected async executeCommand(
@@ -540,7 +540,7 @@ export default class NewsSummaryTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks news-summary --api-key YOUR_API_KEY
+ot news-summary --api-key YOUR_API_KEY
 ```
 
 ### Multi-Source News Aggregation
@@ -550,15 +550,15 @@ Combine news from multiple sources:
 **Step 1: Create the custom task** (`.open-tasks/tasks/multi-source-news.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, TableCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, TableCard } from '@bitcobblers/open-tasks';
 import { spawn } from 'child_process';
 
 export default class MultiSourceNewsTask extends TaskHandler {
   name = 'multi-source-news';
   description = 'Aggregate news from multiple sources';
   examples = [
-    'open-tasks multi-source-news',
+    'ot multi-source-news',
   ];
 
   protected async executeCommand(
@@ -649,7 +649,7 @@ export default class MultiSourceNewsTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks multi-source-news
+ot multi-source-news
 ```
 
 ### Domain-Specific News Summary
@@ -659,14 +659,14 @@ Filter and summarize news for a specific domain:
 **Step 1: Create the custom task** (`.open-tasks/tasks/tech-news-summary.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, ListCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, ListCard } from '@bitcobblers/open-tasks';
 
 export default class TechNewsSummaryTask extends TaskHandler {
   name = 'tech-news-summary';
   description = 'Fetch and summarize technology news';
   examples = [
-    'open-tasks tech-news-summary --api-key YOUR_API_KEY',
+    'ot tech-news-summary --api-key YOUR_API_KEY',
   ];
 
   protected async executeCommand(
@@ -714,7 +714,7 @@ export default class TechNewsSummaryTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks tech-news-summary --api-key YOUR_API_KEY
+ot tech-news-summary --api-key YOUR_API_KEY
 ```
 
 ---
@@ -728,8 +728,8 @@ Analyze application logs to identify issues.
 **Step 1: Create the custom task** (`.open-tasks/tasks/extract-errors.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, TableCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, TableCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -737,7 +737,7 @@ export default class ExtractErrorsTask extends TaskHandler {
   name = 'extract-errors';
   description = 'Extract error messages from log files';
   examples = [
-    'open-tasks extract-errors ./app.log',
+    'ot extract-errors ./app.log',
   ];
 
   protected async executeCommand(
@@ -791,7 +791,7 @@ export default class ExtractErrorsTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks extract-errors ./app.log
+ot extract-errors ./app.log
 ```
 
 ### Analyze Error Patterns
@@ -799,8 +799,8 @@ open-tasks extract-errors ./app.log
 **Step 1: Create the custom task** (`.open-tasks/tasks/analyze-errors.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, TableCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, TableCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -808,7 +808,7 @@ export default class AnalyzeErrorsTask extends TaskHandler {
   name = 'analyze-errors';
   description = 'Analyze error patterns in log files';
   examples = [
-    'open-tasks analyze-errors ./application.log',
+    'ot analyze-errors ./application.log',
   ];
 
   protected async executeCommand(
@@ -870,7 +870,7 @@ export default class AnalyzeErrorsTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks analyze-errors ./application.log
+ot analyze-errors ./application.log
 ```
 
 ---
@@ -884,8 +884,8 @@ Generate documentation from source code.
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-api-docs.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, ListCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, ListCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -893,7 +893,7 @@ export default class GenerateApiDocsTask extends TaskHandler {
   name = 'generate-api-docs';
   description = 'Generate API documentation from source code';
   examples = [
-    'open-tasks generate-api-docs ./src/api.ts',
+    'ot generate-api-docs ./src/api.ts',
   ];
 
   protected async executeCommand(
@@ -952,7 +952,7 @@ export default class GenerateApiDocsTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks generate-api-docs ./src/api.ts
+ot generate-api-docs ./src/api.ts
 ```
 
 ### Generate README from Code
@@ -960,8 +960,8 @@ open-tasks generate-api-docs ./src/api.ts
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-readme.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -969,7 +969,7 @@ export default class GenerateReadmeTask extends TaskHandler {
   name = 'generate-readme';
   description = 'Generate README from package.json and source';
   examples = [
-    'open-tasks generate-readme',
+    'ot generate-readme',
   ];
 
   protected async executeCommand(
@@ -1021,7 +1021,7 @@ export default class GenerateReadmeTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks generate-readme
+ot generate-readme
 ```
 
 ---
@@ -1035,8 +1035,8 @@ Transform data through multiple steps.
 **Step 1: Create the custom task** (`.open-tasks/tasks/csv-to-json.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, TableCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, TableCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -1044,7 +1044,7 @@ export default class CsvToJsonTask extends TaskHandler {
   name = 'csv-to-json';
   description = 'Transform CSV data to JSON format';
   examples = [
-    'open-tasks csv-to-json ./data.csv',
+    'ot csv-to-json ./data.csv',
   ];
 
   protected async executeCommand(
@@ -1111,7 +1111,7 @@ export default class CsvToJsonTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks csv-to-json ./data.csv
+ot csv-to-json ./data.csv
 ```
 
 ---
@@ -1125,14 +1125,14 @@ Work with external APIs and process responses.
 **Step 1: Create the custom task** (`.open-tasks/tasks/fetch-repo-data.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, KeyValueCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, KeyValueCard } from '@bitcobblers/open-tasks';
 
 export default class FetchRepoDataTask extends TaskHandler {
   name = 'fetch-repo-data';
   description = 'Fetch and format GitHub repository data';
   examples = [
-    'open-tasks fetch-repo-data microsoft/vscode',
+    'ot fetch-repo-data microsoft/vscode',
   ];
 
   protected async executeCommand(
@@ -1184,7 +1184,7 @@ export default class FetchRepoDataTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks fetch-repo-data microsoft/vscode
+ot fetch-repo-data microsoft/vscode
 ```
 
 ### Chain API Calls
@@ -1192,14 +1192,14 @@ open-tasks fetch-repo-data microsoft/vscode
 **Step 1: Create the custom task** (`.open-tasks/tasks/chain-api-calls.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, ListCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, ListCard } from '@bitcobblers/open-tasks';
 
 export default class ChainApiCallsTask extends TaskHandler {
   name = 'chain-api-calls';
   description = 'Chain multiple API calls together';
   examples = [
-    'open-tasks chain-api-calls octocat',
+    'ot chain-api-calls octocat',
   ];
 
   protected async executeCommand(
@@ -1264,7 +1264,7 @@ export default class ChainApiCallsTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks chain-api-calls octocat
+ot chain-api-calls octocat
 ```
 
 ---
@@ -1278,8 +1278,8 @@ Manage configuration files and templates.
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-config.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, KeyValueCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, KeyValueCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -1287,7 +1287,7 @@ export default class GenerateConfigTask extends TaskHandler {
   name = 'generate-config';
   description = 'Generate environment-specific configuration';
   examples = [
-    'open-tasks generate-config production',
+    'ot generate-config production',
   ];
 
   protected async executeCommand(
@@ -1353,7 +1353,7 @@ export default class GenerateConfigTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks generate-config production
+ot generate-config production
 ```
 
 ### Validate Configuration
@@ -1361,8 +1361,8 @@ open-tasks generate-config production
 **Step 1: Create the custom task** (`.open-tasks/tasks/validate-config.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, ListCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, ListCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -1370,7 +1370,7 @@ export default class ValidateConfigTask extends TaskHandler {
   name = 'validate-config';
   description = 'Validate configuration file';
   examples = [
-    'open-tasks validate-config ./config.json',
+    'ot validate-config ./config.json',
   ];
 
   protected async executeCommand(
@@ -1431,7 +1431,7 @@ export default class ValidateConfigTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks validate-config ./config.json
+ot validate-config ./config.json
 ```
 
 ---
@@ -1445,8 +1445,8 @@ Generate and manage test cases.
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-tests.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, ListCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, ListCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -1454,7 +1454,7 @@ export default class GenerateTestsTask extends TaskHandler {
   name = 'generate-tests';
   description = 'Generate test cases for source code';
   examples = [
-    'open-tasks generate-tests ./src/calculator.ts',
+    'ot generate-tests ./src/calculator.ts',
   ];
 
   protected async executeCommand(
@@ -1520,7 +1520,7 @@ export default class GenerateTestsTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks generate-tests ./src/calculator.ts
+ot generate-tests ./src/calculator.ts
 ```
 
 ### Analyze Test Coverage
@@ -1528,8 +1528,8 @@ open-tasks generate-tests ./src/calculator.ts
 **Step 1: Create the custom task** (`.open-tasks/tasks/analyze-coverage.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, TableCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, TableCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -1537,7 +1537,7 @@ export default class AnalyzeCoverageTask extends TaskHandler {
   name = 'analyze-coverage';
   description = 'Analyze test coverage';
   examples = [
-    'open-tasks analyze-coverage ./tests/api.test.ts ./src/api.ts',
+    'ot analyze-coverage ./tests/api.test.ts ./src/api.ts',
   ];
 
   protected async executeCommand(
@@ -1615,7 +1615,7 @@ export default class AnalyzeCoverageTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks analyze-coverage ./tests/api.test.ts ./src/api.ts
+ot analyze-coverage ./tests/api.test.ts ./src/api.ts
 ```
 
 ---
@@ -1629,8 +1629,8 @@ Automate build and release processes.
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-release-notes.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard, ListCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard, ListCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import { spawn } from 'child_process';
 import path from 'path';
@@ -1639,7 +1639,7 @@ export default class GenerateReleaseNotesTask extends TaskHandler {
   name = 'generate-release-notes';
   description = 'Generate release notes from git commits';
   examples = [
-    'open-tasks generate-release-notes',
+    'ot generate-release-notes',
   ];
 
   protected async executeCommand(
@@ -1705,7 +1705,7 @@ export default class GenerateReleaseNotesTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks generate-release-notes
+ot generate-release-notes
 ```
 
 ### Update Changelog
@@ -1713,8 +1713,8 @@ open-tasks generate-release-notes
 **Step 1: Create the custom task** (`.open-tasks/tasks/update-changelog.ts`):
 
 ```typescript
-import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
-import { MessageCard } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '@bitcobblers/open-tasks';
+import { MessageCard } from '@bitcobblers/open-tasks';
 import { promises as fs } from 'fs';
 import path from 'path';
 
@@ -1722,7 +1722,7 @@ export default class UpdateChangelogTask extends TaskHandler {
   name = 'update-changelog';
   description = 'Update CHANGELOG.md with new version entry';
   examples = [
-    'open-tasks update-changelog',
+    'ot update-changelog',
   ];
 
   protected async executeCommand(
@@ -1782,7 +1782,7 @@ export default class UpdateChangelogTask extends TaskHandler {
 **Step 2: Run the custom task**:
 
 ```bash
-open-tasks update-changelog
+ot update-changelog
 ```
 
 ---
@@ -1794,7 +1794,7 @@ These examples demonstrate how to create custom task handlers that wrap commands
 1. **Creating a custom task handler** - Implementing `ITaskHandler` or extending `TaskHandler`
 2. **Loading and processing data** - Using the workflow context to manage state
 3. **Creating visual output** - Using MessageCard, TableCard, ListCard, etc.
-4. **Running from command line** - Using `open-tasks your-task-name`
+4. **Running from command line** - Using `ot your-task-name`
 
 To create your own workflows:
 
@@ -1805,4 +1805,4 @@ To create your own workflows:
 
 ---
 
-**Pro Tip:** All examples shown here create custom tasks in the `.open-tasks/tasks/` directory. Use `open-tasks create your-task-name --typescript` to scaffold a new task quickly!
+**Pro Tip:** All examples shown here create custom tasks in the `.open-tasks/tasks/` directory. Use `ot create your-task-name --typescript` to scaffold a new task quickly!

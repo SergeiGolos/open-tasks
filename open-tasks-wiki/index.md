@@ -40,7 +40,7 @@ Open Tasks CLI makes it easy to create custom workflow tasks. Here's how to get 
 ### 1. Initialize Your Project
 
 ```bash
-open-tasks init
+ot init
 ```
 
 This creates the `.open-tasks` directory structure with:
@@ -51,7 +51,7 @@ This creates the `.open-tasks` directory structure with:
 ### 2. Create a Custom Task
 
 ```bash
-open-tasks create hello-world
+ot create hello-world
 ```
 
 This scaffolds a new task at `.open-tasks/tasks/hello-world.js` that demonstrates:
@@ -64,19 +64,19 @@ This scaffolds a new task at `.open-tasks/tasks/hello-world.js` that demonstrate
 
 ```bash
 # Run with default parameter
-open-tasks hello-world
+ot hello-world
 
 # Run with a custom name
-open-tasks hello-world "Alice"
+ot hello-world "Alice"
 ```
 
 **Output:**
 ```
 👋 Hello World Demo
 ──────────────────────────────────────────────────
-Template: Hello, {{name}}! Welcome to open-tasks CLI.
+Template: Hello, {{name}}! Welcome to ot CLI.
 User Name: Alice
-Result: Hello, Alice! Welcome to open-tasks CLI.
+Result: Hello, Alice! Welcome to ot CLI.
 Token: hello-world-result
 ```
 

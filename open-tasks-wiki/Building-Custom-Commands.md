@@ -21,8 +21,8 @@ export default class MyCommand {
   name = 'my-command';
   description = 'What this command does';
   examples = [
-    'open-tasks my-command arg1',
-    'open-tasks my-command arg1 --token result',
+    'ot my-command arg1',
+    'ot my-command arg1 --token result',
   ];
 
   async execute(args: string[], context: any): Promise<any> {
@@ -43,7 +43,7 @@ export default class MyCommand {
 ### Step 1: Scaffold the Command
 
 ```bash
-open-tasks create validate-email --typescript
+ot create validate-email --typescript
 ```
 
 ### Step 2: Implement the Logic
@@ -53,8 +53,8 @@ export default class ValidateEmailCommand {
   name = 'validate-email';
   description = 'Validate email addresses';
   examples = [
-    'open-tasks validate-email user@example.com',
-    'open-tasks validate-email --ref emails',
+    'ot validate-email user@example.com',
+    'ot validate-email --ref emails',
   ];
 
   async execute(args: string[], context: any): Promise<any> {
@@ -100,7 +100,7 @@ Open Tasks provides several card types:
 The most common card type for simple messages:
 
 ```typescript
-import { MessageCard } from 'open-tasks-cli';
+import { MessageCard } from '@bitcobblers/open-tasks';
 
 // Success message
 context.outputSynk.write(
@@ -162,7 +162,7 @@ context.outputSynk.write(
 Display tabular data:
 
 ```typescript
-import { TableCard } from 'open-tasks-cli';
+import { TableCard } from '@bitcobblers/open-tasks';
 
 context.outputSynk.write(
   new TableCard(
@@ -199,7 +199,7 @@ context.outputSynk.write(
 Display a list of items:
 
 ```typescript
-import { ListCard } from 'open-tasks-cli';
+import { ListCard } from '@bitcobblers/open-tasks';
 
 context.outputSynk.write(
   new ListCard(
@@ -233,7 +233,7 @@ context.outputSynk.write(
 Display hierarchical data:
 
 ```typescript
-import { TreeCard, TreeNode } from 'open-tasks-cli';
+import { TreeCard, TreeNode } from '@bitcobblers/open-tasks';
 
 const tree: TreeNode = {
   label: 'Project',
@@ -285,13 +285,13 @@ context.outputSynk.write(
 Display key-value pairs:
 
 ```typescript
-import { KeyValueCard } from 'open-tasks-cli';
+import { KeyValueCard } from '@bitcobblers/open-tasks';
 
 context.outputSynk.write(
   new KeyValueCard(
     'Configuration',
     {
-      'Project': 'open-tasks-cli',
+      'Project': '@bitcobblers/open-tasks',
       'Version': '1.0.0',
       'Node': '18.0.0',
       'Status': 'Active'
@@ -305,7 +305,7 @@ context.outputSynk.write(
 ```
 ╭─ Configuration ──────────────╮
 │                              │
-│  Project: open-tasks-cli     │
+│  Project: open-tasks         │
 │  Version: 1.0.0              │
 │  Node: 18.0.0                │
 │  Status: Active              │
@@ -318,14 +318,14 @@ context.outputSynk.write(
 Here's a complete command that validates emails and uses multiple card types:
 
 ```typescript
-import { MessageCard, TableCard, ListCard } from 'open-tasks-cli';
+import { MessageCard, TableCard, ListCard } from '@bitcobblers/open-tasks';
 
 export default class EmailValidatorCommand {
   name = 'validate-emails';
   description = 'Validate multiple email addresses';
   examples = [
-    'open-tasks validate-emails user@test.com admin@example.com',
-    'open-tasks validate-emails --ref email-list',
+    'ot validate-emails user@test.com admin@example.com',
+    'ot validate-emails --ref email-list',
   ];
 
   async execute(args: string[], context: any): Promise<any> {
@@ -533,16 +533,16 @@ After creating a command, test it:
 
 ```bash
 # Test with direct arguments
-open-tasks my-command arg1 arg2
+ot my-command arg1 arg2
 
 # Test with verbose output
-open-tasks my-command arg1 --verbose
+ot my-command arg1 --verbose
 
 # Test with quiet output
-open-tasks my-command arg1 --quiet
+ot my-command arg1 --quiet
 
 # Test with token
-open-tasks my-command arg1 --token result
+ot my-command arg1 --token result
 ```
 
 ## Advanced: Custom Card Builders
@@ -550,7 +550,7 @@ open-tasks my-command arg1 --token result
 You can create your own card builders by implementing the `ICardBuilder` interface:
 
 ```typescript
-import { ICardBuilder, CardStyle } from 'open-tasks-cli';
+import { ICardBuilder, CardStyle } from '@bitcobblers/open-tasks';
 import boxen from 'boxen';
 
 export class CustomCard implements ICardBuilder {

@@ -1,4 +1,4 @@
-This document outlines the design for integrating external agentic CLI tools into the `open-tasks-cli`.
+This document outlines the design for integrating external agentic CLI tools into the `@bitcobblers/open-tasks`.
 
 ### 1. `AgentCommandHandler` Base Class
 

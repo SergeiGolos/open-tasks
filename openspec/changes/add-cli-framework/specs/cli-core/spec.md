@@ -6,7 +6,7 @@
 
 ## Overview
 
-The CLI Core capability provides the foundational framework for the open-tasks-cli tool, including command parsing, routing, and the execution engine that orchestrates command invocation.
+The CLI Core capability provides the foundational framework for the @bitcobblers/open-tasks tool, including command parsing, routing, and the execution engine that orchestrates command invocation.
 
 **Command Types**:
 1. **System Commands**: Built-in commands for project setup and scaffolding (`init`, `create`) - these are NOT process commands
@@ -29,15 +29,15 @@ The tool MUST be installable via npm and invokable from the command line.
 #### Scenario: User installs CLI globally
 
 **Given** the user has npm installed  
-**When** the user runs `npm install -g open-tasks-cli`  
+**When** the user runs `npm install -g @bitcobblers/open-tasks`  
 **Then** the CLI should be installed globally  
 **And** the user can invoke it using `open-tasks` from any directory
 
 #### Scenario: User installs CLI locally in project
 
 **Given** the user has a Node.js project  
-**When** the user runs `npm install --save-dev open-tasks-cli`  
-**Then** the CLI should be available via `npx open-tasks`
+**When** the user runs `npm install --save-dev @bitcobblers/open-tasks`  
+**Then** the CLI should be available via `npx ot`
 
 #### Scenario: User invokes CLI without arguments
 
@@ -243,7 +243,7 @@ The CLI MUST provide an `init` command to set up a new open-tasks project in the
 **Given** the current directory does not have a `package.json`  
 **When** the user runs `open-tasks init`  
 **Then** the CLI should create a basic `package.json`  
-**And** include open-tasks-cli as a dependency  
+**And** include @bitcobblers/open-tasks as a dependency  
 **And** set up default npm scripts  
 **And** display message about package.json creation
 

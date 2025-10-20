@@ -12,16 +12,16 @@ This guide will help you install Open Tasks CLI and get started with your first 
 
 ### Option 1: Global Installation (Recommended)
 
-Install globally to use `open-tasks` from anywhere:
+Install globally to use `ot` from anywhere:
 
 ```bash
-npm install -g open-tasks-cli
+npm install -g @bitcobblers/open-tasks
 ```
 
 Verify installation:
 
 ```bash
-open-tasks --version
+ot --version
 ```
 
 ### Option 2: Local Installation
@@ -29,13 +29,13 @@ open-tasks --version
 Install in your project:
 
 ```bash
-npm install open-tasks-cli
+npm install @bitcobblers/open-tasks
 ```
 
 Use with npx:
 
 ```bash
-npx open-tasks --help
+npx ot --help
 ```
 
 ### Option 3: From Source
@@ -44,7 +44,7 @@ Clone and build from source:
 
 ```bash
 git clone <repository-url>
-cd open-tasks-cli
+cd open-tasks
 npm install
 npm run build
 npm link
@@ -56,7 +56,7 @@ Initialize Open Tasks in your project directory:
 
 ```bash
 cd /path/to/your/project
-open-tasks init
+ot init
 ```
 
 This creates:
@@ -103,7 +103,7 @@ Create `~/.open-tasks/config.json` for global defaults:
 ### 1. Store Your First Value
 
 ```bash
-open-tasks store "Hello, World!" --token greeting
+ot store "Hello, World!" --token greeting
 ```
 
 **Output:**
@@ -116,7 +116,7 @@ open-tasks store "Hello, World!" --token greeting
 ### 2. Load a File
 
 ```bash
-open-tasks load ./README.md --token readme
+ot load ./README.md --token readme
 ```
 
 **Output:**
@@ -129,8 +129,8 @@ open-tasks load ./README.md --token readme
 ### 3. Extract Data with Regex
 
 ```bash
-open-tasks store "Contact: support@example.com" --token contact
-open-tasks extract "[a-z]+@[a-z.]+" --ref contact --token email
+ot store "Contact: support@example.com" --token contact
+ot extract "[a-z]+@[a-z.]+" --ref contact --token email
 ```
 
 **Output:**
@@ -144,13 +144,13 @@ open-tasks extract "[a-z]+@[a-z.]+" --ref contact --token email
 
 ```bash
 # Load a template
-open-tasks load ./template.html --token template
+ot load ./template.html --token template
 
 # Store a variable
-open-tasks store "John Doe" --token name
+ot store "John Doe" --token name
 
 # Replace in template
-open-tasks replace "{{template}}" --ref template --ref name
+ot replace "{{template}}" --ref template --ref name
 ```
 
 ## Output Control
@@ -161,17 +161,17 @@ Control how much detail commands output:
 
 ```bash
 # Quiet mode - minimal output
-open-tasks store "data" --quiet
+ot store "data" --quiet
 ✓ store completed in 45ms
 
 # Summary mode - default, clean output (default)
-open-tasks store "data"
+ot store "data"
 ✓ store completed in 45ms
 📁 Saved to: .open-tasks/outputs/20241018-130145-store/output.txt
 🔗 Reference: @mytoken
 
 # Verbose mode - detailed information
-open-tasks store "data" --verbose
+ot store "data" --verbose
 (shows processing details, file info, metadata)
 ```
 
@@ -196,7 +196,7 @@ To use the `ai-cli` command, create `.open-tasks/ai-config.json`:
 
 **Usage:**
 ```bash
-open-tasks ai-cli "How do I parse JSON in PowerShell?"
+ot ai-cli "How do I parse JSON in PowerShell?"
 ```
 
 ### Custom AI Tool
@@ -218,11 +218,11 @@ open-tasks ai-cli "How do I parse JSON in PowerShell?"
 
 ### Command Not Found
 
-If `open-tasks` isn't recognized:
+If `ot` isn't recognized:
 
 ```bash
 # Verify installation
-npm list -g open-tasks-cli
+npm list -g @bitcobblers/open-tasks
 
 # Re-link if needed
 npm link

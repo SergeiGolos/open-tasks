@@ -1,4 +1,4 @@
-# open-tasks-cli
+# open-tasks
 
 A powerful CLI tool for executing tasks with explicit workflow context, enabling seamless command chaining, reference management, and extensibility.
 
@@ -30,21 +30,21 @@ For comprehensive documentation, visit the [Open Tasks Wiki](../open-tasks-wiki/
 ### Global Installation (Recommended)
 
 ```bash
-npm install -g open-tasks-cli
+npm install -g @bitcobblers/open-tasks
 ```
 
 ### Local Installation
 
 ```bash
-npm install open-tasks-cli
-npx open-tasks --help
+npm install @bitcobblers/open-tasks
+npx ot --help
 ```
 
 ### From Source
 
 ```bash
 git clone <repository-url>
-cd open-tasks-cli
+cd open-tasks
 npm install
 npm run build
 npm link
@@ -56,38 +56,38 @@ npm link
 
 ```bash
 # Create .open-tasks directory with default configuration
-open-tasks init
+ot init
 ```
 
 ### 2. Store a Value
 
 ```bash
 # Store a simple value
-open-tasks store "Hello World"
+ot store "Hello World"
 
 # Store with a named token
-open-tasks store "Hello World" --token greeting
+ot store "Hello World" --token greeting
 ```
 
 ### 3. Use References in Commands
 
 ```bash
 # Store and replace in template
-open-tasks store "World" --token name
-open-tasks replace "Hello {{name}}!" --ref name
+ot store "World" --token name
+ot replace "Hello {{name}}!" --ref name
 ```
 
 ### 4. Chain Commands
 
 ```bash
 # Extract email from text
-open-tasks store "Contact: support@example.com" --token contact
-open-tasks extract "[a-z]+@[a-z.]+" --ref contact --token email
+ot store "Contact: support@example.com" --token contact
+ot extract "[a-z]+@[a-z.]+" --ref contact --token email
 ```
 
 ## Output Control
 
-Open-tasks-cli provides flexible control over command output verbosity and routing.
+The CLI provides flexible control over command output verbosity and routing.
 
 ### Verbosity Levels
 
@@ -95,17 +95,17 @@ Control how much detail commands output:
 
 ```bash
 # Quiet mode - minimal output (good for scripts)
-open-tasks store "data" --quiet
+ot store "data" --quiet
 ✓ store completed in 45ms
 
 # Summary mode - default, clean readable output
-open-tasks store "data"
+ot store "data"
 ✓ store completed in 45ms
 📁 Saved to: .open-tasks/outputs/20241018-130145-store/output.txt
 🔗 Reference: @mytoken
 
 # Verbose mode - detailed information (good for debugging)
-open-tasks store "data" --verbose
+ot store "data" --verbose
 (shows processing details, file info, metadata)
 ```
 
@@ -122,16 +122,16 @@ Control where command output is written:
 
 ```bash
 # Both (default) - output to screen AND log files
-open-tasks store "data"
+ot store "data"
 
 # Screen only - no log files created
-open-tasks store "data" --screen-only
+ot store "data" --screen-only
 
 # Log only - silent terminal, writes to files
-open-tasks store "data" --log-only
+ot store "data" --log-only
 
 # Custom file - write to specific path
-open-tasks store "data" --file /path/to/output.log
+ot store "data" --file /path/to/output.log
 ```
 
 **Flags:**
@@ -146,13 +146,13 @@ Verbosity and output targets work together:
 
 ```bash
 # Quiet output, no files (fastest)
-open-tasks store "data" --quiet --screen-only
+ot store "data" --quiet --screen-only
 
 # Verbose logs, clean terminal
-open-tasks store "data" --verbose --log-only
+ot store "data" --verbose --log-only
 
 # Verbose output to custom file
-open-tasks long-operation --verbose --file progress.log
+ot long-operation --verbose --file progress.log
 ```
 
 ### Documentation
@@ -168,22 +168,22 @@ open-tasks long-operation --verbose --file progress.log
 Store a value and create a reference for use in other commands.
 
 ```bash
-open-tasks store <value> [--token <name>] [verbosity flags] [output flags]
+ot store <value> [--token <name>] [verbosity flags] [output flags]
 ```
 
 **Examples:**
 ```bash
 # Store a simple string
-open-tasks store "Hello World"
+ot store "Hello World"
 
 # Store with a named token, quiet mode
-open-tasks store "API response data" --token api-result --quiet
+ot store "API response data" --token api-result --quiet
 
 # Store with verbose output
-open-tasks store "data" --token mydata --verbose
+ot store "data" --token mydata --verbose
 
 # Store multi-line content
-open-tasks store "Line 1
+ot store "Line 1
 Line 2
 Line 3" --token multiline
 ```
@@ -201,19 +201,19 @@ Line 3" --token multiline
 Load content from a file and create a reference.
 
 ```bash
-open-tasks load <filepath> [--token <name>]
+ot load <filepath> [--token <name>]
 ```
 
 **Examples:**
 ```bash
 # Load a text file
-open-tasks load ./data.txt
+ot load ./data.txt
 
 # Load with token for later reference
-open-tasks load ./template.html --token template
+ot load ./template.html --token template
 
 # Load JSON file
-open-tasks load ./config.json --token config
+ot load ./config.json --token config
 ```
 
 ---
@@ -223,19 +223,19 @@ open-tasks load ./config.json --token config
 Replace tokens in a template string with referenced values.
 
 ```bash
-open-tasks replace <template> --ref <token1> [--ref <token2> ...]
+ot replace <template> --ref <token1> [--ref <token2> ...]
 ```
 
 **Examples:**
 ```bash
 # Simple replacement
-open-tasks store "World" --token name
-open-tasks replace "Hello {{name}}!" --ref name
+ot store "World" --token name
+ot replace "Hello {{name}}!" --ref name
 
 # Multiple replacements
-open-tasks store "John" --token first
-open-tasks store "Doe" --token last
-open-tasks replace "Name: {{first}} {{last}}" --ref first --ref last
+ot store "John" --token first
+ot store "Doe" --token last
+ot replace "Name: {{first}} {{last}}" --ref first --ref last
 ```
 
 **Token Format:**
@@ -250,22 +250,22 @@ open-tasks replace "Name: {{first}} {{last}}" --ref first --ref last
 Extract text from content using regular expressions.
 
 ```bash
-open-tasks extract <pattern> --ref <input> [--all] [--token <name>]
+ot extract <pattern> --ref <input> [--all] [--token <name>]
 ```
 
 **Examples:**
 ```bash
 # Extract first number
-open-tasks store "Price: $42.99" --token price
-open-tasks extract "\$([0-9.]+)" --ref price
+ot store "Price: $42.99" --token price
+ot extract "\$([0-9.]+)" --ref price
 
 # Extract all emails
-open-tasks load ./contacts.txt --token contacts
-open-tasks extract "[a-z]+@[a-z.]+" --ref contacts --all
+ot load ./contacts.txt --token contacts
+ot extract "[a-z]+@[a-z.]+" --ref contacts --all
 
 # Extract with capture groups
-open-tasks store "Name: John Doe" --token name
-open-tasks extract "Name: ([A-Z][a-z]+) ([A-Z][a-z]+)" --ref name
+ot store "Name: John Doe" --token name
+ot extract "Name: ([A-Z][a-z]+) ([A-Z][a-z]+)" --ref name
 ```
 
 **Flags:**
@@ -280,20 +280,20 @@ open-tasks extract "Name: ([A-Z][a-z]+) ([A-Z][a-z]+)" --ref name
 Execute PowerShell scripts and capture output.
 
 ```bash
-open-tasks powershell <script> [--ref <token1> ...] [--token <name>]
+ot powershell <script> [--ref <token1> ...] [--token <name>]
 ```
 
 **Examples:**
 ```bash
 # Simple command
-open-tasks powershell "Get-Date"
+ot powershell "Get-Date"
 
 # With reference substitution
-open-tasks store "C:\Users" --token path
-open-tasks powershell "Get-ChildItem {{path}}" --ref path
+ot store "C:\Users" --token path
+ot powershell "Get-ChildItem {{path}}" --ref path
 
 # Capture output for later use
-open-tasks powershell "Get-Process | Select-Object -First 5" --token processes
+ot powershell "Get-Process | Select-Object -First 5" --token processes
 ```
 
 ---
@@ -303,7 +303,7 @@ open-tasks powershell "Get-Process | Select-Object -First 5" --token processes
 Execute AI CLI commands with context from references.
 
 ```bash
-open-tasks ai-cli <prompt> [--ref <context1> ...] [--token <name>]
+ot ai-cli <prompt> [--ref <context1> ...] [--token <name>]
 ```
 
 **Configuration:** Create `.open-tasks/ai-config.json`:
@@ -363,19 +363,19 @@ open-tasks ai-cli "How do I parse JSON in PowerShell?"
 
 ```bash
 # Simple AI query
-open-tasks ai-cli "How do I list files in PowerShell?"
+ot ai-cli "How do I list files in PowerShell?"
 
 # With context from file
-open-tasks load ./code.ts --token code
-open-tasks ai-cli "Explain this code" --ref code
+ot load ./code.ts --token code
+ot ai-cli "Explain this code" --ref code
 
 # With multiple context files
-open-tasks load ./api.ts --token api
-open-tasks load ./types.ts --token types
-open-tasks ai-cli "How do these files work together?" --ref api --ref types
+ot load ./api.ts --token api
+ot load ./types.ts --token types
+ot ai-cli "How do these files work together?" --ref api --ref types
 
 # Save AI response for later use
-open-tasks ai-cli "Suggest improvements" --ref code --token suggestions
+ot ai-cli "Suggest improvements" --ref code --token suggestions
 ```
 
 **Context File Passing:**
@@ -384,7 +384,7 @@ When you use `--ref` flags, the AI CLI receives context files:
 
 ```bash
 # This command:
-open-tasks ai-cli "Explain this" --ref code
+ot ai-cli "Explain this" --ref code
 
 # Executes (approximately):
 gh copilot suggest "Explain this" -t /path/to/code-file.txt
@@ -417,7 +417,7 @@ gh copilot suggest "test prompt"
 Create `.open-tasks` directory structure and configuration.
 
 ```bash
-open-tasks init
+ot init
 ```
 
 **Creates:**
@@ -433,12 +433,12 @@ open-tasks init
 Create a new custom command template.
 
 ```bash
-open-tasks create <command-name>
+ot create <command-name>
 ```
 
 **Example:**
 ```bash
-open-tasks create validate-email
+ot create validate-email
 # Creates: .open-tasks/commands/validate-email.ts
 ```
 
@@ -480,13 +480,13 @@ Extend the CLI by creating custom commands in `.open-tasks/commands/`.
 Create `.open-tasks/commands/greet.ts`:
 
 ```typescript
-import { CommandHandler, ExecutionContext, ReferenceHandle } from 'open-tasks-cli';
+import { CommandHandler, ExecutionContext, ReferenceHandle } from '@bitcobblers/open-tasks';
 
 export default class GreetCommand extends CommandHandler {
   name = 'greet';
   description = 'Greet someone by name';
   examples = [
-    'open-tasks greet --ref name',
+    'ot greet --ref name',
   ];
 
   async execute(
@@ -514,8 +514,8 @@ export default class GreetCommand extends CommandHandler {
 
 **Usage:**
 ```bash
-open-tasks store "Alice" --token name
-open-tasks greet --ref name
+ot store "Alice" --token name
+ot greet --ref name
 # Output: Hello, Alice!
 ```
 
@@ -525,48 +525,48 @@ open-tasks greet --ref name
 
 ```bash
 # Fetch API data
-open-tasks powershell "Invoke-RestMethod 'https://api.example.com/data'" --token api-data
+ot powershell "Invoke-RestMethod 'https://api.example.com/data'" --token api-data
 
 # Extract specific field
-open-tasks extract '"email":"([^"]+)"' --ref api-data --token email
+ot extract '"email":"([^"]+)"' --ref api-data --token email
 
 # Use in template
-open-tasks replace "Contact email: {{email}}" --ref email
+ot replace "Contact email: {{email}}" --ref email
 ```
 
 ### Example 2: Code Analysis
 
 ```bash
 # Load source code
-open-tasks load ./app.ts --token source
+ot load ./app.ts --token source
 
 # Ask AI for review
-open-tasks ai-cli "Review this code for security issues" --ref source --token review
+ot ai-cli "Review this code for security issues" --ref source --token review
 ```
 
 ### Example 3: Data Transformation Pipeline
 
 ```bash
 # Load raw data
-open-tasks load ./data.csv --token raw
+ot load ./data.csv --token raw
 
 # Extract specific columns
-open-tasks extract "^([^,]+)," --ref raw --all --token names
+ot extract "^([^,]+)," --ref raw --all --token names
 
 # Generate report template
-open-tasks replace "Names found:\n{{names}}" --ref names --token report
+ot replace "Names found:\n{{names}}" --ref names --token report
 ```
 
 ### Example 4: Multi-file Processing
 
 ```bash
 # Load multiple files
-open-tasks load ./file1.txt --token f1
-open-tasks load ./file2.txt --token f2
-open-tasks load ./file3.txt --token f3
+ot load ./file1.txt --token f1
+ot load ./file2.txt --token f2
+ot load ./file3.txt --token f3
 
 # Combine with template
-open-tasks replace "File 1: {{f1}}\nFile 2: {{f2}}\nFile 3: {{f3}}" \
+ot replace "File 1: {{f1}}\nFile 2: {{f2}}\nFile 3: {{f3}}" \
   --ref f1 --ref f2 --ref f3 --token combined
 ```
 
@@ -574,26 +574,26 @@ open-tasks replace "File 1: {{f1}}\nFile 2: {{f2}}\nFile 3: {{f3}}" \
 
 ```bash
 # Load log file
-open-tasks load ./app.log --token logs
+ot load ./app.log --token logs
 
 # Extract error messages
-open-tasks extract "ERROR: (.+)" --ref logs --all --token errors
+ot extract "ERROR: (.+)" --ref logs --all --token errors
 
 # Extract timestamps of errors
-open-tasks extract "(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})" --ref errors --all --token timestamps
+ot extract "(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})" --ref errors --all --token timestamps
 
 # Generate summary
-open-tasks replace "Found errors at:\n{{timestamps}}" --ref timestamps --token summary
+ot replace "Found errors at:\n{{timestamps}}" --ref timestamps --token summary
 ```
 
 ### Example 6: Environment Configuration
 
 ```bash
 # Load template config
-open-tasks load ./config.template.json --token template
+ot load ./config.template.json --token template
 
 # Replace environment-specific values
-open-tasks replace "{{template}}" --ref template \
+ot replace "{{template}}" --ref template \
   | replace "{{DATABASE_URL}}" "postgres://localhost/prod" --token step1 \
   | replace "{{API_KEY}}" "secret-key-123" --token config
 
@@ -604,11 +604,11 @@ open-tasks replace "{{template}}" --ref template \
 
 ```bash
 # Extract function signatures from code
-open-tasks load ./src/api.ts --token source
-open-tasks extract "export function ([a-zA-Z]+)\([^)]*\)" --ref source --all --token functions
+ot load ./src/api.ts --token source
+ot extract "export function ([a-zA-Z]+)\([^)]*\)" --ref source --all --token functions
 
 # Generate documentation stub
-open-tasks replace "# API Documentation\n\nFunctions:\n{{functions}}" --ref functions --token docs
+ot replace "# API Documentation\n\nFunctions:\n{{functions}}" --ref functions --token docs
 
 # Output: .open-tasks/outputs/{timestamp}-replace/docs.txt
 ```
@@ -617,48 +617,48 @@ open-tasks replace "# API Documentation\n\nFunctions:\n{{functions}}" --ref func
 
 ```bash
 # Load data file
-open-tasks load ./users.csv --token users
+ot load ./users.csv --token users
 
 # Extract email column
-open-tasks extract ",[^,]+@[^,]+," --ref users --all --token emails
+ot extract ",[^,]+@[^,]+," --ref users --all --token emails
 
 # Validate email format (custom command)
-open-tasks validate-emails --ref emails --token validated
+ot validate-emails --ref emails --token validated
 
 # Generate report
-open-tasks replace "Validated {{validated}}" --ref validated --token report
+ot replace "Validated {{validated}}" --ref validated --token report
 ```
 
 ### Example 9: Build Automation
 
 ```bash
 # Get current version from package.json
-open-tasks load ./package.json --token package
-open-tasks extract '"version": "([^"]+)"' --ref package --token version
+ot load ./package.json --token package
+ot extract '"version": "([^"]+)"' --ref package --token version
 
 # Update changelog
-open-tasks load ./CHANGELOG.md --token changelog
-open-tasks replace "## [{{version}}]\n\n- New features\n\n{{changelog}}" \
+ot load ./CHANGELOG.md --token changelog
+ot replace "## [{{version}}]\n\n- New features\n\n{{changelog}}" \
   --ref version --ref changelog --token updated-changelog
 
 # Generate release notes
-open-tasks replace "Release {{version}}" --ref version --token release-notes
+ot replace "Release {{version}}" --ref version --token release-notes
 ```
 
 ### Example 10: Code Refactoring Helper
 
 ```bash
 # Load source file
-open-tasks load ./legacy-code.js --token source
+ot load ./legacy-code.js --token source
 
 # Ask AI to suggest refactoring
-open-tasks ai-cli "Suggest modern ES6 refactoring for this code" --ref source --token suggestions
+ot ai-cli "Suggest modern ES6 refactoring for this code" --ref source --token suggestions
 
 # Extract specific pattern to replace
-open-tasks extract "var ([a-zA-Z]+) = " --ref source --all --token var-declarations
+ot extract "var ([a-zA-Z]+) = " --ref source --all --token var-declarations
 
 # Generate replacement script
-open-tasks replace "Replace these var declarations:\n{{var-declarations}}" \
+ot replace "Replace these var declarations:\n{{var-declarations}}" \
   --ref var-declarations --token refactor-plan
 ```
 
@@ -703,7 +703,7 @@ Each command execution creates an isolated timestamped directory:
 
 ```bash
 # Verify installation
-npm list -g open-tasks-cli
+npm list -g @bitcobblers/open-tasks
 
 # Re-link if needed
 npm link
@@ -726,10 +726,10 @@ References are ephemeral - they only exist during the current CLI session. To pe
 
 ```bash
 # Store to file first
-open-tasks store "data" --token mydata
+ot store "data" --token mydata
 
 # Later: load from file
-open-tasks load .open-tasks/outputs/YYYYMMDDTHHMMSS-mydata.txt --token mydata
+ot load .open-tasks/outputs/YYYYMMDDTHHMMSS-mydata.txt --token mydata
 ```
 
 ### AI CLI Configuration Missing
@@ -739,7 +739,7 @@ open-tasks load .open-tasks/outputs/YYYYMMDDTHHMMSS-mydata.txt --token mydata
 echo '{"command":"gh copilot suggest","contextFlag":"-t","timeout":30000}' > .open-tasks/ai-config.json
 
 # Verify
-open-tasks ai-cli "test prompt"
+ot ai-cli "test prompt"
 ```
 
 ## Development
@@ -831,7 +831,7 @@ interface IMemoryDecorator {
 
 **Example:**
 ```typescript
-import { TokenDecorator, FileNameDecorator } from 'open-tasks-cli';
+import { TokenDecorator, FileNameDecorator } from '@bitcobblers/open-tasks';
 
 // Decorators run BEFORE file is written
 const ref = await context.workflowContext.store(

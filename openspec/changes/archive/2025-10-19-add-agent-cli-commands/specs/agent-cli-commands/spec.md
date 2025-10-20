@@ -2,12 +2,12 @@
 
 ### Requirement: Agent Command Integration
 
-The `open-tasks-cli` MUST provide a mechanism to invoke external agentic CLI tools, allowing users to seamlessly pipe context and execute commands against agents like Claude, Codex, and Gemini.
+The `@bitcobblers/open-tasks` MUST provide a mechanism to invoke external agentic CLI tools, allowing users to seamlessly pipe context and execute commands against agents like Claude, Codex, and Gemini.
 
 #### Scenario: Invoking a generic agent
 Given a configured agent command (e.g., `claude`).
 When the user executes `open-tasks claude "some prompt"`.
-Then the `open-tasks-cli` SHOULD execute the underlying `claude` CLI with the provided prompt and return the result.
+Then the `@bitcobblers/open-tasks` SHOULD execute the underlying `claude` CLI with the provided prompt and return the result.
 
 ### Requirement: Agent-Specific Command Handlers
 

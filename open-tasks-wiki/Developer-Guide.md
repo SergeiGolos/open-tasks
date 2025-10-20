@@ -16,7 +16,7 @@ This guide helps you get started developing Open Tasks CLI, whether you're fixin
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd open-tasks-cli
+cd open-tasks
 
 # Install dependencies
 npm install
@@ -32,16 +32,16 @@ npm link
 
 ```bash
 # Check version
-open-tasks --version
+ot --version
 
 # Run a test command
-open-tasks init
+ot init
 ```
 
 ## Project Structure
 
 ```
-open-tasks-cli/
+open-tasks/
 ├── src/                          # Source code
 │   ├── index.ts                 # CLI entry point
 │   ├── router.ts                # Command routing
@@ -74,7 +74,7 @@ Edit source files in `src/`:
 export default class MyFeature extends TaskHandler {
   name = 'my-feature';
   description = 'My new feature';
-  examples = ['open-tasks my-feature'];
+  examples = ['ot my-feature'];
   
   async executeCommand(
     config: Record<string, any>,
@@ -110,10 +110,10 @@ The build process:
 npm link
 
 # Test your changes
-open-tasks my-feature
+ot my-feature
 
 # Or use npx
-npx open-tasks my-feature
+npx ot my-feature
 ```
 
 ### 4. Hot Reload Development
@@ -128,7 +128,7 @@ npm run dev
 npm run dev-deploy
 
 # Terminal 3: Test
-open-tasks my-feature
+ot my-feature
 ```
 
 ## Building Features
@@ -154,8 +154,8 @@ open-tasks my-feature
      name = 'my-command';
      description = 'Does something useful';
      examples = [
-       'open-tasks my-command arg1',
-       'open-tasks my-command arg1 --token result',
+       'ot my-command arg1',
+       'ot my-command arg1 --token result',
      ];
 
      protected override async executeCommand(
@@ -197,7 +197,7 @@ open-tasks my-feature
    ```bash
    npm run build
    npm link
-   open-tasks my-command test-arg
+   ot my-command test-arg
    ```
 
 ### Adding a New Card Type
@@ -442,7 +442,7 @@ outputBuilder.write(`Debug: ${JSON.stringify(data, null, 2)}`);
 Run commands with verbose flag:
 
 ```bash
-open-tasks my-command --verbose
+ot my-command --verbose
 ```
 
 ## Build Configuration
@@ -565,7 +565,7 @@ npm run build
 
 # 4. Test
 npm link
-open-tasks new-command
+ot new-command
 ```
 
 ### Update Dependencies
