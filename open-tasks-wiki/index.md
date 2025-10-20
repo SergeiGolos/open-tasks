@@ -33,23 +33,60 @@ Open Tasks CLI provides a **command chaining framework** where you can:
 
 📁 **File Persistence** - All outputs saved to timestamped directories for debugging and reuse
 
-## Quick Example
+## Quick Example: Creating Your First Task
+
+Open Tasks CLI makes it easy to create custom workflow tasks. Here's how to get started:
+
+### 1. Initialize Your Project
 
 ```bash
-# Load source code
-open-tasks load ./app.ts --token source
-
-# Extract function names
-open-tasks extract "export function ([a-zA-Z]+)" --ref source --all --token functions
-
-# Ask AI to review with context
-open-tasks ai-cli "Review these functions for best practices" --ref functions
+open-tasks init
 ```
 
-This builds rich, structured context for your AI agent by:
-1. Loading the source file
-2. Extracting specific patterns (function names)
-3. Passing that extracted context to the AI CLI tool
+This creates the `.open-tasks` directory structure with:
+- `tasks/` - Your custom task definitions
+- `outputs/` - Command output files
+- `config.json` - Project configuration
+
+### 2. Create a Custom Task
+
+```bash
+open-tasks create hello-world
+```
+
+This scaffolds a new task at `.open-tasks/tasks/hello-world.js` that demonstrates:
+- Using `SetCommand` to store values in memory
+- Using `ReplaceCommand` to substitute placeholders in templates
+- Creating a custom display command to show formatted output
+- Chaining multiple workflow steps together
+
+### 3. Run Your Task
+
+```bash
+# Run with default parameter
+open-tasks hello-world
+
+# Run with a custom name
+open-tasks hello-world "Alice"
+```
+
+**Output:**
+```
+👋 Hello World Demo
+──────────────────────────────────────────────────
+Template: Hello, {{name}}! Welcome to open-tasks CLI.
+User Name: Alice
+Result: Hello, Alice! Welcome to open-tasks CLI.
+Token: hello-world-result
+```
+
+The generated task shows you the building blocks for creating more complex workflows:
+- **Step 1:** Store a greeting template with a placeholder
+- **Step 2:** Store the user's name
+- **Step 3:** Replace the `{{name}}` placeholder with the actual name
+- **Step 4:** Display the result as a formatted card
+
+You can examine `.open-tasks/tasks/hello-world.js` to see how these steps are implemented and use it as a template for your own custom tasks.
 
 ## Key Concepts
 
