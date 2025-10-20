@@ -1,8 +1,44 @@
-# Commands Reference
+# Tasks and Commands Reference
 
-This page provides a complete reference of all built-in commands in Open Tasks CLI.
+This page provides a complete reference of all built-in tasks and commands in Open Tasks CLI.
 
-## Core Commands
+## Understanding Tasks vs Commands
+
+Open Tasks CLI distinguishes between **Tasks** and **Commands** based on their purpose and how they interact with the workflow:
+
+### Tasks
+**Tasks** are high-level operations that:
+- Can be invoked directly from the command line (e.g., `open-tasks init`, `open-tasks create`)
+- Implement the `ITaskHandler` interface with `execute(args, context)` method
+- Receive full `ExecutionContext` with all workflow components
+- Are stored in `src/tasks/` for built-in tasks or `.open-tasks/tasks/` for custom tasks
+- Typically orchestrate workflows and may use commands internally
+
+**Example built-in tasks:** `init`, `create`
+
+### Commands  
+**Commands** are lower-level operations that:
+- Can be invoked directly from the command line like tasks (e.g., `open-tasks load`, `open-tasks powershell`)
+- Can either implement `ITaskHandler` directly or extend `TaskHandler` base class
+- May use the simpler `executeCommand(config, args, flow, synk)` signature when extending `TaskHandler`
+- Are stored in `src/commands/` for built-in commands
+- Focus on specific data operations (load, transform, execute)
+
+**Example built-in commands:** `load`, `powershell`
+
+### Key Differences
+
+| Aspect | Tasks | Commands |
+|--------|-------|----------|
+| **Purpose** | Orchestrate workflows | Perform specific operations |
+| **Interface** | `ITaskHandler.execute(args, context)` | `ITaskHandler` or `TaskHandler.executeCommand(config, args, flow, synk)` |
+| **Location** | `src/tasks/` or `.open-tasks/tasks/` | `src/commands/` |
+| **Complexity** | Can be complex workflows | Focused, atomic operations |
+| **Usage** | `open-tasks <task-name>` | `open-tasks <command-name>` |
+
+**Note:** From a user perspective, both tasks and commands are invoked the same way from the CLI. The distinction is primarily architectural.
+
+## Built-in Tasks
 
 ### `init` - Initialize Project
 
@@ -54,49 +90,9 @@ Creates `.open-tasks/tasks/validate-email.ts` with a template implementing:
 - Output builder usage
 - Reference handling
 
----
+## Built-in Commands
 
-## Data Commands
-
-### `store` - Store Values
-
-Store a value and create a reference for use in other commands.
-
-**Syntax:**
-```bash
-open-tasks store <value> [--token <name>] [verbosity flags]
-```
-
-**Arguments:**
-- `<value>` - The value to store (string, can be multi-line)
-
-**Options:**
-- `--token <name>` - Named token for referencing later
-
-**Examples:**
-
-```bash
-# Store a simple string
-open-tasks store "Hello World"
-
-# Store with a named token
-open-tasks store "API response data" --token api-result
-
-# Store multi-line content
-open-tasks store "Line 1
-Line 2
-Line 3" --token multiline
-
-# Quiet mode
-open-tasks store "data" --token mydata --quiet
-```
-
-**Output:**
-- Creates a file in `.open-tasks/outputs/{timestamp}-store/`
-- Returns a ReferenceHandle with UUID and optional token
-- File format: `{timestamp}-{token|uuid}.txt`
-
----
+The following are the currently implemented built-in commands.
 
 ### `load` - Load Files
 
@@ -136,11 +132,56 @@ open-tasks load ./src/api.ts --token source
 
 ---
 
-## Transformation Commands
+### `powershell` - Execute PowerShell
 
-### `replace` - Template Substitution
+Execute PowerShell scripts and capture output.
 
-Replace tokens in a template string with referenced values.
+**Syntax:**
+```bash
+open-tasks powershell <script> [--token <name>]
+```
+
+**Arguments:**
+- `<script>` - PowerShell script to execute
+
+**Options:**
+- `--token <name>` - Named token for output
+
+**Examples:**
+
+```bash
+# Simple command
+open-tasks powershell "Get-Date"
+
+# Capture output for later use
+open-tasks powershell "Get-Process | Select-Object -First 5" --token processes
+
+# API call
+open-tasks powershell "Invoke-RestMethod 'https://api.example.com/data'" --token api-data
+```
+
+**Requirements:**
+- PowerShell must be installed and in PATH
+- Scripts execute in a new PowerShell session
+
+---
+
+## Creating Custom Commands and Tasks
+
+You can extend the CLI by creating custom commands and tasks in the `.open-tasks/tasks/` directory. See:
+- **[Building Custom Tasks](./Building-Custom-Tasks.md)** - Learn how to create custom task handlers
+- **[Building Custom Commands](./Building-Custom-Commands.md)** - Learn about creating commands with visual output
+- **[Example Tasks](./Example-Tasks.md)** - See complete examples of custom tasks
+
+---
+
+## Planned Commands (Not Yet Implemented)
+
+The following commands are planned for future releases:
+
+### `store` - Store Values (Planned)
+
+### `replace` - Template Substitution (Planned)
 
 **Syntax:**
 ```bash
@@ -182,9 +223,7 @@ open-tasks replace "{{template}}" --ref template --ref email
 
 ---
 
-### `extract` - Regex Extraction
-
-Extract text from content using regular expressions.
+### `extract` - Regex Extraction (Planned)
 
 **Syntax:**
 ```bash
@@ -271,9 +310,7 @@ open-tasks powershell "Invoke-RestMethod 'https://api.example.com/data'" --token
 
 ---
 
-### `ai-cli` - AI CLI Integration
-
-Execute AI CLI commands with context from references.
+### `ai-cli` - AI CLI Integration (Planned)
 
 **Syntax:**
 ```bash

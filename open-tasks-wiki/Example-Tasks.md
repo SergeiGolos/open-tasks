@@ -15,7 +15,7 @@ Review a single file for best practices:
 **Step 1: Create the custom task** (`.open-tasks/tasks/code-review.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -30,9 +30,9 @@ export default class CodeReviewTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const filePath = args[0];
     if (!filePath) {
       throw new Error('File path required');
@@ -87,7 +87,7 @@ Review multiple related files together:
 **Step 1: Create the custom task** (`.open-tasks/tasks/multi-file-review.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, ListCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -102,9 +102,9 @@ export default class MultiFileReviewTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     if (args.length < 2) {
       throw new Error('At least 2 files required');
     }
@@ -176,7 +176,7 @@ Review only specific functions from a large file:
 **Step 1: Create the custom task** (`.open-tasks/tasks/extract-review-functions.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -191,9 +191,9 @@ export default class ExtractReviewFunctionsTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const filePath = args[0];
     if (!filePath) {
       throw new Error('File path required');
@@ -254,7 +254,7 @@ Review code against its documentation:
 **Step 1: Create the custom task** (`.open-tasks/tasks/review-with-spec.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -269,9 +269,9 @@ export default class ReviewWithSpecTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     if (args.length < 2) {
       throw new Error('Implementation file and spec file required');
     }
@@ -337,7 +337,7 @@ Review changes in a git diff:
 **Step 1: Create the custom task** (`.open-tasks/tasks/review-git-diff.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard } from 'open-tasks-cli';
 import { spawn } from 'child_process';
 
@@ -352,9 +352,9 @@ export default class ReviewGitDiffTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const commit = args[0] || 'HEAD~1';
 
     synk.write('Getting git diff...');
@@ -440,7 +440,7 @@ Fetch news from an API and create a summary:
 **Step 1: Create the custom task** (`.open-tasks/tasks/news-summary.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, ListCard } from 'open-tasks-cli';
 import { spawn } from 'child_process';
 
@@ -455,9 +455,9 @@ export default class NewsSummaryTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const apiKeyIndex = args.indexOf('--api-key');
     const apiKey = apiKeyIndex !== -1 ? args[apiKeyIndex + 1] : 'YOUR_API_KEY';
 
@@ -550,7 +550,7 @@ Combine news from multiple sources:
 **Step 1: Create the custom task** (`.open-tasks/tasks/multi-source-news.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, TableCard } from 'open-tasks-cli';
 import { spawn } from 'child_process';
 
@@ -564,9 +564,9 @@ export default class MultiSourceNewsTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const sources = [
       { name: 'Source 1', url: 'https://api.source1.com/news', field: 'headline' },
       { name: 'Source 2', url: 'https://api.source2.com/articles', field: 'title' },
@@ -659,7 +659,7 @@ Filter and summarize news for a specific domain:
 **Step 1: Create the custom task** (`.open-tasks/tasks/tech-news-summary.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, ListCard } from 'open-tasks-cli';
 
 export default class TechNewsSummaryTask extends TaskHandler {
@@ -672,9 +672,9 @@ export default class TechNewsSummaryTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const apiKeyIndex = args.indexOf('--api-key');
     const apiKey = apiKeyIndex !== -1 ? args[apiKeyIndex + 1] : 'YOUR_API_KEY';
 
@@ -728,7 +728,7 @@ Analyze application logs to identify issues.
 **Step 1: Create the custom task** (`.open-tasks/tasks/extract-errors.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, TableCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -743,9 +743,9 @@ export default class ExtractErrorsTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const logPath = args[0];
     if (!logPath) {
       throw new Error('Log file path required');
@@ -799,7 +799,7 @@ open-tasks extract-errors ./app.log
 **Step 1: Create the custom task** (`.open-tasks/tasks/analyze-errors.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, TableCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -814,9 +814,9 @@ export default class AnalyzeErrorsTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const logPath = args[0];
     if (!logPath) {
       throw new Error('Log file path required');
@@ -884,7 +884,7 @@ Generate documentation from source code.
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-api-docs.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, ListCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -899,9 +899,9 @@ export default class GenerateApiDocsTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const sourcePath = args[0];
     if (!sourcePath) {
       throw new Error('Source file path required');
@@ -960,7 +960,7 @@ open-tasks generate-api-docs ./src/api.ts
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-readme.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -975,9 +975,9 @@ export default class GenerateReadmeTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     synk.write('Loading package.json...');
     const pkgPath = path.join(flow.cwd, 'package.json');
     const pkgContent = await fs.readFile(pkgPath, 'utf-8');
@@ -1035,7 +1035,7 @@ Transform data through multiple steps.
 **Step 1: Create the custom task** (`.open-tasks/tasks/csv-to-json.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, TableCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -1050,9 +1050,9 @@ export default class CsvToJsonTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const csvPath = args[0];
     if (!csvPath) {
       throw new Error('CSV file path required');
@@ -1125,7 +1125,7 @@ Work with external APIs and process responses.
 **Step 1: Create the custom task** (`.open-tasks/tasks/fetch-repo-data.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, KeyValueCard } from 'open-tasks-cli';
 
 export default class FetchRepoDataTask extends TaskHandler {
@@ -1138,9 +1138,9 @@ export default class FetchRepoDataTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const repo = args[0] || 'microsoft/vscode';
 
     synk.write('Fetching repository data...');
@@ -1192,7 +1192,7 @@ open-tasks fetch-repo-data microsoft/vscode
 **Step 1: Create the custom task** (`.open-tasks/tasks/chain-api-calls.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, ListCard } from 'open-tasks-cli';
 
 export default class ChainApiCallsTask extends TaskHandler {
@@ -1205,9 +1205,9 @@ export default class ChainApiCallsTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const username = args[0] || 'octocat';
 
     synk.write('Fetching user data...');
@@ -1278,7 +1278,7 @@ Manage configuration files and templates.
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-config.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, KeyValueCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -1293,9 +1293,9 @@ export default class GenerateConfigTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const environment = args[0] || 'production';
 
     synk.write('Loading template config...');
@@ -1361,7 +1361,7 @@ open-tasks generate-config production
 **Step 1: Create the custom task** (`.open-tasks/tasks/validate-config.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, ListCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -1376,9 +1376,9 @@ export default class ValidateConfigTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const configPath = args[0] || './config.json';
 
     synk.write('Loading config file...');
@@ -1445,7 +1445,7 @@ Generate and manage test cases.
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-tests.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, ListCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -1460,9 +1460,9 @@ export default class GenerateTestsTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     const sourcePath = args[0];
     if (!sourcePath) {
       throw new Error('Source file path required');
@@ -1528,7 +1528,7 @@ open-tasks generate-tests ./src/calculator.ts
 **Step 1: Create the custom task** (`.open-tasks/tasks/analyze-coverage.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, TableCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -1543,9 +1543,9 @@ export default class AnalyzeCoverageTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     if (args.length < 2) {
       throw new Error('Test file and source file required');
     }
@@ -1629,7 +1629,7 @@ Automate build and release processes.
 **Step 1: Create the custom task** (`.open-tasks/tasks/generate-release-notes.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard, ListCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import { spawn } from 'child_process';
@@ -1645,9 +1645,9 @@ export default class GenerateReleaseNotesTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     synk.write('Reading package.json...');
     const pkgPath = path.join(flow.cwd, 'package.json');
     const pkgContent = await fs.readFile(pkgPath, 'utf-8');
@@ -1713,7 +1713,7 @@ open-tasks generate-release-notes
 **Step 1: Create the custom task** (`.open-tasks/tasks/update-changelog.ts`):
 
 ```typescript
-import { TaskHandler } from 'open-tasks-cli';
+import { TaskHandler, IFlow, IOutputSynk, ReferenceHandle } from 'open-tasks-cli';
 import { MessageCard } from 'open-tasks-cli';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -1728,9 +1728,9 @@ export default class UpdateChangelogTask extends TaskHandler {
   protected async executeCommand(
     config: Record<string, any>,
     args: string[],
-    flow: any,
-    synk: any
-  ): Promise<any> {
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
     synk.write('Reading current version...');
     const pkgPath = path.join(flow.cwd, 'package.json');
     const pkgContent = await fs.readFile(pkgPath, 'utf-8');
