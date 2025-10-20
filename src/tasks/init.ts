@@ -19,9 +19,8 @@ export default class InitCommand implements ITaskHandler {
     const verbosity = context.verbosity || 'summary';
     const force = args.includes('--force');
     const openTasksDir = path.join(context.cwd, '.open-tasks');
-    const tasksDir = path.join(openTasksDir, 'tasks');
-    const outputsDir = path.join(openTasksDir, 'outputs');
-    const configPath = path.join(openTasksDir, 'config.json');
+    const logsDir = path.join(openTasksDir, 'logs');
+    const configPath = path.join(openTasksDir, '.config.json');
 
     const exists = await fse.pathExists(openTasksDir);
     if (exists && !force) {
@@ -29,14 +28,14 @@ export default class InitCommand implements ITaskHandler {
     }
 
     const results: string[] = [];
-    await fse.ensureDir(tasksDir);
-    results.push('✓ .open-tasks/tasks/');
-    await fse.ensureDir(outputsDir);
-    results.push('✓ .open-tasks/outputs/');
+    await fse.ensureDir(openTasksDir);
+    results.push('✓ .open-tasks/');
+    await fse.ensureDir(logsDir);
+    results.push('✓ .open-tasks/logs/');
 
     const defaultConfig = getDefaultConfig();
     await fs.writeFile(configPath, JSON.stringify(defaultConfig, null, 2), 'utf-8');
-    results.push('✓ .open-tasks/config.json');
+    results.push('✓ .open-tasks/.config.json');
 
     const commandsPackageJsonPath = path.join(openTasksDir, 'package.json');
     const commandsPackageJsonExists = await fse.pathExists(commandsPackageJsonPath);

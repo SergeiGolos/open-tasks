@@ -58,7 +58,10 @@ async function main() {
   // Define built-in and custom commands  
   const loaders = [
     { dir: tasksDir, warnOnMissing: true },
-    ...customCommandsDirs.map(dir => ({ dir: path.join(cwd, dir), warnOnMissing: false }))
+    ...customCommandsDirs.map(dir => ({ 
+      dir: path.isAbsolute(dir) ? dir : path.join(cwd, dir), 
+      warnOnMissing: false 
+    }))
   ];
 
   // Load and register commands

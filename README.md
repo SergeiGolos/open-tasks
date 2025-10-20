@@ -18,9 +18,9 @@ For comprehensive documentation, visit the [Open Tasks Wiki](../open-tasks-wiki/
 
 - 🔗 **Reference Management**: Store command outputs as MemoryRef objects and pass them between commands using tokens or UUIDs
 - 📝 **Built-in Commands**: Store, load, replace, extract, PowerShell execution, and AI CLI integration
-- 🔌 **Extensible**: Add custom commands in `.open-tasks/commands/` that are auto-discovered
+- 🔌 **Extensible**: Add custom commands in `.open-tasks/` that are auto-discovered
 - 🌊 **Workflow Context**: Internal `IWorkflowContext` API for orchestrating multi-step workflows
-- 📁 **File Output**: Automatically saves outputs to `.open-tasks/outputs/{timestamp}-{command}/` with per-execution isolation
+- 📁 **File Output**: Automatically saves outputs to `.open-tasks/logs/{timestamp}-{command}/` with per-execution isolation
 - 🎨 **Output Control**: Three verbosity levels (quiet, summary, verbose) with flexible routing (screen, logs, custom files)
 - 🎯 **Decorators**: Transform MemoryRef objects before file creation (tokens, filenames, metadata)
 - ⚡ **TypeScript**: Fully typed for excellent IDE support
@@ -101,7 +101,7 @@ ot store "data" --quiet
 # Summary mode - default, clean readable output
 ot store "data"
 ✓ store completed in 45ms
-📁 Saved to: .open-tasks/outputs/20241018-130145-store/output.txt
+📁 Saved to: .open-tasks/logs/20241018-130145-store/output.txt
 🔗 Reference: @mytoken
 
 # Verbose mode - detailed information (good for debugging)
@@ -189,7 +189,7 @@ Line 3" --token multiline
 ```
 
 **Output:**
-- Creates a file in `.open-tasks/outputs/{timestamp}-store/`
+- Creates a file in `.open-tasks/logs/{timestamp}-store/`
 - Returns a MemoryRef wrapped in a ReferenceHandle with UUID and optional token
 - File format: `{timestamp}-{token|uuid}.txt`
 - Each command execution gets its own timestamped output directory
@@ -422,9 +422,9 @@ ot init
 
 **Creates:**
 - `.open-tasks/` directory
-- `.open-tasks/config.json` with defaults
-- `.open-tasks/commands/` for custom commands
-- `.open-tasks/outputs/` for command outputs
+- `.open-tasks/.config.json` with defaults
+- `.open-tasks/logs/` for command outputs
+- Task files are placed directly in `.open-tasks/`
 
 ---
 
@@ -439,45 +439,45 @@ ot create <command-name>
 **Example:**
 ```bash
 ot create validate-email
-# Creates: .open-tasks/commands/validate-email.ts
+# Creates: .open-tasks/validate-email.ts
 ```
 
 ## Configuration
 
 ### Project Configuration
 
-Create `.open-tasks/config.json`:
+Create `.open-tasks/.config.json`:
 
 ```json
 {
-  "outputDir": ".open-tasks/outputs",
-  "customCommandsDir": ".open-tasks/commands"
+  "outputDir": ".open-tasks/logs",
+  "customCommandsDir": [".open-tasks", "~/.open-tasks"]
 }
 ```
 
 ### User Configuration
 
-Create `~/.open-tasks/config.json` for global defaults:
+Create `~/.open-tasks/.config.json` for global defaults:
 
 ```json
 {
-  "outputDir": ".open-tasks/outputs",
+  "outputDir": ".open-tasks/logs",
   "defaultVerbosity": "normal"
 }
 ```
 
 **Configuration Precedence:**
-1. Project config (`.open-tasks/config.json`)
-2. User config (`~/.open-tasks/config.json`)
+1. Project config (`.open-tasks/.config.json`)
+2. User config (`~/.open-tasks/.config.json`)
 3. Built-in defaults
 
 ## Custom Commands
 
-Extend the CLI by creating custom commands in `.open-tasks/commands/`.
+Extend the CLI by creating custom commands in `.open-tasks/`.
 
 ### Basic Example
 
-Create `.open-tasks/commands/greet.ts`:
+Create `.open-tasks/greet.ts`:
 
 ```typescript
 import { CommandHandler, ExecutionContext, ReferenceHandle } from '@bitcobblers/open-tasks';
@@ -597,7 +597,7 @@ ot replace "{{template}}" --ref template \
   | replace "{{DATABASE_URL}}" "postgres://localhost/prod" --token step1 \
   | replace "{{API_KEY}}" "secret-key-123" --token config
 
-# Output: .open-tasks/outputs/{timestamp}-replace/config.txt
+# Output: .open-tasks/logs/{timestamp}-replace/config.txt
 ```
 
 ### Example 7: Documentation Generation
@@ -610,7 +610,7 @@ ot extract "export function ([a-zA-Z]+)\([^)]*\)" --ref source --all --token fun
 # Generate documentation stub
 ot replace "# API Documentation\n\nFunctions:\n{{functions}}" --ref functions --token docs
 
-# Output: .open-tasks/outputs/{timestamp}-replace/docs.txt
+# Output: .open-tasks/logs/{timestamp}-replace/docs.txt
 ```
 
 ### Example 8: Data Validation Pipeline
@@ -672,7 +672,7 @@ ot replace "Replace these var declarations:\n{{var-declarations}}" \
 ### Reference Lifetime
 
 - References exist in memory during CLI execution
-- Output files persist in `.open-tasks/outputs/{timestamp}-{command}/`
+- Output files persist in `.open-tasks/logs/{timestamp}-{command}/`
 - References are NOT preserved across CLI invocations
 - Use files for persistent storage between runs
 
@@ -682,7 +682,7 @@ Each command execution creates an isolated timestamped directory:
 
 ```
 .open-tasks/
-  outputs/
+  logs/
     20250118T143052-store/
       20250118T143052-greeting.txt
     20250118T143105-replace/
@@ -713,7 +713,7 @@ npm link
 
 ```bash
 # Check directory structure
-ls .open-tasks/commands/
+ls .open-tasks/
 
 # Verify file is exported as default
 # ✓ export default class MyCommand extends CommandHandler
@@ -729,7 +729,7 @@ References are ephemeral - they only exist during the current CLI session. To pe
 ot store "data" --token mydata
 
 # Later: load from file
-ot load .open-tasks/outputs/YYYYMMDDTHHMMSS-mydata.txt --token mydata
+ot load .open-tasks/logs/YYYYMMDDTHHMMSS-mydata.txt --token mydata
 ```
 
 ### AI CLI Configuration Missing
@@ -841,7 +841,7 @@ const ref = await context.workflowContext.store(
     new FileNameDecorator("message.txt")
   ]
 );
-// File is written to: .open-tasks/outputs/{timestamp}-store/message.txt
+// File is written to: .open-tasks/logs/{timestamp}-store/message.txt
 ```
 
 See [Managing Context](../open-tasks-wiki/Managing-Context.md) for complete decorator documentation.
