@@ -36,8 +36,8 @@ export class CommandLoader {
       const files = await fs.readdir(sourceDir);
 
       for (const file of files) {
-        // Load .js and .ts files
-        const isValidFile = file.endsWith('.js') || file.endsWith('.ts');
+        // Load .js files only (exclude .d.ts declaration files)
+        const isValidFile = file.endsWith('.js') || (file.endsWith('.ts') && !file.endsWith('.d.ts'));
         if (!isValidFile) {
           continue;
         }
