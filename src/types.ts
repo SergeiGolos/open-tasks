@@ -128,9 +128,8 @@ export type CardStyle = 'info' | 'success' | 'warning' | 'error' | 'dim' | 'defa
  * Commands receive this and use it without worrying about output format
  */
 export interface ICardBuilder {    
-  name: string;  
-  verbosity?: VerbosityLevel
-  
+  name: string;
+  type: 'MessageCard' | 'TableCard' | 'ListCard' | 'TreeCard' | 'KeyValueCard' | string;   
   /**
    * Build and return the formatted cards as a string
    * Called by framework, not by commands

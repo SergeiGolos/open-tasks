@@ -6,11 +6,12 @@ export class ConsoleOutputBuilder implements IOutputSynk {
     this.cards = [];
   }
 
-  write(card: ICardBuilder | string, verbosity: VerbosityLevel): void {
-       
+  write(card: ICardBuilder | string, verbosity: VerbosityLevel): void {       
     if (typeof card === 'string') {
+      if (this.shouldWrite(verbosity || 'verbose')) { 
         console.log(card);
-        return;
+      }
+      return;      
     }
 
     if (this.shouldWrite(verbosity)) {
