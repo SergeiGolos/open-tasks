@@ -1,6 +1,7 @@
 import { createCardBuilder as createCardBuilderFactory } from './card-builders';
 import { createOutputBuilder as createOutputBuilderFactory } from './output-builders';
 import { VerbosityLevel, ExecutionContext, ReferenceHandle, ICardBuilder, IOutputBuilder, SummaryData } from './types';
+import { IWorkflowContext } from './workflow/types.js';
 
 /**
  * Base class for command handlers
@@ -39,7 +40,8 @@ export abstract class CommandHandler {
    */
   protected abstract executeCommand(
     args: string[],
-    context: ExecutionContext,
+    config: Record<string, any>,
+    workflowContext: IWorkflowContext,
     cardBuilder: ICardBuilder
   ): Promise<ReferenceHandle>;
 
@@ -57,7 +59,7 @@ export abstract class CommandHandler {
 
     try {
       // Execute the actual command logic, passing card builder
-      const result = await this.executeCommand(args, refs, context, cardBuilder);
+      const result = await this.executeCommand(args, context.config, context.workflowContext, cardBuilder);
 
       // Handle successful output (combine cards + summary)
       await this.handleOutput(result, context, startTime, outputBuilder, cardBuilder);
