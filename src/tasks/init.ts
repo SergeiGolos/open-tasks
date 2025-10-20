@@ -1,9 +1,14 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
+import { fileURLToPath } from 'url';
 import { ExecutionContext,ITaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '../types.js';
 import { getDefaultConfig } from '../config-loader.js';
 import { MessageCard } from '../cards/index.js';
+
+// Get the directory name for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 
 export default class InitCommand implements ITaskHandler {  
@@ -20,6 +25,7 @@ export default class InitCommand implements ITaskHandler {
     const force = args.includes('--force');
     const openTasksDir = path.join(context.cwd, '.open-tasks');
     const logsDir = path.join(openTasksDir, 'logs');
+    const schemasDir = path.join(openTasksDir, 'schemas');
     const configPath = path.join(openTasksDir, '.config.json');
 
     const exists = await fse.pathExists(openTasksDir);
@@ -32,9 +38,28 @@ export default class InitCommand implements ITaskHandler {
     results.push('✓ .open-tasks/');
     await fse.ensureDir(logsDir);
     results.push('✓ .open-tasks/logs/');
+    await fse.ensureDir(schemasDir);
+    results.push('✓ .open-tasks/schemas/');
 
+    // Copy schema file
+    const schemaSourcePath = path.join(__dirname, '..', '..', 'schemas', 'config.schema.json');
+    const schemaDestPath = path.join(schemasDir, 'config.schema.json');
+    
+    try {
+      await fse.copy(schemaSourcePath, schemaDestPath);
+      results.push('✓ .open-tasks/schemas/config.schema.json');
+    } catch (error) {
+      // If schema file doesn't exist in the package, create a basic reference
+      console.warn('Warning: Could not copy schema file, creating schema reference only');
+    }
+
+    // Create config with schema reference
     const defaultConfig = getDefaultConfig();
-    await fs.writeFile(configPath, JSON.stringify(defaultConfig, null, 2), 'utf-8');
+    const configWithSchema = {
+      "$schema": "./schemas/config.schema.json",
+      ...defaultConfig
+    };
+    await fs.writeFile(configPath, JSON.stringify(configWithSchema, null, 2), 'utf-8');
     results.push('✓ .open-tasks/.config.json');
 
     const commandsPackageJsonPath = path.join(openTasksDir, 'package.json');

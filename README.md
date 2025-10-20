@@ -30,6 +30,14 @@ npm install -g @bitcobblers/open-tasks
 ot init
 ```
 
+This creates:
+- `.open-tasks/` directory structure
+- `.open-tasks/.config.json` with `$schema` reference for VS Code intellisense
+- `.open-tasks/schemas/config.schema.json` for configuration validation
+- `.open-tasks/logs/` for output files
+
+**VS Code Users**: The config file includes schema validation automatically - you'll get autocomplete and validation when editing `.config.json`!
+
 ### Create Your First Task
 
 ```bash
