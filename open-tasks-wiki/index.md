@@ -105,12 +105,14 @@ The execution environment that manages state, file I/O, and command orchestratio
 ## Get Started
 
 - **[Installation](./Installation.md)** - Install and configure Open Tasks CLI
-- **[Commands](./Commands.md)** - Reference guide for all built-in commands
+- **[Core Tasks](./Core-Tasks.md)** - Built-in tasks for project setup and management
+- **[Core Commands](./Core-Commands.md)** - Reference guide for all built-in commands
+- **[Core Agents Command Builder](./Core-Agents-Command-Builder.md)** - Configure AI agents (Claude, Gemini, Copilot, Aider, llm, Qwen)
 - **[Example Tasks](./Example-Tasks.md)** - Ready-to-use examples for code review, news summarization, and more
 - **[Building Custom Tasks](./Building-Custom-Tasks.md)** - Chain commands together for complex workflows
-- **[Building Custom Commands](./Building-Custom-Commands.md)** - Create your own commands with the box format
-- **[Architecture](./Architecture.md)** - High-level overview of the system design
-- **[Developer Guide](./Developer-Guide.md)** - Contributing and developing new features
+- **[Building Custom Commands](./Building-Custom-Commands.md)** - Create your own commands with the ICommand interface
+- **[Architecture](./Architecture.md)** - High-level overview of the system design and core concepts
+- **[Contributing Guide](https://github.com/SergeiGolos/open-tasks/blob/main/CONTRIBUTING.md)** - Developer guide for contributing new features
 
 ## Why Open Tasks?
 
