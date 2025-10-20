@@ -120,18 +120,18 @@ export default class CreateCommand extends TaskHandler {
     typescript: boolean
   ): string {
     if (typescript) {
-      return `import { TaskHandler, ExecutionContext, ReferenceHandle, IOutputSynk, IFlow } from 'open-tasks-cli';
-import { MessageCard } from 'open-tasks-cli/cards';
-
-/**
+      return `/**
  * ${description}
  * 
  * This is a demo command that shows how to:
  * - Accept command arguments
  * - Use the output builder to create visual output
  * - Store and return results
+ * 
+ * Note: For TypeScript support, install type definitions:
+ *   npm install --save-dev open-tasks-cli
  */
-export default class ${this.toPascalCase(name)}Command extends TaskHandler {
+export default class ${this.toPascalCase(name)}Command {
   name = '${name}';
   description = '${description}';
   examples = [
@@ -140,54 +140,47 @@ export default class ${this.toPascalCase(name)}Command extends TaskHandler {
     'open-tasks ${name} "Bob" --token greeting',
   ];
 
-  protected async executeCommand(
-    config: Record<string, any>,
-    args: string[],
-    workflowContext: IFlow,
-    outputBuilder: IOutputSynk
-  ): Promise<ReferenceHandle> {
+  async execute(args: string[], context: any): Promise<any> {
     // Get the name from arguments (default to "World")
     const userName = args[0] || 'World';
     
-    outputBuilder.write('Creating greeting...');
+    context.outputSynk.write('Creating greeting...');
     
     // Create the hello world template
     const template = 'Hello, {{name}}! Welcome to open-tasks CLI.';
     
-    outputBuilder.write('Replacing name placeholder...');
+    context.outputSynk.write('Replacing name placeholder...');
     
     // Replace the placeholder with the actual name
     const greeting = template.replace('{{name}}', userName);
     
-    outputBuilder.write('Building result...');
+    context.outputSynk.write('Building result...');
     
     // Store the result
     const token = args.find((arg, i) => args[i - 1] === '--token');
-    const ref: ReferenceHandle = {
+    const ref = {
       id: '${name}-result',
       content: greeting,
       token: token || '${name}',
       timestamp: new Date(),
     };
     
-    // Create a visual card showing what we did
-    const details = [
-      \`Template: \${template}\`,
-      \`User Name: \${userName}\`,
-      \`Result: \${greeting}\`,
-      \`Token: \${token || 'none'}\`,
-    ].join('\\n');
-    
-    outputBuilder.write(new MessageCard('👋 Hello World Demo', details, 'success'));
+    // Output the results
+    context.outputSynk.write('');
+    context.outputSynk.write('👋 Hello World Demo');
+    context.outputSynk.write('─'.repeat(50));
+    context.outputSynk.write(\`Template: \${template}\`);
+    context.outputSynk.write(\`User Name: \${userName}\`);
+    context.outputSynk.write(\`Result: \${greeting}\`);
+    context.outputSynk.write(\`Token: \${token || 'none'}\`);
+    context.outputSynk.write('');
     
     return ref;
   }
 }
 `;
     } else {
-      return `import { MessageCard } from 'open-tasks-cli/cards';
-
-/**
+      return `/**
  * ${description}
  * 
  * This is a demo command that shows how to:
@@ -233,15 +226,15 @@ export default class ${this.toPascalCase(name)}Command {
       timestamp: new Date(),
     };
     
-    // Create a visual card showing what we did
-    const details = [
-      \`Template: \${template}\`,
-      \`User Name: \${userName}\`,
-      \`Result: \${greeting}\`,
-      \`Token: \${token || 'none'}\`,
-    ].join('\\n');
-    
-    context.outputSynk.write(new MessageCard('👋 Hello World Demo', details, 'success'));
+    // Output the results
+    context.outputSynk.write('');
+    context.outputSynk.write('👋 Hello World Demo');
+    context.outputSynk.write('─'.repeat(50));
+    context.outputSynk.write(\`Template: \${template}\`);
+    context.outputSynk.write(\`User Name: \${userName}\`);
+    context.outputSynk.write(\`Result: \${greeting}\`);
+    context.outputSynk.write(\`Token: \${token || 'none'}\`);
+    context.outputSynk.write('');
     
     return ref;
   }

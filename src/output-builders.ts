@@ -16,7 +16,13 @@ export class ConsoleOutputBuilder implements IOutputSynk {
 
     if (this.shouldWrite(verbosity)) {
       this.cards.push(card);
-      console.log(card.build());
+      // Check if it's a card builder or a plain object
+      if (typeof card.build === 'function') {
+        console.log(card.build());
+      } else {
+        // Handle plain object cards from user commands
+        console.log(JSON.stringify(card, null, 2));
+      }
     }
   }
 
