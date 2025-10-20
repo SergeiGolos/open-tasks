@@ -512,7 +512,7 @@ type TaskLog = {
 
 ```typescript
 // .open-tasks/commands/process-data.ts
-import { TaskHandler, TaskOutcome, IWorkflowContext, MemoryRef, ICommand } from 'open-tasks-cli';
+import { TaskHandler, TaskOutcome, IWorkflowContext, MemoryRef, ICommand } from '@bitcobblers/open-tasks';
 
 export default class ProcessDataHandler extends TaskHandler {
   static name = 'process-data';

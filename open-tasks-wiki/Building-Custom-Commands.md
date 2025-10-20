@@ -305,7 +305,7 @@ context.outputSynk.write(
 ```
 ╭─ Configuration ──────────────╮
 │                              │
-│  Project: open-tasks-cli     │
+│  Project: open-tasks         │
 │  Version: 1.0.0              │
 │  Node: 18.0.0                │
 │  Status: Active              │

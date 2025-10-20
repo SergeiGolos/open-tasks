@@ -6,7 +6,7 @@
 
 ## Summary
 
-Create an npm-based CLI tool (`open-tasks-cli`) that enables users to execute tasks with explicit workflow context. The tool provides:
+Create an npm-based CLI tool (`@bitcobblers/open-tasks`) that enables users to execute tasks with explicit workflow context. The tool provides:
 
 1. **System Commands**: Built-in commands for initialization and scaffolding (`init`, `create`)
 2. **Built-in CLI Commands**: Core operational commands packaged with the CLI
@@ -75,7 +75,7 @@ This change introduces the following new capabilities:
 
 ## Success Criteria
 
-- [ ] Users can install `open-tasks-cli` via npm and run basic commands
+- [ ] Users can install `@bitcobblers/open-tasks` via npm and run basic commands
 - [ ] System command `init` sets up project with npm dependencies and directory structure
 - [ ] System command `create` scaffolds new TaskHandler templates in `.open-tasks/commands/`
 - [ ] TaskHandler abstract class is defined and can be extended

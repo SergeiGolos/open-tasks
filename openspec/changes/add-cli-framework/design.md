@@ -7,7 +7,7 @@
 
 ### Three-Layer Architecture
 
-The open-tasks-cli framework has three distinct layers:
+The @bitcobblers/open-tasks framework has three distinct layers:
 
 1. **Context API Layer (Internal)**: Programmatic API for workflow processing
    - Functions: `context.store()`, `context.load()`, `context.transform()`, `context.run()`
@@ -298,7 +298,7 @@ open-tasks ai-cli "Summarize this" --ref message
 ## File Structure
 
 ```
-open-tasks-cli/
+@bitcobblers/open-tasks/
 ├── package.json
 ├── tsconfig.json
 ├── src/
