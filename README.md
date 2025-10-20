@@ -442,6 +442,134 @@ ot create validate-email
 # Creates: .open-tasks/validate-email.ts
 ```
 
+---
+
+### `clean` - Clean Up Log Files
+
+Clean up old log files with configurable retention period.
+
+```bash
+ot clean [--days <number>]
+```
+
+**Examples:**
+```bash
+# Clean logs older than 7 days (default)
+ot clean
+
+# Clean logs older than 30 days
+ot clean --days 30
+
+# Clean all logs (0 day retention)
+ot clean --days 0
+
+# Clean with verbose output
+ot clean --days 7 --verbose
+```
+
+**Features:**
+- Removes log directories older than specified retention period
+- Displays space freed and directories deleted
+- Safe - only affects `.open-tasks/logs/` directory
+- Configurable retention period (default: 7 days)
+
+---
+
+### `promote` - Promote Task to User Profile
+
+Copy a task and its dependencies to the user profile level directory (`~/.open-tasks/`) to make it available globally.
+
+```bash
+ot promote <task-name>
+```
+
+**Examples:**
+```bash
+# Promote a task to user profile
+ot promote my-custom-task
+
+# Promote with verbose output
+ot promote my-custom-task --verbose
+```
+
+**Features:**
+- Copies task file (.ts or .js) to `~/.open-tasks/`
+- Copies related spec files (.md) if they exist
+- Analyzes and copies task dependencies
+- Creates backup if task already exists in user directory
+- Makes task available globally across all projects
+
+---
+
+### `create-agent` - Create Agent Task with AI Assistance
+
+Scaffold a new agent task using AI-assisted planning and implementation. This command uses an interactive workflow to gather requirements, generate a detailed plan, and implement the task.
+
+```bash
+ot create-agent [task-name] [--cli-agent <agent-name>]
+```
+
+**Examples:**
+```bash
+# Interactive mode - prompts for name and requirements
+ot create-agent
+
+# With task name specified
+ot create-agent my-agent-task
+
+# Use specific CLI agent from config
+ot create-agent my-agent --cli-agent gemini-default
+
+# Use Claude for planning
+ot create-agent my-agent --cli-agent claude-default
+```
+
+**Workflow:**
+1. **Gather Requirements**: Prompts for task name and description
+2. **Generate Plan**: Uses configured AI agent to create detailed specification
+3. **Save Specification**: Saves plan to `.open-tasks/{task-name}.md`
+4. **Review**: Displays plan for user review
+5. **Implement**: Uses AI agent to generate task implementation
+6. **Save Implementation**: Creates `.open-tasks/{task-name}.ts`
+
+**Prerequisites:**
+- Project must be initialized (`ot init`)
+- At least one agent must be configured in `.open-tasks/.config.json`
+- Configured agent CLI tool must be installed and accessible
+
+**Configuration:**
+Agents are configured in `.open-tasks/.config.json`. Example:
+```json
+{
+  "agents": [
+    {
+      "name": "gemini-default",
+      "type": "gemini",
+      "timeout": 300000,
+      "config": {
+        "model": "gemini-2.0-flash-exp"
+      }
+    },
+    {
+      "name": "claude-default",
+      "type": "claude",
+      "timeout": 300000,
+      "config": {
+        "model": "claude-3-5-sonnet-20241022"
+      }
+    }
+  ]
+}
+```
+
+**Next Steps After Creation:**
+1. Review the implementation in `.open-tasks/{task-name}.ts`
+2. Review the specification in `.open-tasks/{task-name}.md`
+3. Test: `ot {task-name}`
+4. (Optional) Promote globally: `ot promote {task-name}`
+
+---
+
 ## Configuration
 
 ### Project Configuration
