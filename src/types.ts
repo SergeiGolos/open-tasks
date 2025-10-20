@@ -15,7 +15,7 @@ export interface ITaskHandler {
   description: string;
   examples: string[];
   name: string;
-  
+
   execute(
     args: string[],
     context: ExecutionContext
@@ -154,12 +154,12 @@ export interface ICardBuilder {
 export interface IOutputSynk {
     
   /// writes a message to the output
-  write(message: string, verbosity: VerbosityLevel): void;
+  write(message: string, verbosity?: VerbosityLevel): void;
   
   /**
-   * writes a card to the output
+   * writes a card to the output 
    */
-  write(card: ICardBuilder, verbosity: VerbosityLevel): void;  
+  write(card: ICardBuilder, verbosity?: VerbosityLevel): void;  
 }
 
 
@@ -185,14 +185,10 @@ export interface StringRef {
   id: string;
   /** Optional user-friendly token */
   token?: string;
-  /** Path to persisted file (if applicable) */
-  fileName?: string;
-  /** In-memory content */
-  content: any;
   /** Creation timestamp */
   timestamp: Date;
-  /** Metadata about transforms applied to this content */
-  metadata?: TransformMetadata[];
+  /** Path to persisted file (if applicable) */
+  fileName: string;  
 }
 
 /**
@@ -229,13 +225,29 @@ export interface IRefDecorator {
  * Core workflow context interface for storing, retrieving, and executing operations
  */
 export interface IFlow {
-  
+  cwd: string;
+  /**
+   * Stores a value with optional decorators
+   * @param value - The value to store
+   * @param decorators - Optional array of decorators to apply
+   * @returns The stored memory reference
+   */  
+  set(value: any, decorators?: IRefDecorator[]): Promise<StringRef>;
+
+  /**
+   * Retrieves a stored value by its reference
+   * @param ref - The memory reference to retrieve
+   * @returns The stored value or undefined if not found
+   */
+  get(ref: StringRef): Promise<string | undefined>;
+
+
   /**
    * Execute a command with this context
    * @param command - The command to execute
    * @returns Array of memory references produced by the command
    */
-  with(command: ICommand): Promise<StringRef[]>;
+  run(command: ICommand): Promise<StringRef[]>;
 }
 
 /**

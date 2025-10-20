@@ -1,13 +1,12 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
-import { ExecutionContext, ReferenceHandle } from '../types.js';
-import { TaskHandler } from '../task-handler.js';
+import { ExecutionContext,ITaskHandler, IFlow, IOutputSynk, ReferenceHandle } from '../types.js';
 import { getDefaultConfig } from '../config-loader.js';
 import { MessageCard } from '../cards/index.js';
-import { IWorkflowContext } from '../workflow/types.js';
 
-export default class InitCommand extends TaskHandler {
+
+export default class InitCommand implements ITaskHandler {  
   name = 'init';
   description = 'Initialize a new open-tasks project';
   examples = [
@@ -17,7 +16,7 @@ export default class InitCommand extends TaskHandler {
   ];
 
   async execute(args: string[], context: ExecutionContext): Promise<ReferenceHandle> {
-    const verbosity = context.verbosity || this.defaultVerbosity || 'summary';
+    const verbosity = context.verbosity || 'summary';
     const force = args.includes('--force');
     const openTasksDir = path.join(context.cwd, '.open-tasks');
     const commandsDir = path.join(openTasksDir, 'commands');
@@ -100,9 +99,5 @@ export default class InitCommand extends TaskHandler {
     };
 
     return ref;
-  }
-
-  protected override async executeCommand(args: string[], config: Record<string, any>, workflowContext: IWorkflowContext, outputBuilder: any): Promise<ReferenceHandle> {
-    throw new Error('This method should not be called. Use execute() instead.');
-  }
+  }  
 }

@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { ExecutionContext, ReferenceHandle, IOutputSynk } from '../types.js';
+import { ExecutionContext, ReferenceHandle, IOutputSynk, IFlow, ITaskHandler } from '../types.js';
 import { TaskHandler } from '../task-handler.js';
-import { TokenDecorator } from '../workflow/decorators.js';
+import { TokenDecorator } from '../decorators.js';
 import { formatFileSize } from '../output-utils.js';
 import { MessageCard, KeyValueCard } from '../cards/index.js';
 
@@ -10,7 +10,7 @@ import { MessageCard, KeyValueCard } from '../cards/index.js';
  * Load command - loads content from a file
  * Supports enhanced output control (quiet, summary, verbose)
  */
-export default class LoadCommand extends TaskHandler {
+export default class LoadCommand implements ITaskHandler {
   name = 'load';
   description = 'Load content from a file';
   examples = [
@@ -23,7 +23,7 @@ export default class LoadCommand extends TaskHandler {
     args: string[],
     context: ExecutionContext
   ): Promise<ReferenceHandle> {
-    const verbosity = context.verbosity || this.defaultVerbosity || 'summary';
+    const verbosity = context.verbosity || 'summary';
     
     if (args.length === 0) {
       throw new Error('Load command requires a file path argument');
@@ -49,7 +49,7 @@ export default class LoadCommand extends TaskHandler {
     const content = await fs.readFile(absolutePath, 'utf-8');
 
     // Store using workflow context
-    const StringRef = await context.workflowContext.store(content, token ? [new TokenDecorator(token)] : []);
+    const StringRef = await context.workflowContext.set(content, token ? [new TokenDecorator(token)] : []);
 
     // Create reference handle
     const ref: ReferenceHandle = {
@@ -84,13 +84,5 @@ export default class LoadCommand extends TaskHandler {
     }
 
     return ref;
-  }
-
-  protected override async executeCommand(
-    args: string[],
-    context: ExecutionContext,
-    outputBuilder: IOutputSynk
-  ): Promise<ReferenceHandle> {
-    throw new Error('This method should not be called. Use execute() instead.');
   }
 }

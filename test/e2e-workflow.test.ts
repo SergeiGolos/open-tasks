@@ -2,14 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
-import { DirectoryOutputContext } from '../src/workflow/directory-output-context.js';
+import { DirectoryOutputContext } from '../src/directory-output-context.js';
 import {
   TokenReplaceCommand,
   ExtractCommand,
   JoinCommand,
   SplitCommand,
 } from '../src/workflow/transforms.js';
-import { TokenDecorator } from '../src/workflow/decorators.js';
+import { TokenDecorator } from '../src/decorators.js';
 
 describe('End-to-End Workflow Tests', () => {
   const testOutputDir = path.join(process.cwd(), 'test-outputs-e2e');

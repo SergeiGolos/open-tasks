@@ -11,12 +11,6 @@ export abstract class TaskHandler implements ITaskHandler {
   abstract examples: string[];
 
   /**
-   * Optional default verbosity level for this command
-   * Can be overridden by CLI flags
-   */
-  protected defaultVerbosity?: VerbosityLevel;
-
-  /**
    * Main execute method - can be overridden for backward compatibility
    * or use the new executeCommand pattern for enhanced output control
    */

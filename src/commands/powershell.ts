@@ -1,7 +1,8 @@
 import { spawn } from 'child_process';
-import {  ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
-import { TokenDecorator } from '../workflow/decorators.js';
+import {  ExecutionContext, ReferenceHandle, IOutputSynk, IFlow } from '../types.js';
+import { TokenDecorator } from '../decorators.js';
 import { TaskHandler } from '../task-handler.js';
+import { MessageCard } from '../cards/MessageCard.js';
 
 /**
  * PowerShell command - executes PowerShell scripts
@@ -15,10 +16,10 @@ export default class PowerShellCommand extends TaskHandler {
   ];
 
   protected async executeCommand(
+    config: Record<string, any>,
     args: string[],
-    refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext,
-    cardBuilder: ICardBuilder
+    workflowContext: IFlow,
+    outputBuilder: IOutputSynk
   ): Promise<ReferenceHandle> {
     if (args.length === 0) {
       throw new Error('PowerShell command requires a script argument');
@@ -27,15 +28,8 @@ export default class PowerShellCommand extends TaskHandler {
     let script = args[0];
     const token = args.find((arg, i) => args[i - 1] === '--token');
 
-    // Replace tokens in script
-    cardBuilder.addProgress('Replacing tokens in script...');
-    for (const [refToken, ref] of refs.entries()) {
-      const pattern = new RegExp(`\\{\\{${refToken}\\}\\}`, 'g');
-      script = script.replace(pattern, String(ref.content));
-    }
-
     // Execute PowerShell script
-    cardBuilder.addProgress('Executing PowerShell script...');
+    outputBuilder.write('Executing PowerShell script...');
     let exitCode = 0;
     let result: string;
     let executionError: string | undefined;
@@ -50,45 +44,46 @@ export default class PowerShellCommand extends TaskHandler {
 
     // Store the result
     const decorators = token ? [new TokenDecorator(token)] : [];
-    const StringRef = await context.workflowContext.store(result, decorators);
+    const StringRef = await workflowContext.set(result, decorators);
 
     const outputFile = StringRef.fileName
-      ? `${context.outputDir}/${StringRef.fileName}`
+      ? `${workflowContext.cwd}/.open-tasks/outputs/${StringRef.fileName}`
       : undefined;
 
-    const ref = context.referenceManager.createReference(
-      StringRef.id,
-      result,
-      token,
-      outputFile
-    );
+    const ref: ReferenceHandle = {
+      id: StringRef.id,
+      content: result,
+      token: token,
+      timestamp: new Date(),
+      outputFile: outputFile
+    };
 
     // Add visual card
     const cardStyle = exitCode === 0 ? 'success' : 'error';
     const cardTitle = exitCode === 0 ? '⚡ PowerShell Executed' : '❌ PowerShell Failed';
     
-    const details: Record<string, string> = {
-      'Script': script.length > 100 ? script.substring(0, 100) + '...' : script,
-      'Exit Code': String(exitCode),
-      'Output Length': `${result.length} characters`,
-    };
+    const details = [
+      `Script: ${script.length > 100 ? script.substring(0, 100) + '...' : script}`,
+      `Exit Code: ${exitCode}`,
+      `Output Length: ${result.length} characters`,
+    ];
 
     if (token) {
-      details['Token'] = token;
+      details.push(`Token: ${token}`);
     }
 
     if (outputFile) {
-      details['Output File'] = outputFile;
+      details.push(`Output File: ${outputFile}`);
     }
 
     if (executionError) {
-      details['Error'] = executionError;
+      details.push(`Error: ${executionError}`);
     } else {
       const preview = result.length > 200 ? result.substring(0, 200) + '...' : result;
-      details['Output Preview'] = preview;
+      details.push(`Output Preview: ${preview}`);
     }
 
-    cardBuilder.addCard(cardTitle, details, cardStyle);
+    outputBuilder.write(new MessageCard(cardTitle, details.join('\n'), cardStyle));
 
     return ref;
   }

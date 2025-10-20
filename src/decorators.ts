@@ -1,4 +1,4 @@
-import { IRefDecorator, StringRef, TransformMetadata } from './types.js';
+import { IRefDecorator, StringRef } from './types.js';
 
 /**
  * Decorator that adds a user-friendly token to a StringRef
@@ -46,21 +46,6 @@ export class TimestampedFileNameDecorator implements IRefDecorator {
     return {
       ...ref,
       fileName,
-    };
-  }
-}
-
-/**
- * Decorator that adds transform metadata to a StringRef
- */
-export class MetadataDecorator implements IRefDecorator {
-  constructor(private metadata: TransformMetadata) {}
-
-  decorate(ref: StringRef): StringRef {
-    const existingMetadata = ref.metadata || [];
-    return {
-      ...ref,
-      metadata: [...existingMetadata, this.metadata],
     };
   }
 }

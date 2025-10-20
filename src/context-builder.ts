@@ -1,6 +1,6 @@
 import { ExecutionContext, VerbosityLevel } from './types.js';
-import { DirectoryOutputContext } from './workflow/index.js';
 import { ConsoleOutputBuilder } from './output-builders.js';
+import { DirectoryOutputContext } from './directory-output-context.js';
 
 /**
  * Builds execution context from resolved options
@@ -15,7 +15,7 @@ export class ContextBuilder {
    * Builds a complete execution context for command execution
    */
   build(outputDir: string, verbosity: VerbosityLevel): ExecutionContext {
-    const workflowContext = new DirectoryOutputContext(outputDir);
+    const workflowContext = new DirectoryOutputContext(this.cwd, outputDir);
     const outputSynk = new ConsoleOutputBuilder(verbosity);
 
     return {
