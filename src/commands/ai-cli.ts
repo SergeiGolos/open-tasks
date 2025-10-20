@@ -1,8 +1,10 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
-import { CommandHandler, ExecutionContext, ReferenceHandle, ICardBuilder } from '../types.js';
+import {  ReferenceHandle, IOutputBuilder } from '../types.js';
 import { TokenDecorator } from '../workflow/decorators.js';
+import { CommandHandler } from '../CommandHandler.js';
+import { IWorkflowContext } from '../workflow/types.js';
 
 interface AiCliConfig {
   command: string;
@@ -22,11 +24,11 @@ export default class AiCliCommand extends CommandHandler {
     'open-tasks ai-cli "Compare these files" --ref file1 --ref file2',
   ];
 
-  protected async executeCommand(
+  protected override async executeCommand(
     args: string[],
-    refs: Map<string, ReferenceHandle>,
-    context: ExecutionContext,
-    cardBuilder: ICardBuilder
+    config: Record<string, any>,
+    context: IWorkflowContext,
+    outputBuilder: IOutputBuilder
   ): Promise<ReferenceHandle> {
     if (args.length === 0) {
       throw new Error('AI CLI command requires a prompt argument');
@@ -36,15 +38,15 @@ export default class AiCliCommand extends CommandHandler {
     const token = args.find((arg, i) => args[i - 1] === '--token');
 
     // Load AI CLI configuration
-    cardBuilder.addProgress('Loading AI CLI configuration...');
-    const config = await this.loadConfig(context.cwd);
+    outputBuilder.addProgress('Loading AI CLI configuration...');
+
 
     // Build command with context files
     const contextFiles = Array.from(refs.values())
       .map((ref) => ref.outputFile)
       .filter((file): file is string => file !== undefined);
 
-    cardBuilder.addProgress(`Executing AI CLI with ${contextFiles.length} context file(s)...`);
+    outputBuilder.addProgress(`Executing AI CLI with ${contextFiles.length} context file(s)...`);
 
     // Execute AI CLI
     let exitCode = 0;
