@@ -23,6 +23,9 @@ export class LlmConfig implements IAgentConfig {
   /** Stream output */
   stream?: boolean;
 
+  /** Dry-run mode - echo command instead of executing it */
+  dryRun?: boolean;
+
   /**
    * Build command-line arguments for llm CLI
    */
@@ -89,6 +92,11 @@ export class LlmConfigBuilder {
 
   withStreaming(): this {
     this.config.stream = true;
+    return this;
+  }
+
+  withDryRun(): this {
+    this.config.dryRun = true;
     return this;
   }
 

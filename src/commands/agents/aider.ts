@@ -32,6 +32,9 @@ export class AiderConfig implements IAgentConfig {
   /** Enable repository map */
   useRepoMap?: boolean;
 
+  /** Dry-run mode - echo command instead of executing it */
+  dryRun?: boolean;
+
   /**
    * Build command-line arguments for Aider CLI
    */
@@ -128,6 +131,11 @@ export class AiderConfigBuilder {
 
   withRepoMap(): this {
     this.config.useRepoMap = true;
+    return this;
+  }
+
+  withDryRun(): this {
+    this.config.dryRun = true;
     return this;
   }
 

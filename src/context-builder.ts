@@ -15,7 +15,7 @@ export class ContextBuilder {
    * Builds a complete execution context for command execution
    */
   build(outputDir: string, verbosity: VerbosityLevel): ExecutionContext {
-    const workflowContext = new DirectoryOutputContext(this.cwd, outputDir);
+    const workflowContext = new DirectoryOutputContext(this.cwd, outputDir, verbosity);
     const outputSynk = new ConsoleOutputBuilder(verbosity);
 
     return {

@@ -16,10 +16,12 @@ import { TimestampedFileNameDecorator } from './decorators.js';
 export class DirectoryOutputContext implements IFlow {
   public Tokens: Map<string, StringRef>;
   private outputDir: string;
+  public verbosity?: string;
 
-  constructor(public cwd: string, outputDir: string = '.open-tasks/logs') {
+  constructor(public cwd: string, outputDir: string = '.open-tasks/logs', verbosity: string = 'summary') {
     this.outputDir = outputDir;
     this.Tokens = new Map();
+    this.verbosity = verbosity;
   }
 
   public async set(value: any, decorators?: IRefDecorator[]): Promise<StringRef> {

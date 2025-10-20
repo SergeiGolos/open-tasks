@@ -39,6 +39,9 @@ export class ClaudeConfig implements IAgentConfig {
   /** Enable extended thinking mode */
   extendedThinking?: boolean;
 
+  /** Dry-run mode - echo command instead of executing it */
+  dryRun?: boolean;
+
   /**
    * Build command-line arguments for Claude Code CLI
    */
@@ -123,6 +126,11 @@ export class ClaudeConfigBuilder {
 
   withExtendedThinking(): this {
     this.config.extendedThinking = true;
+    return this;
+  }
+
+  withDryRun(): this {
+    this.config.dryRun = true;
     return this;
   }
 
