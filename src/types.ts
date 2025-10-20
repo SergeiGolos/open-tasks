@@ -174,9 +174,7 @@ export interface ExecutionContext {
   /** Configuration object */
   config: Record<string, any>;
   /** Verbosity level (default: 'summary') */
-  verbosity?: VerbosityLevel;
-  /** Custom output file path (for 'file' target) */
-  customOutputPath?: string;
+  verbosity?: VerbosityLevel;  
 }
 
 /**
@@ -242,40 +240,16 @@ export class OutputHandler {
   constructor(private outputDir: string) {}
 
   /**
-   * Determine if output should be written to screen/terminal
-   */
-  shouldOutputToScreen(target: OutputTarget = 'both'): boolean {
-    return target === 'screen-only' || target === 'both' || target === 'file';
-  }
-
-  /**
-   * Determine if output should be written to file
-   */
-  shouldOutputToFile(target: OutputTarget = 'both'): boolean {
-    return target === 'log-only' || target === 'both' || target === 'file';
-  }
-
-  /**
    * Write output with routing based on output target
    */
   async writeOutputWithRouting(
     content: string,
     fileName: string,
-    outputTarget: OutputTarget = 'both',
     customPath?: string
   ): Promise<string | undefined> {
     let filePath: string | undefined;
-
-    // Write to file if needed
-    if (this.shouldOutputToFile(outputTarget)) {
-      filePath = await this.writeOutput(content, fileName, customPath);
-    }
-
-    // Write to screen if needed
-    if (this.shouldOutputToScreen(outputTarget)) {
-      console.log(content);
-    }
-
+    filePath = await this.writeOutput(content, fileName, customPath);
+    console.log(content);
     return filePath;
   }
 
@@ -446,12 +420,8 @@ export abstract class CommandHandler {
     const finalOutput = cards || summary;
     
     // Route output to appropriate destination
-    if (finalOutput) {
-      const outputTarget = context.outputTarget || 'both';
-      
-      if (context.outputHandler.shouldOutputToScreen(outputTarget)) {
-        console.log(finalOutput);
-      }
+    if (finalOutput) {      
+      console.log(finalOutput);      
     }
   }
 
