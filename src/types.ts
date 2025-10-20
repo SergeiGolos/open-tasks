@@ -149,6 +149,15 @@ export interface ReferenceHandle {
 }
 
 /**
+ * Loaded command representation
+ * Returned by CommandLoader to be registered by the router
+ */
+export interface LoadedCommand {
+  name: string;
+  handler: CommandHandler;
+}
+
+/**
  * Execution context passed to all command handlers
  */
 export interface ExecutionContext {

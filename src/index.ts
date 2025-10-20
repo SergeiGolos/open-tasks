@@ -55,7 +55,7 @@ async function main() {
 
   // Initialize core components
   const router = new CommandRouter();
-  const loader = new CommandLoader(router);
+  const loader = new CommandLoader();
   const referenceManager = new ReferenceManager();
   const outputHandler = new OutputHandler(outputDir);
   const workflowContext = new DirectoryOutputContext(outputDir);
@@ -70,12 +70,18 @@ async function main() {
     : [config.customCommandsDir];
   
   // Load built-in commands (warn if missing, though this shouldn't happen)
-  await loader.loadCommandSource(commandsDir, { warnOnMissing: true });
+  let loadedCommands = await loader.loadCommandSource(commandsDir, { warnOnMissing: true });
+  for (const loadedCommand of loadedCommands) {
+    router.register(loadedCommand.name, loadedCommand.handler);
+  }
   
   // Load custom commands from all configured directories (don't warn if missing, as they're optional)
   for (const customDir of customCommandsDirs) {
     const customCommandsDir = path.join(cwd, customDir);
-    await loader.loadCommandSource(customCommandsDir, { warnOnMissing: false });
+    loadedCommands = await loader.loadCommandSource(customCommandsDir, { warnOnMissing: false });
+    for (const loadedCommand of loadedCommands) {
+      router.register(loadedCommand.name, loadedCommand.handler);
+    }
   }
 
 
