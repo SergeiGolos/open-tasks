@@ -200,13 +200,13 @@ export interface ICommand {
    * @param context - The workflow context
    * @param args - Command arguments
    * @param cardBuilder - Optional card builder for creating formatted output (provided by framework)
-   * @returns Array of memory references produced by the command
+   * @returns Array of tuples [value, decorators[]] to be stored with optional decorators
    */
   execute(
     context: IFlow, 
     args: any[],
     cardBuilder?: ICardBuilder
-  ): Promise<StringRef[]>;
+  ): Promise<[any, IRefDecorator[]][]>;
 }
   
 /**

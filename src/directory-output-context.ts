@@ -58,6 +58,9 @@ export class DirectoryOutputContext implements IFlow {
 
   public async get(ref: StringRef): Promise<string | undefined> {
     // Read from file
+    if (!ref.fileName) {
+      throw new Error(`Cannot get reference: fileName is missing. Ref ID: ${ref.id}, Token: ${ref.token || 'none'}`);
+    }
     const filePath = path.join(this.outputDir, ref.fileName);
     try {
       const content = await fs.readFile(filePath, 'utf-8');
