@@ -19,7 +19,7 @@ export default class InitCommand implements ITaskHandler {
     const verbosity = context.verbosity || 'summary';
     const force = args.includes('--force');
     const openTasksDir = path.join(context.cwd, '.open-tasks');
-    const commandsDir = path.join(openTasksDir, 'commands');
+    const tasksDir = path.join(openTasksDir, 'tasks');
     const outputsDir = path.join(openTasksDir, 'outputs');
     const configPath = path.join(openTasksDir, 'config.json');
 
@@ -29,8 +29,8 @@ export default class InitCommand implements ITaskHandler {
     }
 
     const results: string[] = [];
-    await fse.ensureDir(commandsDir);
-    results.push('✓ .open-tasks/commands/');
+    await fse.ensureDir(tasksDir);
+    results.push('✓ .open-tasks/tasks/');
     await fse.ensureDir(outputsDir);
     results.push('✓ .open-tasks/outputs/');
 

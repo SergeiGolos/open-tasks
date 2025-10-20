@@ -3,7 +3,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: [
     'src/index.ts',
-    'src/commands/*.ts',
+    'src/tasks/*.ts',
   ],
   format: ['esm'],
   dts: true,

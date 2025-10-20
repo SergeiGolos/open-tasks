@@ -44,7 +44,7 @@ export default class CreateCommand extends TaskHandler {
       );
     }
 
-    const commandsDir = path.join(workflowContext.cwd, '.open-tasks', 'commands');
+    const commandsDir = path.join(workflowContext.cwd, '.open-tasks', 'tasks');
 
     // Check if commands directory exists
     outputBuilder.write('Checking project initialization...');

@@ -48,7 +48,7 @@ async function main() {
     
   // Build paths for built-in and custom commands
   const __filename = fileURLToPath(import.meta.url);
-  const commandsDir = path.join(path.dirname(__filename), 'commands');
+  const tasksDir = path.join(path.dirname(__filename), 'tasks');
   
   // Normalize customCommandsDir to array
   const customCommandsDirs = Array.isArray(config.customCommandsDir)
@@ -57,7 +57,7 @@ async function main() {
   
   // Define built-in and custom commands  
   const loaders = [
-    { dir: commandsDir, warnOnMissing: true },
+    { dir: tasksDir, warnOnMissing: true },
     ...customCommandsDirs.map(dir => ({ dir: path.join(cwd, dir), warnOnMissing: false }))
   ];
 

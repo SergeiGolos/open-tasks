@@ -7,7 +7,7 @@ import os from 'os';
  */
 const DEFAULT_CONFIG = {
   outputDir: '.open-tasks/outputs',
-  customCommandsDir: '.open-tasks/commands',
+  customCommandsDir: '.open-tasks/tasks',
   timestampFormat: 'YYYYMMDD-HHmmss-SSS',
   defaultFileExtension: 'txt',
   colors: true,
