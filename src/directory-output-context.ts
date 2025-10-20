@@ -17,11 +17,13 @@ export class DirectoryOutputContext implements IFlow {
   public Tokens: Map<string, StringRef>;
   private outputDir: string;
   public verbosity?: string;
+  public config?: Record<string, any>;
 
-  constructor(public cwd: string, outputDir: string = '.open-tasks/logs', verbosity: string = 'summary') {
+  constructor(public cwd: string, outputDir: string = '.open-tasks/logs', verbosity: string = 'summary', config?: Record<string, any>) {
     this.outputDir = outputDir;
     this.Tokens = new Map();
     this.verbosity = verbosity;
+    this.config = config;
   }
 
   public async set(value: any, decorators?: IRefDecorator[]): Promise<StringRef> {

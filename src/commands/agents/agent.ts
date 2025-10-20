@@ -57,10 +57,10 @@ export class AgentCommand implements ICommand {
     // Get environment variables from config (tool-specific)
     const env = this.config.getEnvironment();
     
-    // Determine if we should stream output (verbose mode)
-    // We need to get the verbosity from somewhere in the execution context
-    // For now, we'll check if verbose is enabled via a context property
-    const verbose = (context as any).verbosity === 'verbose';
+    // Get runtime options from context config
+    const runtimeConfig = context.config || {};
+    const verbose = runtimeConfig.verbosity === 'verbose';
+    const dryRun = this.config.dryRun || runtimeConfig.dryRun || false;
     
     // Execute the CLI tool
     const result = await executeAgent(
@@ -69,7 +69,7 @@ export class AgentCommand implements ICommand {
       this.config.workingDirectory || context.cwd,
       env,
       this.config.timeout,
-      this.config.dryRun,
+      dryRun,
       verbose
     );
 

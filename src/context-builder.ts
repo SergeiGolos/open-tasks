@@ -14,8 +14,15 @@ export class ContextBuilder {
   /**
    * Builds a complete execution context for command execution
    */
-  build(outputDir: string, verbosity: VerbosityLevel): ExecutionContext {
-    const workflowContext = new DirectoryOutputContext(this.cwd, outputDir, verbosity);
+  build(outputDir: string, verbosity: VerbosityLevel, dryRun?: boolean): ExecutionContext {
+    // Merge runtime options into config so they're accessible to all commands
+    const runtimeConfig = {
+      ...this.config,
+      verbosity,
+      dryRun: dryRun || false,
+    };
+
+    const workflowContext = new DirectoryOutputContext(this.cwd, outputDir, verbosity, runtimeConfig);
     const outputSynk = new ConsoleOutputBuilder(verbosity);
 
     return {
@@ -23,7 +30,7 @@ export class ContextBuilder {
       outputDir,
       workflowContext,
       outputSynk,
-      config: this.config,
+      config: runtimeConfig,
       verbosity
     };
   }

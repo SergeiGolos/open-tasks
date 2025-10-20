@@ -143,4 +143,45 @@ describe('Agent Commands', () => {
       expect(result).toContain('[DRY-RUN]');
     });
   });
+
+  describe('Config-based dry-run', () => {
+    it('should use dry-run from context config', async () => {
+      // Create context with dry-run in config
+      const runtimeConfig = { dryRun: true, verbosity: 'summary' };
+      const configContext = new DirectoryOutputContext(process.cwd(), testDir, 'summary', runtimeConfig);
+      
+      const promptRefs = await configContext.run(new SetCommand('Test config dry-run'));
+      
+      // No need to set withDryRun() on the config builder
+      const config = new ClaudeConfigBuilder()
+        .withModel('claude-3.5-sonnet')
+        .build();
+      
+      const command = new AgentCommand(config, [promptRefs[0]]);
+      const refs = await configContext.run(command);
+      
+      const result = await configContext.get(refs[0]);
+      expect(result).toContain('[DRY-RUN]');
+      expect(result).toContain('claude');
+      expect(result).toContain('Test config dry-run');
+    });
+
+    it('should prioritize agent config dry-run over context config', async () => {
+      // Context says no dry-run, but agent config says yes
+      const runtimeConfig = { dryRun: false, verbosity: 'summary' };
+      const configContext = new DirectoryOutputContext(process.cwd(), testDir, 'summary', runtimeConfig);
+      
+      const promptRefs = await configContext.run(new SetCommand('Test priority'));
+      
+      const config = new ClaudeConfigBuilder()
+        .withDryRun()
+        .build();
+      
+      const command = new AgentCommand(config, [promptRefs[0]]);
+      const refs = await configContext.run(command);
+      
+      const result = await configContext.get(refs[0]);
+      expect(result).toContain('[DRY-RUN]');
+    });
+  });
 });
