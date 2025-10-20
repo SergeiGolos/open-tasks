@@ -52,7 +52,7 @@ export function executeAgent(
     const escapedArgs = args.map(arg => {
       // Quote arguments that contain spaces or special characters
       if (arg.includes(' ') || arg.includes('"') || arg.includes("'")) {
-        return `"${arg.replace(/"/g, '\\"')}"`;
+        return `"${arg.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
       }
       return arg;
     });
