@@ -6,21 +6,11 @@ import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import { CommandRouter } from './router.js';
 import { CommandLoader } from './command-loader.js';
-import {
-  ExecutionContext,
-  IOutputSynk,
-  VerbosityLevel,
-} from './types.js';
-import { DirectoryOutputContext } from './workflow/index.js';
 import { loadConfig } from './config-loader.js';
-import {
-  formatSuccess,
-  formatError,
-  formatReferenceHandle,
-  formatCommandList,  
-} from './formatters.js';
-import { ConsoleOutputBuilder } from './output-builders.js';
-import { MessageCard } from './cards/MessageCard.js';
+import { formatError, formatCommandList } from './formatters.js';
+import { OptionResolver } from './option-resolver.js';
+import { ContextBuilder } from './context-builder.js';
+import { ResultPresenter } from './result-presenter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -90,6 +80,11 @@ async function main() {
   // Dynamically register all loaded commands as Commander commands
   const commands = router.listCommands();
   
+  // Initialize helper classes
+  const optionResolver = new OptionResolver();
+  const contextBuilder = new ContextBuilder(cwd, config);
+  const resultPresenter = new ResultPresenter();
+  
   for (const cmd of commands) {
     const help = router.getCommandHelp(cmd.name);
     const commandInstance = program
@@ -104,68 +99,28 @@ async function main() {
         // Get global options from parent (program)
         const globalOpts = commandObj.parent?.opts() || {};
         
-        // Determine output directory (--dir overrides config)
-        const outputDir = globalOpts.dir 
-          ? path.resolve(cwd, globalOpts.dir)
-          : path.join(cwd, config.outputDir);        
-        const workflowContext = new DirectoryOutputContext(outputDir);
-              
-
-      
-        // Resolve verbosity (mutual exclusivity handled by checking multiple flags)
-        let verbosity: VerbosityLevel | undefined;
-        const verbosityFlags = [globalOpts.quiet, globalOpts.summary, globalOpts.verbose].filter(Boolean);
+        // Resolve options
+        const verbosity = optionResolver.resolveVerbosity(globalOpts);
+        const outputDir = optionResolver.resolveOutputDir(cwd, globalOpts, config);
         
-        if (verbosityFlags.length > 1) {
-          console.error(formatError('Error: Only one verbosity flag (--quiet, --summary, --verbose) can be specified'));
-          process.exit(1);
-        }
+        // Build execution context
+        const context = contextBuilder.build(outputDir, verbosity);
         
-        if (globalOpts.quiet) verbosity = 'quiet';
-        else if (globalOpts.summary) verbosity = 'summary';
-        else if (globalOpts.verbose) verbosity = 'verbose';
-                        
-        const outputSynk: IOutputSynk = new ConsoleOutputBuilder(verbosity || 'summary');
         try {
-          // Create execution context
-          const context: ExecutionContext = {
-            cwd,
-            outputDir,            
-            workflowContext,
-            outputSynk,
-            config,
-            verbosity            
-          };
-
           // Get remaining arguments (Commander puts them in commandArgs)
           const remainingArgs = commandObj.args || [];
           
           // Execute command
           const result = await router.execute(cmd.name, remainingArgs, context);
 
-          // Display result only in quiet mode (other modes show cards with embedded summary)
-          if (verbosity === 'quiet') {
-            console.log(formatSuccess('Command executed successfully'));
-            console.log(formatReferenceHandle(result));
-
-            if (result.content && typeof result.content === 'string') {
-              console.log('\nOutput:');
-              console.log(result.content);
-            }
-          }
+          // Display result
+          resultPresenter.display(result, verbosity);
         } catch (error: any) {
-          // Write error file         
-            /* {
-              command: cmd.name,
-              args: commandArgs,
-              cwd,
-            } */
-            await outputSynk.write(new MessageCard("Error", error.toString(), "error"), 'quiet');
-            process.exit(1);
+          // Handle error
+          await resultPresenter.handleError(error, context.outputSynk);
+          process.exit(1);
         }
-      });
-    
-    // Add examples to help if available
+      });    // Add examples to help if available
     if (help && help.examples.length > 0) {
       commandInstance.addHelpText('after', '\nExamples:\n' + help.examples.map(ex => `  ${ex}`).join('\n'));
     }
