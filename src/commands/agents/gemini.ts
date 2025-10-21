@@ -2,8 +2,16 @@ import { IAgentConfig } from './base.js';
 
 /**
  * Gemini-specific model options
+ * Based on Gemini CLI available models as of October 2025
  */
-export type GeminiModel = 'gemini-2.5-pro' | 'gemini-2.5-flash' | 'gemini-pro' | 'gemini-flash';
+export type GeminiModel = 
+  | 'gemini-2.5-pro'        // State-of-the-art thinking model
+  | 'gemini-2.5-flash'      // Best price-performance model
+  | 'gemini-2.5-flash-lite' // Fastest flash model
+  | 'gemini-2.0-flash'      // Second generation workhorse
+  | 'gemini-2.0-flash-lite' // Second generation small workhorse
+  | 'gemini-flash-latest'   // Alias for latest flash
+  | 'gemini-pro-latest';    // Alias for latest pro
 
 /**
  * Configuration for Gemini CLI

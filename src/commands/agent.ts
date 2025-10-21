@@ -243,8 +243,9 @@ export class AgentCommand implements ICommand {
     // Build command based on the configured tool
     const { command, args: cmdArgs } = this.buildCommand(prompt);
 
-    // Execute the CLI tool
-    const result = await this.executeAgent(command, cmdArgs, this.config.workingDirectory || context.cwd);
+    // Execute the CLI tool with verbosity info from context
+    const verbosity = (context as any).verbosity || 'summary';
+    const result = await this.executeAgent(command, cmdArgs, this.config.workingDirectory || context.cwd, verbosity);
 
     // Return the result
     return [[result, []]];
@@ -361,7 +362,7 @@ export class AgentCommand implements ICommand {
   /**
    * Execute the agent CLI tool
    */
-  private executeAgent(command: string, args: string[], cwd: string): Promise<string> {
+  private executeAgent(command: string, args: string[], cwd: string, verbosity: string = 'summary'): Promise<string> {
     return new Promise((resolve, reject) => {
       const env = { ...process.env };
       
@@ -380,41 +381,83 @@ export class AgentCommand implements ICommand {
         }
       }
 
+      // Log command being executed in verbose mode
+      if (verbosity === 'verbose') {
+        console.log(`\n[Agent Command] ${command} ${args.join(' ')}\n`);
+      }
+
       const child = spawn(command, args, {
         cwd,
         env,
         shell: true,
+        stdio: verbosity === 'verbose' ? ['inherit', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'],
       });
 
       let stdout = '';
       let stderr = '';
 
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
+      if (child.stdout) {
+        child.stdout.on('data', (data) => {
+          const chunk = data.toString();
+          stdout += chunk;
+          
+          // In verbose mode, stream output to console in real-time
+          if (verbosity === 'verbose') {
+            process.stdout.write(chunk);
+          }
+        });
+      }
 
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
+      if (child.stderr) {
+        child.stderr.on('data', (data) => {
+          const chunk = data.toString();
+          stderr += chunk;
+          
+          // In verbose mode, stream stderr to console in real-time
+          if (verbosity === 'verbose') {
+            process.stderr.write(chunk);
+          }
+        });
+      }
 
       // Handle timeout
       let timeoutId: NodeJS.Timeout | undefined;
       if (this.config.timeout) {
+        if (verbosity === 'verbose') {
+          console.log(`[Agent] Timeout set to ${this.config.timeout}ms`);
+        }
         timeoutId = setTimeout(() => {
+          if (verbosity === 'verbose') {
+            console.error(`[Agent] Process timed out after ${this.config.timeout}ms`);
+          }
           child.kill();
           reject(new Error(`Agent execution timed out after ${this.config.timeout}ms`));
         }, this.config.timeout);
       }
 
-      child.on('close', (code) => {
+      child.on('spawn', () => {
+        if (verbosity === 'verbose') {
+          console.log(`[Agent] Process spawned (PID: ${child.pid})`);
+        }
+      });
+
+      child.on('close', (code, signal) => {
         if (timeoutId) {
           clearTimeout(timeoutId);
+        }
+
+        if (verbosity === 'verbose') {
+          console.log(`\n[Agent] Process closed with code ${code}${signal ? ` (signal: ${signal})` : ''}`);
         }
 
         if (code === 0) {
           resolve(stdout);
         } else {
-          reject(new Error(`Agent execution failed with code ${code}:\n${stderr || stdout}`));
+          const errorMsg = `Agent execution failed with code ${code}:\n${stderr || stdout}`;
+          if (verbosity === 'verbose') {
+            console.error(`[Agent Error] ${errorMsg}`);
+          }
+          reject(new Error(errorMsg));
         }
       });
 
@@ -422,7 +465,11 @@ export class AgentCommand implements ICommand {
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
-        reject(new Error(`Failed to execute agent: ${error.message}`));
+        const errorMsg = `Failed to execute agent: ${error.message}`;
+        if (verbosity === 'verbose') {
+          console.error(`[Agent Error] ${errorMsg}`);
+        }
+        reject(new Error(errorMsg));
       });
     });
   }
