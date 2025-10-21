@@ -5,7 +5,6 @@
       "label": "Build Project",
       "type": "npm",
       "script": "build",
-      "path": "open-tasks-cli",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -19,7 +18,6 @@
       "label": "Build in Watch Mode",
       "type": "npm",
       "script": "dev",
-      "path": "open-tasks-cli",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -34,7 +32,6 @@
       "label": "Deploy to Global npm",
       "type": "npm",
       "script": "dev-deploy",
-      "path": "open-tasks-cli",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -48,7 +45,6 @@
       "label": "Run Tests",
       "type": "npm",
       "script": "test",
-      "path": "open-tasks-cli",
       "group": "test",
       "presentation": {
         "echo": true,
@@ -61,7 +57,6 @@
       "label": "Run Tests with Coverage",
       "type": "npm",
       "script": "test:coverage",
-      "path": "open-tasks-cli",
       "group": "test",
       "presentation": {
         "echo": true,
@@ -74,7 +69,6 @@
       "label": "Lint Code",
       "type": "npm",
       "script": "lint",
-      "path": "open-tasks-cli",
       "group": "test",
       "presentation": {
         "echo": true,
@@ -88,7 +82,6 @@
       "label": "Format Code",
       "type": "npm",
       "script": "format",
-      "path": "open-tasks-cli",
       "group": "build",
       "presentation": {
         "echo": true,
@@ -127,7 +120,7 @@
       "label": "Initialize Test Workspace",
       "type": "shell",
       "command": "cd",
-      "args": ["test-workspace", "&&", "node", "../open-tasks-cli/dist/index.js", "init"],
+      "args": ["test-workspace", "&&", "node", "../dist/index.js", "init"],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -141,7 +134,7 @@
       "label": "Test CLI Help",
       "type": "shell",
       "command": "node",
-      "args": ["open-tasks-cli/dist/index.js", "--help"],
+      "args": ["dist/index.js", "--help"],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -155,7 +148,7 @@
       "label": "Test Store Command",
       "type": "shell",
       "command": "node",
-      "args": ["open-tasks-cli/dist/index.js", "store", "test data", "--token", "test"],
+      "args": ["dist/index.js", "store", "test data", "--token", "test"],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -169,7 +162,7 @@
       "label": "Test Load Command",
       "type": "shell",
       "command": "node",
-      "args": ["open-tasks-cli/dist/index.js", "load", "--ref", "test"],
+      "args": ["dist/index.js", "load", "--ref", "test"],
       "group": "test",
       "presentation": {
         "echo": true,

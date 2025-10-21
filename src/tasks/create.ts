@@ -14,7 +14,7 @@ export default class CreateCommand extends TaskHandler {
   description = 'Create a new custom command template';
   examples = [
     'ot create my-command',
-    'ot create my-command --typescript',
+    'ot create my-command --javascript',
     'ot create my-command --description "My custom command"',
   ];
 
@@ -29,7 +29,7 @@ export default class CreateCommand extends TaskHandler {
     }
 
     const commandName = args[0];
-    const typescript = args.includes('--typescript');
+    const typescript = !args.includes('--javascript');
     const descriptionIndex = args.indexOf('--description');
     const description =
       descriptionIndex !== -1 && args[descriptionIndex + 1]

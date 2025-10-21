@@ -21,7 +21,8 @@
     "test:coverage": "vitest --coverage",
     "lint": "eslint src",
     "format": "prettier --write \"src/**/*.ts\"",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "task": "npm run build && node dist/index.js"
   },
   "keywords": [
     "cli",
