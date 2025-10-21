@@ -99,12 +99,13 @@ export default class CreateCommand extends TaskHandler {
     };
 
     // Add visual card
+    const templateType = isExample ? 'Example (Hello World)' : 'Minimal (Bare-bones)';
     const details = [
       `Command Name: ${commandName}`,
+      `Template Type: ${templateType}`,
       `Language: ${typescript ? 'TypeScript' : 'JavaScript'}`,
       `Description: ${description}`,
       `Location: ${commandPath}`,
-      `Template Size: ${template.length} characters`,
       ``,
       `Next Steps:`,
       `  1. Edit ${commandPath}`,
