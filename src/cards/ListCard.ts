@@ -3,20 +3,19 @@ import { ICardBuilder, CardStyle, VerbosityLevel } from '../types.js';
 
 /**
  * ListCard - displays items as a bulleted or numbered list
+ * Cards are always SUMMARY level by specification
  */
 export class ListCard implements ICardBuilder {
   name: string;
-  verbosity?: VerbosityLevel;
+  type: string = 'ListCard';
 
   constructor(
     private title: string,
     private items: string[],
     private ordered: boolean = false,
-    private style: CardStyle = 'default',
-    verbosity?: VerbosityLevel
+    private style: CardStyle = 'default'
   ) {
     this.name = `ListCard:${title}`;
-    this.verbosity = verbosity;
   }
 
   build(): string {
