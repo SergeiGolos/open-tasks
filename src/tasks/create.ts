@@ -122,7 +122,6 @@ export default class CreateCommand extends TaskHandler {
     const typeAnnotations = typescript;
     const t = (type: string) => typeAnnotations ? `: ${type}` : '';
     const privateKeyword = typeAnnotations ? 'private ' : '';
-    const anyType = typeAnnotations ? 'any' : '';
     
     return `/**
  * ${description}
