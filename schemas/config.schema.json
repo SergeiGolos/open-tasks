@@ -108,6 +108,11 @@
         "apiKey": {
           "type": "string",
           "description": "Google AI API key"
+        },
+        "showShell": {
+          "type": "boolean",
+          "description": "Show shell window while agent runs (useful for debugging)",
+          "default": false
         }
       }
     },
@@ -138,6 +143,11 @@
           "type": "boolean",
           "description": "Enable extended thinking mode",
           "default": false
+        },
+        "showShell": {
+          "type": "boolean",
+          "description": "Show shell window while agent runs (useful for debugging)",
+          "default": false
         }
       }
     },
@@ -157,6 +167,11 @@
         "allowAllTools": {
           "type": "boolean",
           "description": "Allow all tools without confirmation",
+          "default": false
+        },
+        "showShell": {
+          "type": "boolean",
+          "description": "Show shell window while agent runs (useful for debugging)",
           "default": false
         }
       }
@@ -188,6 +203,11 @@
         "apiKey": {
           "type": "string",
           "description": "API key for the model provider"
+        },
+        "showShell": {
+          "type": "boolean",
+          "description": "Show shell window while agent runs (useful for debugging)",
+          "default": false
         }
       }
     },
@@ -202,6 +222,11 @@
         "model": {
           "type": "string",
           "description": "Qwen model to use"
+        },
+        "showShell": {
+          "type": "boolean",
+          "description": "Show shell window while agent runs (useful for debugging)",
+          "default": false
         }
       }
     },
@@ -225,6 +250,11 @@
         "apiKey": {
           "type": "string",
           "description": "API key for the model provider"
+        },
+        "showShell": {
+          "type": "boolean",
+          "description": "Show shell window while agent runs (useful for debugging)",
+          "default": false
         }
       }
     }

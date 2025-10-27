@@ -72,6 +72,51 @@ const dataRef = await flow.run(new SetCommand('file content'));
 await flow.run(new WriteCommand('output.txt', dataRef[0]));
 ```
 
+#### PromptCommand
+Load and execute GitHub Copilot prompts from `.github/prompts/*.prompt.md`.
+
+This command integrates with your repository's prompt library, automatically processing frontmatter and argument placeholders, then sending the prompt to your default LLM CLI.
+
+```javascript
+import { PromptCommand } from '../src/commands/prompt.js';
+
+// Execute a prompt with arguments
+const result = await flow.run(
+  new PromptCommand('openspec-proposal', 'Add user authentication')
+);
+
+// Execute a prompt without arguments
+const result = await flow.run(
+  new PromptCommand('openspec-apply')
+);
+
+// Execute with custom LLM options
+const result = await flow.run(
+  new PromptCommand(
+    'openspec-proposal',
+    'Implement notifications',
+    {
+      model: 'gpt-4',
+      temperature: 0.7,
+      system: 'You are an expert architect.'
+    }
+  )
+);
+```
+
+**Prompt File Format:**
+```markdown
+---
+description: Brief description of the prompt
+---
+
+$ARGUMENTS
+
+Rest of the prompt content...
+```
+
+The `$ARGUMENTS` placeholder is replaced with the arguments you provide, or removed if no arguments are given.
+
 ### Transformation Commands
 
 #### TemplateCommand

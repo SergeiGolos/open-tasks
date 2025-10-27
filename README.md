@@ -45,6 +45,14 @@ ot create hello-world
 ot hello-world
 ```
 
+### Use GitHub Copilot Prompts
+
+```bash
+# Execute prompts from .github/prompts/
+ot prompt code-review "Review this code..."
+ot prompt generate-docs "document this function..."
+```
+
 ## Key Features
 
 ✨ **Command Chaining** - Execute multiple commands in sequence, passing outputs as inputs
@@ -56,6 +64,8 @@ ot hello-world
 🔗 **Reference Management** - Store command outputs and reference them by name or UUID
 
 🤖 **AI Agent Integration** - Built-in support for Claude, Gemini, Copilot, Aider, llm, and more
+
+📝 **GitHub Copilot Prompts** - Load and execute prompts from `.github/prompts/` directory
 
 🎨 **Visual Output** - Formatted, boxed output showing exactly what's happening
 

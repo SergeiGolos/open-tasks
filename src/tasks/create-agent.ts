@@ -112,7 +112,7 @@ export default class CreateAgentCommand implements ITaskHandler {
     }
     
     try {
-      const agentCommand = new AgentCommand(agentConfig, [promptRefs[0]]);
+      const agentCommand = new AgentCommand(agentConfig, [promptRefs[0]], planningPromptPath);
       const planRefs = await flow.run(agentCommand);
       const planValue = await flow.get(planRefs[0]);
       if (!planValue || typeof planValue !== 'string') {
@@ -157,7 +157,7 @@ export default class CreateAgentCommand implements ITaskHandler {
       
       const implPromptRefs = await flow.run(new SetCommand(implPrompt, 'impl-prompt'));
       
-      const implAgentCommand = new AgentCommand(agentConfig, [implPromptRefs[0]]);
+      const implAgentCommand = new AgentCommand(agentConfig, [implPromptRefs[0]], implPromptPath);
       const implRefs = await flow.run(implAgentCommand);
       const implValue = await flow.get(implRefs[0]);
       if (!implValue || typeof implValue !== 'string') {
