@@ -26,6 +26,19 @@ export function calculateDuration(startTime: number, endTime: number = Date.now(
 }
 
 /**
+ * Resolve a file path relative to a working directory
+ * If the path is absolute, returns it as-is
+ * If the path is relative, joins it with the working directory
+ * 
+ * @param filePath - The file path to resolve
+ * @param cwd - The current working directory
+ * @returns The resolved absolute path
+ */
+export function resolvePath(filePath: string, cwd: string): string {
+  return path.isAbsolute(filePath) ? filePath : path.join(cwd, filePath);
+}
+
+/**
  * Validate and sanitize output file path
  * Prevents directory traversal attacks
  * 

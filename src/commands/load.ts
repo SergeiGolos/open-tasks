@@ -5,6 +5,7 @@ import { TaskHandler } from '../task-handler.js';
 import { TokenDecorator } from '../decorators.js';
 import { formatFileSize } from '../output-utils.js';
 import { MessageCard, KeyValueCard } from '../cards/index.js';
+import { resolvePath } from '../utils.js';
 
 /**
  * Load command - loads content from a file
@@ -33,9 +34,7 @@ export default class LoadCommand implements ITaskHandler {
     const token = args.find((arg, i) => args[i - 1] === '--token');
 
     // Resolve file path relative to cwd
-    const absolutePath = path.isAbsolute(filePath)
-      ? filePath
-      : path.join(context.cwd, filePath);
+    const absolutePath = resolvePath(filePath, context.cwd);
 
     // Check if file exists and get stats
     let stats;

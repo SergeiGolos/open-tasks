@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { ICommand, IFlow, StringRef, ICardBuilder, IRefDecorator } from '../types.js';
+import { resolvePath } from '../utils.js';
 
 /**
  * ReadCommand - Reads a file and stores its content
@@ -27,9 +28,7 @@ export class ReadCommand implements ICommand {
     cardBuilder?: ICardBuilder
   ): Promise<[any, IRefDecorator[]][]> {
     // Resolve file path relative to cwd
-    const absolutePath = path.isAbsolute(this.fileName)
-      ? this.fileName
-      : path.join(context.cwd, this.fileName);
+    const absolutePath = resolvePath(this.fileName, context.cwd);
 
     // Check if file exists
     try {

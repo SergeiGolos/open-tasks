@@ -1,4 +1,5 @@
 import { IAgentConfig } from './base.js';
+import { BaseAgentConfigBuilder } from './BaseAgentConfigBuilder.js';
 
 /**
  * Configuration for Aider CLI
@@ -85,8 +86,10 @@ export class AiderConfig implements IAgentConfig {
 /**
  * Builder for Aider configuration
  */
-export class AiderConfigBuilder {
-  private config: AiderConfig = new AiderConfig();
+export class AiderConfigBuilder extends BaseAgentConfigBuilder<AiderConfig> {
+  constructor() {
+    super(new AiderConfig());
+  }
 
   withModel(model: string): this {
     this.config.model = model;
@@ -103,11 +106,6 @@ export class AiderConfigBuilder {
     return this;
   }
 
-  inDirectory(dir: string): this {
-    this.config.workingDirectory = dir;
-    return this;
-  }
-
   withAutoCommit(message?: string): this {
     this.config.autoCommit = true;
     this.config.commitMessage = message;
@@ -119,11 +117,6 @@ export class AiderConfigBuilder {
     return this;
   }
 
-  withTimeout(ms: number): this {
-    this.config.timeout = ms;
-    return this;
-  }
-
   withEditFormat(format: 'whole' | 'diff' | 'udiff'): this {
     this.config.editFormat = format;
     return this;
@@ -132,14 +125,5 @@ export class AiderConfigBuilder {
   withRepoMap(): this {
     this.config.useRepoMap = true;
     return this;
-  }
-
-  withDryRun(): this {
-    this.config.dryRun = true;
-    return this;
-  }
-
-  build(): AiderConfig {
-    return this.config;
   }
 }

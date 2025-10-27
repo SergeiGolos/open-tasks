@@ -1,4 +1,5 @@
 import { IAgentConfig } from './base.js';
+import { BaseAgentConfigBuilder } from './BaseAgentConfigBuilder.js';
 
 /**
  * Configuration for Qwen Code CLI
@@ -55,8 +56,10 @@ export class QwenConfig implements IAgentConfig {
 /**
  * Builder for Qwen configuration
  */
-export class QwenConfigBuilder {
-  private config: QwenConfig = new QwenConfig();
+export class QwenConfigBuilder extends BaseAgentConfigBuilder<QwenConfig> {
+  constructor() {
+    super(new QwenConfig());
+  }
 
   withModel(model: 'qwen3-coder' | 'qwen-coder-plus' | 'qwen-coder-turbo'): this {
     this.config.model = model;
@@ -68,27 +71,8 @@ export class QwenConfigBuilder {
     return this;
   }
 
-  inDirectory(dir: string): this {
-    this.config.workingDirectory = dir;
-    return this;
-  }
-
-  withTimeout(ms: number): this {
-    this.config.timeout = ms;
-    return this;
-  }
-
   withPlanningMode(): this {
     this.config.planningMode = true;
     return this;
-  }
-
-  withDryRun(): this {
-    this.config.dryRun = true;
-    return this;
-  }
-
-  build(): QwenConfig {
-    return this.config;
   }
 }

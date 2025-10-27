@@ -1,4 +1,5 @@
 import { IAgentConfig } from './base.js';
+import { BaseAgentConfigBuilder } from './BaseAgentConfigBuilder.js';
 
 /**
  * Configuration for llm CLI
@@ -62,16 +63,13 @@ export class LlmConfig implements IAgentConfig {
 /**
  * Builder for llm configuration
  */
-export class LlmConfigBuilder {
-  private config: LlmConfig = new LlmConfig();
+export class LlmConfigBuilder extends BaseAgentConfigBuilder<LlmConfig> {
+  constructor() {
+    super(new LlmConfig());
+  }
 
   withModel(model: string): this {
     this.config.model = model;
-    return this;
-  }
-
-  inDirectory(dir: string): this {
-    this.config.workingDirectory = dir;
     return this;
   }
 
@@ -85,22 +83,8 @@ export class LlmConfigBuilder {
     return this;
   }
 
-  withTimeout(ms: number): this {
-    this.config.timeout = ms;
-    return this;
-  }
-
   withStreaming(): this {
     this.config.stream = true;
     return this;
-  }
-
-  withDryRun(): this {
-    this.config.dryRun = true;
-    return this;
-  }
-
-  build(): LlmConfig {
-    return this.config;
   }
 }
