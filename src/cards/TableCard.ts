@@ -3,21 +3,20 @@ import { ICardBuilder, CardStyle, VerbosityLevel } from '../types.js';
 
 /**
  * TableCard - displays data in a formatted table
+ * Cards are always SUMMARY level by specification
  */
 export class TableCard implements ICardBuilder {
   name: string;
-  verbosity?: VerbosityLevel;
+  type: string = 'TableCard';
 
   constructor(
     private title: string,
     private headers: string[],
     private rows: string[][],
     private footer?: string,
-    private style: CardStyle = 'default',
-    verbosity?: VerbosityLevel
+    private style: CardStyle = 'default'
   ) {
     this.name = `TableCard:${title}`;
-    this.verbosity = verbosity;
   }
 
   build(): string {

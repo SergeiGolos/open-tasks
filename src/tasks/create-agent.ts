@@ -8,6 +8,7 @@ import { SetCommand } from '../commands/set.js';
 import { AgentCommand, AgentTool } from '../commands/agent.js';
 import { WriteCommand } from '../commands/write.js';
 import { JoinCommand } from '../commands/join.js';
+import { getWikiPath } from '../utils.js';
 
 /**
  * CreateAgent command - scaffolds a new agent task using AI-assisted workflow
@@ -83,9 +84,15 @@ export default class CreateAgentCommand implements ITaskHandler {
     }
     const requirements = reqValue;
 
-    // Step 3: Create detailed planning prompt
+    // Step 3: Create detailed planning prompt and save to file
     context.outputSynk.write('Creating planning prompt...');
     const planningPrompt = this.createPlanningPrompt(taskName, requirements);
+    
+    // Save planning prompt to file for reference and reuse
+    const planningPromptPath = path.join(openTasksDir, `${taskName}.planning-prompt.txt`);
+    await fs.writeFile(planningPromptPath, planningPrompt, 'utf-8');
+    context.outputSynk.write(`Planning prompt saved to: ${planningPromptPath}`);
+    
     const promptRefs = await flow.run(new SetCommand(planningPrompt, 'planning-prompt'));
 
     // Step 4: Get agent configuration
@@ -100,9 +107,12 @@ export default class CreateAgentCommand implements ITaskHandler {
 
     // Step 5: Run agent to create detailed plan
     context.outputSynk.write(`Running agent "${cliAgentName}" to create plan...`);
+    if (verbosity === 'verbose') {
+      console.log(`[create-agent] Using planning prompt file: ${planningPromptPath}`);
+    }
     
     try {
-      const agentCommand = new AgentCommand(agentConfig, [promptRefs[0]]);
+      const agentCommand = new AgentCommand(agentConfig, [promptRefs[0]], planningPromptPath);
       const planRefs = await flow.run(agentCommand);
       const planValue = await flow.get(planRefs[0]);
       if (!planValue || typeof planValue !== 'string') {
@@ -130,12 +140,24 @@ export default class CreateAgentCommand implements ITaskHandler {
       );
       await flow.run(confirmQuestion);
 
-      // Step 8: Run agent again to implement the task
-      context.outputSynk.write('Building task implementation...');
-      const implPrompt = this.createImplementationPrompt(taskName, specContent);
+      // Step 8: Run agent again to implement the task with wiki documentation
+      context.outputSynk.write('Loading framework documentation...');
+      const implPrompt = await this.createImplementationPrompt(taskName, specContent);
+      
+      // Save implementation prompt to file for reference and reuse
+      const implPromptPath = path.join(openTasksDir, `${taskName}.implementation-prompt.txt`);
+      await fs.writeFile(implPromptPath, implPrompt, 'utf-8');
+      context.outputSynk.write(`Implementation prompt saved to: ${implPromptPath}`);
+      
+      context.outputSynk.write('Building task implementation with AI agent...');
+      if (verbosity === 'verbose') {
+        console.log(`[create-agent] Using implementation prompt file: ${implPromptPath}`);
+        console.log(`[create-agent] Prompt size: ${(implPrompt.length / 1024).toFixed(1)} KB`);
+      }
+      
       const implPromptRefs = await flow.run(new SetCommand(implPrompt, 'impl-prompt'));
       
-      const implAgentCommand = new AgentCommand(agentConfig, [implPromptRefs[0]]);
+      const implAgentCommand = new AgentCommand(agentConfig, [implPromptRefs[0]], implPromptPath);
       const implRefs = await flow.run(implAgentCommand);
       const implValue = await flow.get(implRefs[0]);
       if (!implValue || typeof implValue !== 'string') {
@@ -156,8 +178,13 @@ export default class CreateAgentCommand implements ITaskHandler {
       const details = [
         `Task Name: ${taskName}`,
         `Requirements: ${requirements.substring(0, 100)}${requirements.length > 100 ? '...' : ''}`,
-        `Spec File: ${specPath}`,
-        `Implementation: ${taskPath}`,
+        ``,
+        `Generated Files:`,
+        `  📄 Spec: ${specPath}`,
+        `  💾 Implementation: ${taskPath}`,
+        `  📝 Planning Prompt: ${planningPromptPath}`,
+        `  📝 Implementation Prompt: ${implPromptPath}`,
+        ``,
         `Agent: ${cliAgentName}`,
         ``,
         `Next Steps:`,
@@ -165,6 +192,10 @@ export default class CreateAgentCommand implements ITaskHandler {
         `  2. Review the spec in ${specPath}`,
         `  3. Run: ot ${taskName}`,
         `  4. (Optional) Promote globally: ot promote ${taskName}`,
+        ``,
+        `Prompt Files:`,
+        `  The saved prompt files can be used to regenerate or refine the task.`,
+        `  You can edit them and re-run the agent with the modified prompts.`,
       ].join('\n');
 
       if (verbosity !== 'quiet') {
@@ -245,66 +276,187 @@ export default class CreateAgentCommand implements ITaskHandler {
   }
 
   /**
-   * Create planning prompt for the agent
+   * Load wiki documentation files
    */
-  private createPlanningPrompt(taskName: string, requirements: string): string {
-    return `You are creating a detailed plan for building an open-tasks framework task.
+  private async loadWikiDocs(): Promise<string> {
+    const wikiFiles = [
+      'Building-Custom-Tasks.md',
+      'Core-Commands.md',
+      'Example-Tasks.md',
+    ];
 
-Task Name: ${taskName}
-Requirements: ${requirements}
+    try {
+      const contents = await Promise.all(
+        wikiFiles.map(async (file) => {
+          try {
+            const filePath = getWikiPath(file);
+            const content = await fs.readFile(filePath, 'utf-8');
+            return `# Reference: ${file}\n\n${content}`;
+          } catch (error) {
+            console.warn(`Warning: Could not load wiki file ${file}`);
+            return '';
+          }
+        })
+      );
 
-The open-tasks framework uses:
-- TaskHandler base class for implementing tasks
-- IFlow for workflow context (run, get, set methods)
-- Commands like SetCommand, ReadCommand, WriteCommand, QuestionCommand, etc.
-- Cards for formatted output (MessageCard)
-
-Please create a detailed plan with the following sections:
-
-1. Overview
-   - Brief description of what the task does
-   - Key features and capabilities
-
-2. Implementation Steps
-   - Step-by-step breakdown of how to implement the task
-   - Which commands and components to use
-   - Data flow and transformations
-
-3. Code Structure
-   - Main class structure
-   - Key methods and their responsibilities
-   - Error handling considerations
-
-4. Testing Approach
-   - How to test the task
-   - Example usage scenarios
-
-5. Example Usage
-   - Command-line examples showing how to use the task
-
-Please provide a comprehensive plan that can be used to implement the task.`;
+      return contents.filter(c => c).join('\n\n---\n\n');
+    } catch (error) {
+      console.warn('Warning: Could not load wiki documentation');
+      return '';
+    }
   }
 
   /**
-   * Create implementation prompt for the agent
+   * Create planning prompt for the agent
    */
-  private createImplementationPrompt(taskName: string, spec: string): string {
-    return `You are implementing an open-tasks framework task based on the following specification.
+  private createPlanningPrompt(taskName: string, requirements: string): string {
+    return `You are an expert software architect creating a detailed implementation plan for an open-tasks CLI task.
 
+# Task Definition
+**Name:** ${taskName}
+**Requirements:** ${requirements}
+
+# Your Role
+Create a comprehensive, actionable plan that will guide the implementation of this task. The plan should be clear enough that another developer (or AI) can implement the code exactly as specified.
+
+# Framework Context
+The open-tasks framework is a CLI tool that uses:
+- **ITaskHandler interface** - Tasks implement this with execute() method
+- **IFlow** - Workflow context providing run(), get(), set() methods
+- **Commands** - Composable units like SetCommand, ReadCommand, WriteCommand, AgentCommand, etc.
+- **Cards** - Formatted output using MessageCard, TableCard, ListCard, etc.
+- **Reference system** - Data flows through ReferenceHandles between commands
+
+# Required Plan Sections
+
+## 1. Task Overview
+- Clear description of what the task accomplishes
+- Primary use cases and scenarios
+- Expected inputs and outputs
+
+## 2. Implementation Architecture
+- Which Commands will be used and in what order
+- Data flow between commands (what refs are created/consumed)
+- Any external tools or APIs required
+- Error scenarios and handling strategy
+
+## 3. Detailed Implementation Steps
+Provide step-by-step pseudocode showing:
+- Command instantiation
+- How to chain commands using flow.run()
+- How to pass data between commands
+- Where to add error handling
+- How to format and present results
+
+## 4. Example Code Structure
+Show the class structure including:
+- Class declaration
+- Required properties (name, description, examples)
+- execute() method signature
+- Key variables and their purposes
+
+## 5. Testing Strategy
+- How to test the task manually
+- Example command-line invocations
+- Expected outputs
+- Edge cases to verify
+
+## 6. Potential Challenges
+- Known limitations or dependencies
+- Performance considerations
+- Alternative approaches considered
+
+**Important:** Be specific about command usage, data types, and error handling. The implementation phase will use this plan directly.`;
+  }
+
+  /**
+   * Create implementation prompt for the agent with wiki documentation
+   */
+  private async createImplementationPrompt(taskName: string, spec: string): Promise<string> {
+    const wikiDocs = await this.loadWikiDocs();
+
+    return `You are an expert TypeScript developer implementing an open-tasks framework task.
+
+# Implementation Specification
 ${spec}
 
-Please generate complete TypeScript code for this task following these requirements:
+---
 
-1. Implement a default export class that extends TaskHandler or implements ITaskHandler
-2. Set name, description, and examples properties
-3. Implement the execute method with proper typing
-4. Use IFlow commands for workflow operations
-5. Use MessageCard for formatted output
-6. Include proper error handling
-7. Follow the existing code patterns from the framework
+# Framework Documentation
+${wikiDocs}
 
-The code should be production-ready and follow TypeScript best practices.
-Do not include any markdown code fences or explanations, just the pure TypeScript code.`;
+---
+
+# Implementation Requirements
+
+Your task is to generate production-ready TypeScript code that:
+
+## 1. Implements ITaskHandler Interface
+\`\`\`typescript
+export default class ${this.toClassName(taskName)} implements ITaskHandler {
+  name = '${taskName}';
+  description = '...';
+  examples = [...];
+  
+  async execute(args: string[], context: ExecutionContext): Promise<ReferenceHandle> {
+    // Implementation
+  }
+}
+\`\`\`
+
+## 2. Uses the Framework Correctly
+- Import types: ExecutionContext, ReferenceHandle, ITaskHandler
+- Import commands as needed: SetCommand, ReadCommand, WriteCommand, AgentCommand, etc.
+- Import cards for output: MessageCard, TableCard, ListCard, etc.
+- Use \`context.workflowContext\` (IFlow) to run commands
+- Use \`context.outputSynk\` for progress messages
+- Use \`context.verbosity\` to control output detail
+
+## 3. Follows Best Practices
+- Proper error handling with descriptive messages
+- Input validation for args and options
+- Clean, readable code with comments
+- Type-safe operations
+- Proper async/await usage
+
+## 4. Implements Command Flow Pattern
+\`\`\`typescript
+const flow = context.workflowContext;
+
+// Create and run commands
+const refs = await flow.run(new SomeCommand(...));
+
+// Retrieve results
+const value = await flow.get(refs[0]);
+
+// Chain commands
+const nextRefs = await flow.run(new NextCommand(refs[0]));
+\`\`\`
+
+## 5. Provides Good User Experience
+- Set informative name, description, and examples
+- Use outputSynk for progress updates
+- Format output using appropriate Card types
+- Return a meaningful ReferenceHandle
+
+# Output Format
+Provide ONLY the complete TypeScript code. Do not include:
+- Markdown code fences (\`\`\`typescript)
+- Explanations or commentary
+- Import statements for Node.js built-ins unless necessary
+- Any text before or after the code
+
+The code should be ready to save directly to a .ts file and execute.`;
+  }
+
+  /**
+   * Convert kebab-case to PascalCase for class names
+   */
+  private toClassName(kebabCase: string): string {
+    return kebabCase
+      .split('-')
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join('');
   }
 
   /**

@@ -2,13 +2,15 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 import fse from 'fs-extra';
-import { ExecutionContext, ReferenceHandle, ITaskHandler } from '../types.js';
+import { ReferenceHandle, IFlow, IOutputSynk } from '../types.js';
 import { MessageCard } from '../cards/MessageCard.js';
+import { TaskHandler } from '../task-handler.js';
+import { TaskLogger } from '../logging/index.js';
 
 /**
  * Promote command - copies a task and its dependencies to the user profile level
  */
-export default class PromoteCommand implements ITaskHandler {
+export default class PromoteCommand extends TaskHandler {
   name = 'promote';
   description = 'Copy a task and its dependencies to the user profile level directory';
   examples = [
@@ -16,37 +18,45 @@ export default class PromoteCommand implements ITaskHandler {
     'ot promote my-command --verbose',
   ];
 
-  async execute(args: string[], context: ExecutionContext): Promise<ReferenceHandle> {
-    const verbosity = context.verbosity || 'summary';
+  protected async executeCommand(
+    config: Record<string, any>,
+    args: string[],
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
+    const logger = new TaskLogger(synk, this.name);
     
     if (args.length === 0) {
+      logger.error('Promote command requires a task name argument');
       throw new Error('Promote command requires a task name argument');
     }
 
     const taskName = args[0];
     
     // Validate task name
-    context.outputSynk.write('Validating task name...');
+    logger.progress('Validating task name...');
     if (!/^[a-z0-9-]+$/.test(taskName)) {
+      logger.error('Task name must be kebab-case');
       throw new Error(
         'Task name must be kebab-case (lowercase letters, numbers, and hyphens only)'
       );
     }
 
-    const projectDir = path.join(context.cwd, '.open-tasks');
+    const projectDir = path.join(flow.cwd, '.open-tasks');
     const userDir = path.join(os.homedir(), '.open-tasks');
 
     // Check if project .open-tasks directory exists
-    context.outputSynk.write('Checking project directory...');
+    logger.progress('Checking project directory...');
     const projectDirExists = await fse.pathExists(projectDir);
     if (!projectDirExists) {
+      logger.error('Project .open-tasks directory does not exist');
       throw new Error(
         'Project .open-tasks directory does not exist. Run "ot init" first.'
       );
     }
 
     // Find task file (could be .ts or .js)
-    context.outputSynk.write(`Looking for task: ${taskName}...`);
+    logger.progress(`Looking for task: ${taskName}...`);
     let sourceFile: string | null = null;
     let extension = '';
 
@@ -60,6 +70,7 @@ export default class PromoteCommand implements ITaskHandler {
     }
 
     if (!sourceFile) {
+      logger.error(`Task "${taskName}" not found`);
       throw new Error(
         `Task "${taskName}" not found in ${projectDir}. ` +
         `Looking for ${taskName}.ts or ${taskName}.js`
@@ -67,8 +78,9 @@ export default class PromoteCommand implements ITaskHandler {
     }
 
     // Ensure user .open-tasks directory exists
-    context.outputSynk.write('Ensuring user directory exists...');
+    logger.progress('Ensuring user directory exists...');
     await fse.ensureDir(userDir);
+    logger.fileCreated(userDir);
 
     // Check if file already exists in user directory
     const destFile = path.join(userDir, `${taskName}.${extension}`);
@@ -77,13 +89,15 @@ export default class PromoteCommand implements ITaskHandler {
     if (destExists) {
       // Create backup
       const backupFile = path.join(userDir, `${taskName}.${extension}.backup`);
-      context.outputSynk.write(`Backing up existing file to ${path.basename(backupFile)}...`);
+      logger.info(`Backing up existing file to ${path.basename(backupFile)}...`);
       await fse.copy(destFile, backupFile);
+      logger.fileCreated(path.basename(backupFile));
     }
 
     // Copy the task file
-    context.outputSynk.write('Copying task file...');
+    logger.progress('Copying task file...');
     await fse.copy(sourceFile, destFile);
+    logger.fileCreated(`${taskName}.${extension}`);
 
     // Look for and copy any related spec files
     const specFiles: string[] = [];
@@ -92,10 +106,11 @@ export default class PromoteCommand implements ITaskHandler {
       const destSpecPath = path.join(userDir, `${taskName}.md`);
       await fse.copy(specPath, destSpecPath);
       specFiles.push(`${taskName}.md`);
+      logger.fileCreated(`${taskName}.md`);
     }
 
     // Check for dependencies by reading the task file
-    context.outputSynk.write('Analyzing dependencies...');
+    logger.progress('Analyzing dependencies...');
     const taskContent = await fs.readFile(sourceFile, 'utf-8');
     const dependencies = await this.findDependencies(taskContent, projectDir);
 
@@ -108,10 +123,8 @@ export default class PromoteCommand implements ITaskHandler {
       if (await fse.pathExists(depSourcePath)) {
         await fse.copy(depSourcePath, depDestPath);
         copiedDependencies.push(dep);
-        
-        if (verbosity === 'verbose') {
-          context.outputSynk.write(`Copied dependency: ${dep}`);
-        }
+        logger.fileCreated(dep);
+        logger.info(`Copied dependency: ${dep}`);
       }
     }
 
@@ -152,9 +165,8 @@ export default class PromoteCommand implements ITaskHandler {
       `  3. Edit in: ${userDir}`,
     ].join('\n');
 
-    if (verbosity !== 'quiet') {
-      console.log(new MessageCard('📦 Task Promoted', details, 'success').build());
-    }
+    logger.card(new MessageCard('📦 Task Promoted', details, 'success'));
+    logger.complete();
 
     return {
       id: 'promote-result',

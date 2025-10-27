@@ -1,13 +1,15 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
-import { ExecutionContext, ReferenceHandle, ITaskHandler, IFlow, IOutputSynk } from '../types.js';
+import { ReferenceHandle, IFlow, IOutputSynk } from '../types.js';
 import { MessageCard } from '../cards/MessageCard.js';
+import { TaskHandler } from '../task-handler.js';
+import { TaskLogger } from '../logging/index.js';
 
 /**
  * Clean command - cleans up old log files with configurable retention
  */
-export default class CleanCommand implements ITaskHandler {
+export default class CleanCommand extends TaskHandler {
   name = 'clean';
   description = 'Clean up old log files with configurable retention';
   examples = [
@@ -16,8 +18,13 @@ export default class CleanCommand implements ITaskHandler {
     'ot clean --days 30 --verbose',
   ];
 
-  async execute(args: string[], context: ExecutionContext): Promise<ReferenceHandle> {
-    const verbosity = context.verbosity || 'summary';
+  protected async executeCommand(
+    config: Record<string, any>,
+    args: string[],
+    flow: IFlow,
+    synk: IOutputSynk
+  ): Promise<ReferenceHandle> {
+    const logger = new TaskLogger(synk, this.name);
     
     // Parse --days argument
     const daysIndex = args.indexOf('--days');
@@ -26,20 +33,20 @@ export default class CleanCommand implements ITaskHandler {
       : 7; // Default to 7 days
 
     if (isNaN(retentionDays) || retentionDays < 0) {
+      logger.error('Invalid --days value. Must be a non-negative number.');
       throw new Error('Invalid --days value. Must be a non-negative number.');
     }
 
-    const logsDir = path.join(context.cwd, '.open-tasks', 'logs');
+    const logsDir = path.join(flow.cwd, '.open-tasks', 'logs');
 
     // Check if logs directory exists
-    context.outputSynk.write('Checking logs directory...');
+    logger.progress('Checking logs directory...');
     const logsDirExists = await fse.pathExists(logsDir);
     if (!logsDirExists) {
       const message = 'No logs directory found. Nothing to clean.';
       
-      if (verbosity !== 'quiet') {
-        console.log(new MessageCard('ℹ️ Clean Complete', message, 'info').build());
-      }
+      logger.card(new MessageCard('ℹ️ Clean Complete', message, 'info'));
+      logger.complete();
 
       return {
         id: 'clean-result',
@@ -53,7 +60,7 @@ export default class CleanCommand implements ITaskHandler {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-    context.outputSynk.write('Scanning log directories...');
+    logger.progress('Scanning log directories...');
     
     // Get all directories in logs
     const entries = await fs.readdir(logsDir, { withFileTypes: true });
@@ -80,16 +87,13 @@ export default class CleanCommand implements ITaskHandler {
           deletedCount++;
           deletedSize += size;
           deletedDirs.push(dir.name);
+          logger.fileCreated(dir.name); // Track deleted directory
           
-          if (verbosity === 'verbose') {
-            context.outputSynk.write(`Deleted: ${dir.name} (${this.formatSize(size)})`);
-          }
+          logger.info(`Deleted: ${dir.name} (${this.formatSize(size)})`);
         }
       } catch (error) {
         // Skip directories that can't be accessed
-        if (verbosity === 'verbose') {
-          context.outputSynk.write(`Warning: Could not process ${dir.name}: ${error}`);
-        }
+        logger.warning(`Could not process ${dir.name}: ${error}`);
       }
     }
 
@@ -108,15 +112,14 @@ export default class CleanCommand implements ITaskHandler {
       `Directories Deleted: ${deletedCount}`,
       `Space Freed: ${this.formatSize(deletedSize)}`,
       '',
-      ...(deletedDirs.length > 0 && verbosity !== 'quiet' 
+      ...(deletedDirs.length > 0 
         ? ['Deleted Directories:', ...deletedDirs.slice(0, 10).map(d => `  - ${d}`)] 
         : []),
       ...(deletedDirs.length > 10 ? [`  ... and ${deletedDirs.length - 10} more`] : []),
     ].join('\n');
 
-    if (verbosity !== 'quiet') {
-      console.log(new MessageCard('🧹 Clean Complete', details, 'success').build());
-    }
+    logger.card(new MessageCard('🧹 Clean Complete', details, 'success'));
+    logger.complete();
 
     return {
       id: 'clean-result',

@@ -14,7 +14,8 @@ export default class CreateCommand extends TaskHandler {
   description = 'Create a new custom command template';
   examples = [
     'ot create my-command',
-    'ot create my-command --typescript',
+    'ot create my-command --example',
+    'ot create my-command --javascript',
     'ot create my-command --description "My custom command"',
   ];
 
@@ -29,7 +30,8 @@ export default class CreateCommand extends TaskHandler {
     }
 
     const commandName = args[0];
-    const typescript = args.includes('--typescript');
+    const typescript = !args.includes('--javascript');
+    const isExample = args.includes('--example');
     const descriptionIndex = args.indexOf('--description');
     const description =
       descriptionIndex !== -1 && args[descriptionIndex + 1]
@@ -72,7 +74,8 @@ export default class CreateCommand extends TaskHandler {
     const template = this.generateTemplate(
       commandName,
       description,
-      typescript
+      typescript,
+      isExample
     );
 
     // Write template file
@@ -96,12 +99,13 @@ export default class CreateCommand extends TaskHandler {
     };
 
     // Add visual card
+    const templateType = isExample ? 'Example (Hello World)' : 'Minimal (Bare-bones)';
     const details = [
       `Command Name: ${commandName}`,
+      `Template Type: ${templateType}`,
       `Language: ${typescript ? 'TypeScript' : 'JavaScript'}`,
       `Description: ${description}`,
       `Location: ${commandPath}`,
-      `Template Size: ${template.length} characters`,
       ``,
       `Next Steps:`,
       `  1. Edit ${commandPath}`,
@@ -115,6 +119,87 @@ export default class CreateCommand extends TaskHandler {
   }
 
   private generateTemplate(
+    name: string,
+    description: string,
+    typescript: boolean,
+    isExample: boolean
+  ): string {
+    if (isExample) {
+      return this.generateExampleTemplate(name, description, typescript);
+    } else {
+      return this.generateMinimalTemplate(name, description, typescript);
+    }
+  }
+
+  private generateMinimalTemplate(
+    name: string,
+    description: string,
+    typescript: boolean
+  ): string {
+    if (typescript) {
+      return `/**
+ * ${description}
+ */
+export default class ${this.toPascalCase(name)}Command {
+  name = '${name}';
+  description = '${description}';
+  examples = [
+    'ot ${name}',
+    'ot ${name} [args]',
+  ];
+
+  async execute(args: string[], context: any): Promise<any> {
+    // Get workflow context and output synk
+    const flow = context.workflowContext;
+    const output = context.outputSynk;
+
+    // TODO: Implement your command logic here
+    output.writeInfo('Executing ${name} command...');
+
+    // Return a reference handle with your result
+    return {
+      id: '${name}-result',
+      content: 'Command executed successfully',
+      token: '${name}',
+      timestamp: new Date(),
+    };
+  }
+}
+`;
+    } else {
+      return `/**
+ * ${description}
+ */
+export default class ${this.toPascalCase(name)}Command {
+  name = '${name}';
+  description = '${description}';
+  examples = [
+    'ot ${name}',
+    'ot ${name} [args]',
+  ];
+
+  async execute(args, context) {
+    // Get workflow context and output synk
+    const flow = context.workflowContext;
+    const output = context.outputSynk;
+
+    // TODO: Implement your command logic here
+    output.writeInfo('Executing ${name} command...');
+
+    // Return a reference handle with your result
+    return {
+      id: '${name}-result',
+      content: 'Command executed successfully',
+      token: '${name}',
+      timestamp: new Date(),
+    };
+  }
+}
+`;
+    }
+  }
+
+  private generateExampleTemplate(
     name: string,
     description: string,
     typescript: boolean
@@ -135,7 +220,11 @@ export default class CreateCommand extends TaskHandler {
 
 // ===== TokenDecorator - Adds a token to a reference =====
 class TokenDecorator {
-  constructor(private token: string) {}
+  token: string;
+
+  constructor(token: string) {
+    this.token = token;
+  }
   
   decorate(ref: any): any {
     return { ...ref, token: this.token };
@@ -144,7 +233,13 @@ class TokenDecorator {
 
 // ===== Step 1 & 2: SetCommand - Store values in workflow context =====
 class SetCommand {
-  constructor(private value: any, private token?: string) {}
+  value: any;
+  token?: string;
+
+  constructor(value: any, token?: string) {
+    this.value = value;
+    this.token = token;
+  }
 
   async execute(context: any, args: any[]): Promise<[any, any[]][]> {
     // Return tuple of [value, decorators[]]
@@ -155,10 +250,13 @@ class SetCommand {
 
 // ===== Step 3: ReplaceCommand - Replace placeholders in template =====
 class ReplaceCommand {
-  constructor(
-    private templateRef: any,
-    private replacements: Record<string, string>
-  ) {}
+  templateRef: any;
+  replacements: Record<string, string>;
+
+  constructor(templateRef: any, replacements: Record<string, string>) {
+    this.templateRef = templateRef;
+    this.replacements = replacements;
+  }
 
   async execute(context: any, args: any[]): Promise<[any, any[]][]> {
     const template = await context.get(this.templateRef);
@@ -179,7 +277,13 @@ class ReplaceCommand {
 
 // ===== Step 4: DisplayCardCommand - Show result as formatted card =====
 class DisplayCardCommand {
-  constructor(private valueRef: any, private metadata: any = {}) {}
+  valueRef: any;
+  metadata: any;
+
+  constructor(valueRef: any, metadata: any = {}) {
+    this.valueRef = valueRef;
+    this.metadata = metadata;
+  }
 
   async execute(context: any, args: any[], cardBuilder?: any): Promise<[any, any[]][]> {
     const value = await context.get(this.valueRef);
