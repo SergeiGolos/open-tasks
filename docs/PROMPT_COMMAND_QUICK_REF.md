@@ -193,9 +193,12 @@ const reviewRef = await flow.run(
   new PromptCommand('security-review', code)
 );
 
+// Get the result content
+const review = await flow.get(reviewRef[0]);
+
 // Save result
 await flow.run(
-  new WriteCommand('review-output.md', reviewRef[0])
+  new WriteCommand('review-output.md', review)
 );
 ```
 

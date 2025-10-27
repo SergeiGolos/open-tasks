@@ -286,9 +286,9 @@ export class AgentCommand implements ICommand {
       case AgentTool.CLAUDE:
         // claude -p "filepath" or stdin (prefers file path to avoid length limits)
         args.push('-p');
-        if (usePromptFile) {
+        if (usePromptFile && this.promptFilePath) {
           // Pass file path as positional argument after -p flag
-          args.push(this.promptFilePath!);
+          args.push(this.promptFilePath);
         }
         if (this.config.allowAllTools) {
           args.push('--dangerously-skip-permissions');

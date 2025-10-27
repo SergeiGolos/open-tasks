@@ -87,19 +87,32 @@ export function getWikiPath(filename: string): string {
 }
 
 /**
- * Get all available wiki files
+ * Get all available wiki files by reading the wiki directory
  * @returns Array of wiki file names
  */
-export function getAvailableWikiFiles(): string[] {
-  return [
-    'Architecture.md',
-    'Building-Custom-Commands.md',
-    'Building-Custom-Tasks.md',
-    'Core-Agents-Command-Builder.md',
-    'Core-Commands.md',
-    'Core-Tasks.md',
-    'Example-Tasks.md',
-    'index.md',
-    'Installation.md',
-  ];
+export async function getAvailableWikiFiles(): Promise<string[]> {
+  const { promises: fs } = await import('fs');
+  
+  try {
+    // Get the directory where this module is located
+    const url = new URL(import.meta.url);
+    let moduleDir = path.dirname(url.pathname);
+    
+    // Fix Windows path (remove leading slash from /C:/...)
+    if (process.platform === 'win32' && moduleDir.startsWith('/')) {
+      moduleDir = moduleDir.substring(1);
+    }
+    
+    // Navigate to dist/wiki from the module location
+    const wikiDir = path.join(moduleDir, 'wiki');
+    
+    // Read all files in the wiki directory
+    const files = await fs.readdir(wikiDir);
+    
+    // Filter to only markdown files
+    return files.filter(file => file.endsWith('.md'));
+  } catch (error) {
+    // If directory doesn't exist or can't be read, return empty array
+    return [];
+  }
 }
