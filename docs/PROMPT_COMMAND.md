@@ -74,15 +74,15 @@ const result = await context.run(
 ### With Custom LLM Options
 
 ```typescript
-// Execute with specific model, temperature, and system prompt
+// Execute with specific model and temperature
 const result = await context.run(
   new PromptCommand(
     'openspec-proposal',
     'Implement real-time notifications',
     {
-      model: 'gpt-4',
+      model: 'sonnet',
       temperature: 0.7,
-      system: 'You are an expert software architect.'
+      allowAllTools: true
     }
   )
 );
@@ -149,7 +149,7 @@ Provide specific, actionable feedback.
 3. **Process content**:
    - Strips frontmatter (YAML between `---` markers)
    - Replaces `$ARGUMENTS` with provided text (or removes it)
-4. **Execute with LLM**: Uses the `llm` CLI tool with your configuration
+4. **Execute with Claude Code CLI**: Uses the Claude Code CLI tool with your configuration
 
 ## Error Handling
 

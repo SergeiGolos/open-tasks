@@ -1,7 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
-import { fileURLToPath } from 'url';
 import { ExecutionContext, ReferenceHandle, ITaskHandler, IFlow } from '../types.js';
 import { MessageCard } from '../cards/MessageCard.js';
 import { QuestionCommand } from '../commands/question.js';
@@ -9,6 +8,7 @@ import { SetCommand } from '../commands/set.js';
 import { AgentCommand, AgentTool } from '../commands/agent.js';
 import { WriteCommand } from '../commands/write.js';
 import { JoinCommand } from '../commands/join.js';
+import { getWikiPath } from '../utils.js';
 
 /**
  * CreateAgent command - scaffolds a new agent task using AI-assisted workflow
@@ -276,24 +276,6 @@ export default class CreateAgentCommand implements ITaskHandler {
   }
 
   /**
-   * Get path to wiki documentation file
-   */
-  private getWikiPath(filename: string): string {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    
-    // Wiki files are in dist/wiki/ (or dist/tasks/../wiki/)
-    let wikiPath = path.join(__dirname, '..', 'wiki', filename);
-    
-    // Handle Windows paths
-    if (process.platform === 'win32' && wikiPath.startsWith('/')) {
-      wikiPath = wikiPath.substring(1);
-    }
-    
-    return path.resolve(wikiPath);
-  }
-
-  /**
    * Load wiki documentation files
    */
   private async loadWikiDocs(): Promise<string> {
@@ -307,7 +289,7 @@ export default class CreateAgentCommand implements ITaskHandler {
       const contents = await Promise.all(
         wikiFiles.map(async (file) => {
           try {
-            const filePath = this.getWikiPath(file);
+            const filePath = getWikiPath(file);
             const content = await fs.readFile(filePath, 'utf-8');
             return `# Reference: ${file}\n\n${content}`;
           } catch (error) {

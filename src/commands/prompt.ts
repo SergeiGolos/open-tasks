@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { ICommand, IFlow, StringRef, ICardBuilder, IRefDecorator } from '../types.js';
 import { AgentCommand } from './agents/agent.js';
-import { ClaudeConfigBuilder } from './agents/claude.js';
+import { ClaudeConfigBuilder, ClaudeModel } from './agents/claude.js';
 
 /**
  * PromptCommand - Load and execute GitHub Copilot prompts
@@ -104,7 +104,15 @@ export class PromptCommand implements ICommand {
       .inDirectory(context.cwd);
 
     if (this.model) {
-      configBuilder.withModel(this.model as any); // Cast to ClaudeModel
+      // Validate model is a valid ClaudeModel
+      if (this.isValidClaudeModel(this.model)) {
+        configBuilder.withModel(this.model);
+      } else {
+        throw new Error(
+          `Invalid Claude model: ${this.model}. ` +
+          `Valid models are: sonnet, haiku, opus, or their full version names.`
+        );
+      }
     }
 
     if (this.temperature !== undefined) {
@@ -122,6 +130,24 @@ export class PromptCommand implements ICommand {
     const result = await agentCommand.execute(context, args, cardBuilder);
 
     return result;
+  }
+
+  /**
+   * Check if a string is a valid ClaudeModel
+   */
+  private isValidClaudeModel(model: string): model is ClaudeModel {
+    const validModels: readonly string[] = [
+      'claude-sonnet-4-5-20250929',
+      'claude-haiku-4-5-20251001',
+      'claude-opus-4-1-20250805',
+      'claude-sonnet-4-5',
+      'claude-haiku-4-5',
+      'claude-opus-4-1',
+      'sonnet',
+      'haiku',
+      'opus',
+    ];
+    return validModels.includes(model);
   }
 
   /**
