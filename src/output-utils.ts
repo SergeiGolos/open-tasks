@@ -1,70 +1,8 @@
-import { IOutputSynk, SummaryData } from './types.js';
+import { SummaryData } from './types.js';
 
 /**
- * Utility functions for working with output builders
+ * Utility functions for output and formatting
  */
-
-/**
- * Add a formatted section to the output builder
- */
-export function addFormattedSection(
-  builder: IOutputSynk,
-  title: string,
-  content: string | Record<string, any>
-): void {
-  const formattedContent = typeof content === 'string' 
-    ? content 
-    : JSON.stringify(content, null, 2);
-  
-  builder.addSection(title, formattedContent);
-}
-
-/**
- * Add file information section (useful for verbose mode)
- */
-export function addFileInfoSection(
-  builder: IOutputSynk,
-  filePath: string,
-  size?: number,
-  mimeType?: string
-): void {
-  const info: Record<string, string | number> = {
-    path: filePath,
-  };
-  
-  if (size !== undefined) {
-    info.size = `${size} bytes`;
-    info.sizeFormatted = formatFileSize(size);
-  }
-  
-  if (mimeType) {
-    info.type = mimeType;
-  }
-  
-  addFormattedSection(builder, '📄 File Information', info);
-}
-
-/**
- * Add processing details section
- */
-export function addProcessingDetails(
-  builder: IOutputSynk,
-  details: Record<string, any>
-): void {
-  addFormattedSection(builder, '⚙️  Processing Details', details);
-}
-
-/**
- * Add progress message with timestamp
- */
-export function addProgressWithTime(
-  builder: IOutputSynk,
-  message: string,
-  startTime: number
-): void {
-  const elapsed = Date.now() - startTime;
-  builder.addProgress(`[${elapsed}ms] ${message}`);
-}
 
 /**
  * Format file size in human-readable format
