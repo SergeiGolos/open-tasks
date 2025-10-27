@@ -1,4 +1,7 @@
 import { spawn } from 'child_process';
+import { writeFileSync, unlinkSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 import { ICommand, IFlow, StringRef, ICardBuilder, IRefDecorator } from '../types.js';
 
 /**
@@ -241,11 +244,11 @@ export class AgentCommand implements ICommand {
     const prompt = promptParts.join('\n\n');
 
     // Build command based on the configured tool
-    const { command, args: cmdArgs } = this.buildCommand(prompt);
+    const { command, args: cmdArgs, promptFilePath } = this.buildCommand(prompt);
 
     // Execute the CLI tool with verbosity info from context
     const verbosity = (context as any).verbosity || 'summary';
-    const result = await this.executeAgent(command, cmdArgs, this.config.workingDirectory || context.cwd, verbosity);
+    const result = await this.executeAgent(command, cmdArgs, this.config.workingDirectory || context.cwd, verbosity, promptFilePath, prompt);
 
     // Return the result
     return [[result, []]];
@@ -253,47 +256,75 @@ export class AgentCommand implements ICommand {
 
   /**
    * Build command and arguments based on tool configuration
+   * Returns command, args, and optional promptFilePath for large prompts
    */
-  private buildCommand(prompt: string): { command: string; args: string[] } {
+  private buildCommand(prompt: string): { command: string; args: string[]; promptFilePath?: string } {
     const args: string[] = [];
+    
+    // If prompt is very large (>10KB), use a temp file
+    const useTempFile = prompt.length > 10240;
+    let promptFilePath: string | undefined;
+    
+    if (useTempFile) {
+      // Create a temporary file for the prompt
+      const tempDir = tmpdir();
+      promptFilePath = join(tempDir, `ot-prompt-${Date.now()}.txt`);
+      writeFileSync(promptFilePath, prompt, 'utf-8');
+    }
     
     switch (this.config.tool) {
       case AgentTool.GEMINI:
-        // gemini -p "prompt"
-        args.push('-p', prompt);
+        // gemini can read from stdin or use -p with file content
+        if (useTempFile) {
+          // Gemini accepts files as context
+          args.push('-p', '@' + promptFilePath);
+        } else {
+          args.push('-p', prompt);
+        }
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
         if (this.config.contextFiles) {
           args.push(...this.config.contextFiles);
         }
-        return { command: 'gemini', args };
+        return { command: 'gemini', args, promptFilePath };
 
       case AgentTool.CLAUDE:
-        // claude -p "prompt" or claude --print "prompt"
-        args.push('-p', prompt);
+        // claude -p for print mode, or use stdin
+        if (useTempFile) {
+          // Claude doesn't have file input, so we'll use stdin
+          // Don't add -p, we'll pipe the file content
+        } else {
+          args.push('-p', prompt);
+        }
         if (this.config.allowAllTools) {
           args.push('--allow-all-tools');
         }
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'claude', args };
+        return { command: 'claude', args, promptFilePath };
 
       case AgentTool.COPILOT:
         // copilot -p "prompt" --allow-all-tools
-        args.push('-p', prompt);
+        if (!useTempFile) {
+          args.push('-p', prompt);
+        }
         if (this.config.allowAllTools) {
           args.push('--allow-all-tools');
         }
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'copilot', args };
+        return { command: 'copilot', args, promptFilePath };
 
       case AgentTool.AIDER:
         // aider --message "prompt" file1 file2
-        args.push('--message', prompt);
+        if (!useTempFile) {
+          args.push('--message', prompt);
+        } else {
+          args.push('--message', '@' + promptFilePath);
+        }
         if (this.config.contextFiles) {
           args.push(...this.config.contextFiles);
         }
@@ -303,56 +334,66 @@ export class AgentCommand implements ICommand {
         if (this.config.git?.autoCommit === false) {
           args.push('--no-auto-commits');
         }
-        return { command: 'aider', args };
+        return { command: 'aider', args, promptFilePath };
 
       case AgentTool.CODEBUFF:
         // codebuff "prompt"
-        args.push(prompt);
+        if (!useTempFile) {
+          args.push(prompt);
+        }
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'codebuff', args };
+        return { command: 'codebuff', args, promptFilePath };
 
       case AgentTool.QWEN:
         // qwen -p "prompt" file1 file2
-        args.push('-p', prompt);
+        if (!useTempFile) {
+          args.push('-p', prompt);
+        }
         if (this.config.contextFiles) {
           args.push(...this.config.contextFiles);
         }
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'qwen', args };
+        return { command: 'qwen', args, promptFilePath };
 
       case AgentTool.CRUSH:
         // crush -p "prompt" (assuming similar to OpenCode)
-        args.push('-p', prompt);
+        if (!useTempFile) {
+          args.push('-p', prompt);
+        }
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
         if (this.config.provider) {
           args.push('--provider', this.config.provider);
         }
-        return { command: 'crush', args };
+        return { command: 'crush', args, promptFilePath };
 
       case AgentTool.LLM:
         // llm "prompt"
-        args.push(prompt);
+        if (!useTempFile) {
+          args.push(prompt);
+        }
         if (this.config.model) {
           args.push('-m', this.config.model);
         }
         if (this.config.temperature !== undefined) {
           args.push('--temperature', this.config.temperature.toString());
         }
-        return { command: 'llm', args };
+        return { command: 'llm', args, promptFilePath };
 
       case AgentTool.OPENAI:
         // openai -p "prompt"
-        args.push('-p', prompt);
+        if (!useTempFile) {
+          args.push('-p', prompt);
+        }
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'openai', args };
+        return { command: 'openai', args, promptFilePath };
 
       default:
         throw new Error(`Unsupported agent tool: ${this.config.tool}`);
@@ -362,7 +403,14 @@ export class AgentCommand implements ICommand {
   /**
    * Execute the agent CLI tool
    */
-  private executeAgent(command: string, args: string[], cwd: string, verbosity: string = 'summary'): Promise<string> {
+  private executeAgent(
+    command: string, 
+    args: string[], 
+    cwd: string, 
+    verbosity: string = 'summary',
+    promptFilePath?: string,
+    promptContent?: string
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       const env = { ...process.env };
       
@@ -384,14 +432,28 @@ export class AgentCommand implements ICommand {
       // Log command being executed in verbose mode
       if (verbosity === 'verbose') {
         console.log(`\n[Agent Command] ${command} ${args.join(' ')}\n`);
+        if (promptFilePath) {
+          console.log(`[Agent] Using temp prompt file: ${promptFilePath}`);
+          console.log(`[Agent] Prompt size: ${(promptContent?.length || 0) / 1024} KB`);
+        }
       }
 
+      // Determine stdio mode based on whether we need stdin for prompt
+      const useStdin = promptFilePath && this.config.tool === AgentTool.CLAUDE;
+      const stdinMode = useStdin ? 'pipe' : (verbosity === 'verbose' ? 'inherit' : 'ignore');
+      
       const child = spawn(command, args, {
         cwd,
         env,
         shell: true,
-        stdio: verbosity === 'verbose' ? ['inherit', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'],
+        stdio: [stdinMode, 'pipe', 'pipe'],
       });
+
+      // If using stdin, write the prompt content
+      if (useStdin && child.stdin && promptContent) {
+        child.stdin.write(promptContent);
+        child.stdin.end();
+      }
 
       let stdout = '';
       let stderr = '';
@@ -446,6 +508,18 @@ export class AgentCommand implements ICommand {
           clearTimeout(timeoutId);
         }
 
+        // Clean up temp file if it was created
+        if (promptFilePath) {
+          try {
+            unlinkSync(promptFilePath);
+            if (verbosity === 'verbose') {
+              console.log(`[Agent] Cleaned up temp prompt file`);
+            }
+          } catch (err) {
+            // Ignore cleanup errors
+          }
+        }
+
         if (verbosity === 'verbose') {
           console.log(`\n[Agent] Process closed with code ${code}${signal ? ` (signal: ${signal})` : ''}`);
         }
@@ -465,6 +539,16 @@ export class AgentCommand implements ICommand {
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
+        
+        // Clean up temp file if it was created
+        if (promptFilePath) {
+          try {
+            unlinkSync(promptFilePath);
+          } catch (err) {
+            // Ignore cleanup errors
+          }
+        }
+        
         const errorMsg = `Failed to execute agent: ${error.message}`;
         if (verbosity === 'verbose') {
           console.error(`[Agent Error] ${errorMsg}`);

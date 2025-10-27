@@ -57,3 +57,49 @@ export function validateOutputPath(filePath: string, allowedBaseDir?: string): s
   
   return normalized;
 }
+
+/**
+ * Get the absolute path to a wiki documentation file
+ * Wiki files are located in dist/wiki/ after build
+ * 
+ * @param filename - Name of the wiki file (e.g., 'Core-Commands.md')
+ * @returns Absolute path to the wiki file
+ * 
+ * @example
+ * const wikiPath = getWikiPath('Core-Commands.md');
+ * const content = await fs.readFile(wikiPath, 'utf-8');
+ */
+export function getWikiPath(filename: string): string {
+  // Get the directory where this module is located
+  const url = new URL(import.meta.url);
+  let moduleDir = path.dirname(url.pathname);
+  
+  // Fix Windows path (remove leading slash from /C:/...)
+  if (process.platform === 'win32' && moduleDir.startsWith('/')) {
+    moduleDir = moduleDir.substring(1);
+  }
+  
+  // Navigate to dist/wiki from the module location
+  // In production: dist/utils.js -> dist/wiki/filename
+  const wikiPath = path.join(moduleDir, 'wiki', filename);
+  
+  return path.resolve(wikiPath);
+}
+
+/**
+ * Get all available wiki files
+ * @returns Array of wiki file names
+ */
+export function getAvailableWikiFiles(): string[] {
+  return [
+    'Architecture.md',
+    'Building-Custom-Commands.md',
+    'Building-Custom-Tasks.md',
+    'Core-Agents-Command-Builder.md',
+    'Core-Commands.md',
+    'Core-Tasks.md',
+    'Example-Tasks.md',
+    'index.md',
+    'Installation.md',
+  ];
+}
