@@ -5,6 +5,7 @@ export { ReplaceCommand } from './replace.js';
 // File I/O commands
 export { ReadCommand } from './read.js';
 export { WriteCommand } from './write.js';
+export { PromptCommand } from './prompt.js';
 
 // Template and transformation commands
 export { TemplateCommand } from './template.js';

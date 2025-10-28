@@ -150,16 +150,75 @@ export interface ICardBuilder {
 /**
  * Interface for building framework-level formatted output
  * Handles system-level execution reporting: timing, status, files, errors
+ * 
+ * Verbosity Specification:
+ * - QUIET: Command name + execution time + files created
+ * - SUMMARY: QUIET + all command cards
+ * - VERBOSE: SUMMARY + between-card messages (progress/info/warning/error)
  */
 export interface IOutputSynk {
     
-  /// writes a message to the output
+  /// writes a message to the output (legacy method - kept for backward compatibility)
   write(message: string, verbosity?: VerbosityLevel): void;
   
   /**
-   * writes a card to the output 
+   * writes a card to the output (legacy method - kept for backward compatibility)
    */
-  write(card: ICardBuilder, verbosity?: VerbosityLevel): void;  
+  write(card: ICardBuilder, verbosity?: VerbosityLevel): void;
+  
+  // === QUIET level methods - always visible ===
+  
+  /**
+   * Log command start (QUIET level)
+   * Shown in all verbosity modes
+   */
+  writeCommandStart(name: string): void;
+  
+  /**
+   * Log command end with execution time (QUIET level)
+   * Shown in all verbosity modes
+   */
+  writeCommandEnd(duration: number): void;
+  
+  /**
+   * Track a file created/modified by the command (QUIET level)
+   * Aggregated and shown in all verbosity modes
+   */
+  writeFileCreated(path: string): void;
+  
+  // === SUMMARY level methods - cards ===
+  
+  /**
+   * Write a card (SUMMARY level)
+   * Shown in summary and verbose modes
+   */
+  writeCard(card: ICardBuilder): void;
+  
+  // === VERBOSE level methods - between-card messages ===
+  
+  /**
+   * Write a progress message (VERBOSE level)
+   * Shown only in verbose mode
+   */
+  writeProgress(message: string): void;
+  
+  /**
+   * Write an info message (VERBOSE level)
+   * Shown only in verbose mode
+   */
+  writeInfo(message: string): void;
+  
+  /**
+   * Write a warning message (VERBOSE level)
+   * Shown only in verbose mode
+   */
+  writeWarning(message: string): void;
+  
+  /**
+   * Write an error message (VERBOSE level)
+   * Shown only in verbose mode
+   */
+  writeError(message: string): void;
 }
 
 

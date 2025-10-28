@@ -45,6 +45,14 @@ ot create hello-world
 ot hello-world
 ```
 
+### Use GitHub Copilot Prompts
+
+```bash
+# Execute prompts from .github/prompts/
+ot prompt code-review "Review this code..."
+ot prompt generate-docs "document this function..."
+```
+
 ## Key Features
 
 ✨ **Command Chaining** - Execute multiple commands in sequence, passing outputs as inputs
@@ -56,6 +64,8 @@ ot hello-world
 🔗 **Reference Management** - Store command outputs and reference them by name or UUID
 
 🤖 **AI Agent Integration** - Built-in support for Claude, Gemini, Copilot, Aider, llm, and more
+
+📝 **GitHub Copilot Prompts** - Load and execute prompts from `.github/prompts/` directory
 
 🎨 **Visual Output** - Formatted, boxed output showing exactly what's happening
 
@@ -197,12 +207,34 @@ npm install
 # Build
 npm run build
 
+# Build and watch for changes (recommended during development)
+npm run dev
+
 # Run tests
 npm test
 
 # Install locally for testing
 npm run dev-deploy
+
+# Test task workflows during development
+npm run task init
+npm run task store "test data" --token mytoken
+npm run task agent --model gpt-4 --dry-run
 ```
+
+### Debugging in VS Code
+
+The project includes pre-configured VS Code debug configurations:
+
+1. **Debug Task (with args)** - Main config for testing any command
+   - Edit `args` array in `.vscode/launch.json`
+   - Press F5 to debug
+
+2. **Pre-configured debuggers** for common commands (Init, Store, Load, Create, etc.)
+
+3. **Test debuggers** for running vitest tests with breakpoints
+
+**See [Development Workflow Guide](docs/DEVELOPMENT_WORKFLOW.md) for detailed debugging instructions.**
 
 ## License
 

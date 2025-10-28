@@ -3,13 +3,21 @@ import { BaseAgentConfigBuilder } from './BaseAgentConfigBuilder.js';
 
 /**
  * Claude-specific model options
+ * Based on Claude Code CLI available models as of October 2025
  */
 export type ClaudeModel = 
-  | 'claude-3.7-sonnet' 
-  | 'claude-3.5-sonnet' 
-  | 'claude-3-sonnet' 
-  | 'claude-3-opus'
-  | 'claude-3-haiku';
+  // Claude 4 models (latest)
+  | 'claude-sonnet-4-5-20250929'  // Smartest model for complex agents and coding
+  | 'claude-haiku-4-5-20251001'   // Fastest model with near-frontier intelligence
+  | 'claude-opus-4-1-20250805'    // Exceptional model for specialized reasoning
+  // Aliases (automatically point to latest snapshots)
+  | 'claude-sonnet-4-5'           // Alias for latest Sonnet
+  | 'claude-haiku-4-5'            // Alias for latest Haiku
+  | 'claude-opus-4-1'             // Alias for latest Opus
+  // Short aliases
+  | 'sonnet'                      // Alias for Sonnet
+  | 'haiku'                       // Alias for Haiku
+  | 'opus';                       // Alias for Opus
 
 /**
  * Configuration for Claude Code CLI

@@ -83,6 +83,9 @@ export interface IAgentConfig {
   /** Timeout in milliseconds */
   timeout?: number;
   
+  /** Show the shell window while agent runs (useful for debugging) */
+  showShell?: boolean;
+  
   /** Git integration options */
   git?: {
     /** Automatically commit changes */
@@ -211,15 +214,18 @@ export class AgentConfigBuilder {
 export class AgentCommand implements ICommand {
   private config: IAgentConfig;
   private promptRefs: StringRef[];
+  private promptFilePath?: string;
 
   /**
    * Create a new AgentCommand
    * @param config - Agent tool configuration
    * @param promptRefs - Array of StringRefs whose values will be joined to form the prompt
+   * @param promptFilePath - Optional file path containing the prompt (avoids command-line length limits)
    */
-  constructor(config: IAgentConfig, promptRefs: StringRef[]) {
+  constructor(config: IAgentConfig, promptRefs: StringRef[], promptFilePath?: string) {
     this.config = config;
     this.promptRefs = promptRefs;
+    this.promptFilePath = promptFilePath;
   }
 
   async execute(
@@ -241,10 +247,11 @@ export class AgentCommand implements ICommand {
     const prompt = promptParts.join('\n\n');
 
     // Build command based on the configured tool
-    const { command, args: cmdArgs } = this.buildCommand(prompt);
+    const { command, args: cmdArgs, useStdin } = this.buildCommand(prompt);
 
-    // Execute the CLI tool
-    const result = await this.executeAgent(command, cmdArgs, this.config.workingDirectory || context.cwd);
+    // Execute the CLI tool with verbosity info from context
+    const verbosity = (context as any).verbosity || 'summary';
+    const result = await this.executeAgent(command, cmdArgs, this.config.workingDirectory || context.cwd, verbosity, useStdin, prompt);
 
     // Return the result
     return [[result, []]];
@@ -252,35 +259,48 @@ export class AgentCommand implements ICommand {
 
   /**
    * Build command and arguments based on tool configuration
+   * Returns command, args, and useStdin flag indicating if prompt should be piped
    */
-  private buildCommand(prompt: string): { command: string; args: string[] } {
+  private buildCommand(prompt: string): { command: string; args: string[]; useStdin: boolean } {
     const args: string[] = [];
+    
+    // If a prompt file path is provided, use it instead of the prompt string for tools that support it
+    const usePromptFile = !!this.promptFilePath;
     
     switch (this.config.tool) {
       case AgentTool.GEMINI:
-        // gemini -p "prompt"
-        args.push('-p', prompt);
+        // gemini -p "prompt" or -p "@filepath" (uses command-line arg or file)
+        if (usePromptFile) {
+          args.push('-p', `@${this.promptFilePath}`);
+        } else {
+          args.push('-p', prompt);
+        }
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
         if (this.config.contextFiles) {
           args.push(...this.config.contextFiles);
         }
-        return { command: 'gemini', args };
+        return { command: 'gemini', args, useStdin: false };
 
       case AgentTool.CLAUDE:
-        // claude -p "prompt" or claude --print "prompt"
-        args.push('-p', prompt);
+        // claude -p "filepath" or stdin (prefers file path to avoid length limits)
+        args.push('-p');
+        if (usePromptFile && this.promptFilePath) {
+          // Pass file path as positional argument after -p flag
+          args.push(this.promptFilePath);
+        }
         if (this.config.allowAllTools) {
-          args.push('--allow-all-tools');
+          args.push('--dangerously-skip-permissions');
         }
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'claude', args };
+        // Use stdin only if no file path provided
+        return { command: 'claude', args, useStdin: !usePromptFile };
 
       case AgentTool.COPILOT:
-        // copilot -p "prompt" --allow-all-tools
+        // copilot -p "prompt" --allow-all-tools (uses command-line arg)
         args.push('-p', prompt);
         if (this.config.allowAllTools) {
           args.push('--allow-all-tools');
@@ -288,10 +308,10 @@ export class AgentCommand implements ICommand {
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'copilot', args };
+        return { command: 'copilot', args, useStdin: false };
 
       case AgentTool.AIDER:
-        // aider --message "prompt" file1 file2
+        // aider --message "prompt" file1 file2 (uses command-line arg)
         args.push('--message', prompt);
         if (this.config.contextFiles) {
           args.push(...this.config.contextFiles);
@@ -302,18 +322,18 @@ export class AgentCommand implements ICommand {
         if (this.config.git?.autoCommit === false) {
           args.push('--no-auto-commits');
         }
-        return { command: 'aider', args };
+        return { command: 'aider', args, useStdin: false };
 
       case AgentTool.CODEBUFF:
-        // codebuff "prompt"
+        // codebuff "prompt" (uses command-line arg)
         args.push(prompt);
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'codebuff', args };
+        return { command: 'codebuff', args, useStdin: false };
 
       case AgentTool.QWEN:
-        // qwen -p "prompt" file1 file2
+        // qwen -p "prompt" file1 file2 (uses command-line arg)
         args.push('-p', prompt);
         if (this.config.contextFiles) {
           args.push(...this.config.contextFiles);
@@ -321,10 +341,10 @@ export class AgentCommand implements ICommand {
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'qwen', args };
+        return { command: 'qwen', args, useStdin: false };
 
       case AgentTool.CRUSH:
-        // crush -p "prompt" (assuming similar to OpenCode)
+        // crush -p "prompt" (uses command-line arg)
         args.push('-p', prompt);
         if (this.config.model) {
           args.push('--model', this.config.model);
@@ -332,10 +352,10 @@ export class AgentCommand implements ICommand {
         if (this.config.provider) {
           args.push('--provider', this.config.provider);
         }
-        return { command: 'crush', args };
+        return { command: 'crush', args, useStdin: false };
 
       case AgentTool.LLM:
-        // llm "prompt"
+        // llm "prompt" (uses command-line arg)
         args.push(prompt);
         if (this.config.model) {
           args.push('-m', this.config.model);
@@ -343,15 +363,15 @@ export class AgentCommand implements ICommand {
         if (this.config.temperature !== undefined) {
           args.push('--temperature', this.config.temperature.toString());
         }
-        return { command: 'llm', args };
+        return { command: 'llm', args, useStdin: false };
 
       case AgentTool.OPENAI:
-        // openai -p "prompt"
+        // openai -p "prompt" (uses command-line arg)
         args.push('-p', prompt);
         if (this.config.model) {
           args.push('--model', this.config.model);
         }
-        return { command: 'openai', args };
+        return { command: 'openai', args, useStdin: false };
 
       default:
         throw new Error(`Unsupported agent tool: ${this.config.tool}`);
@@ -361,7 +381,14 @@ export class AgentCommand implements ICommand {
   /**
    * Execute the agent CLI tool
    */
-  private executeAgent(command: string, args: string[], cwd: string): Promise<string> {
+  private executeAgent(
+    command: string, 
+    args: string[], 
+    cwd: string, 
+    verbosity: string = 'summary',
+    useStdin: boolean = false,
+    promptContent?: string
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       const env = { ...process.env };
       
@@ -380,41 +407,107 @@ export class AgentCommand implements ICommand {
         }
       }
 
-      const child = spawn(command, args, {
+      // Log command being executed in verbose mode
+      if (verbosity === 'verbose') {
+        console.log(`\n[Agent Command] ${command} ${args.join(' ')}\n`);
+        if (useStdin && promptContent) {
+          console.log(`[Agent] Using stdin for prompt`);
+          console.log(`[Agent] Prompt size: ${(promptContent.length / 1024).toFixed(2)} KB`);
+        }
+      }
+
+      // Determine stdio mode based on whether we need stdin for prompt
+      const stdinMode = useStdin ? 'pipe' : (verbosity === 'verbose' ? 'inherit' : 'ignore');
+      
+      // Determine spawn options
+      const spawnOptions: any = {
         cwd,
         env,
         shell: true,
-      });
+        stdio: [stdinMode, 'pipe', 'pipe'],
+      };
+      
+      // If showShell is enabled, show the window (Windows-specific)
+      if (this.config.showShell) {
+        spawnOptions.windowsHide = false;
+        if (verbosity === 'verbose') {
+          console.log('[Agent] Shell window will be visible');
+        }
+      }
+      
+      const child = spawn(command, args, spawnOptions);
+
+      // If using stdin, write the prompt content
+      if (useStdin && child.stdin && promptContent) {
+        child.stdin.write(promptContent);
+        child.stdin.end();
+      }
 
       let stdout = '';
       let stderr = '';
 
-      child.stdout?.on('data', (data) => {
-        stdout += data.toString();
-      });
+      if (child.stdout) {
+        child.stdout.on('data', (data) => {
+          const chunk = data.toString();
+          stdout += chunk;
+          
+          // In verbose mode, stream output to console in real-time
+          if (verbosity === 'verbose') {
+            process.stdout.write(chunk);
+          }
+        });
+      }
 
-      child.stderr?.on('data', (data) => {
-        stderr += data.toString();
-      });
+      if (child.stderr) {
+        child.stderr.on('data', (data) => {
+          const chunk = data.toString();
+          stderr += chunk;
+          
+          // In verbose mode, stream stderr to console in real-time
+          if (verbosity === 'verbose') {
+            process.stderr.write(chunk);
+          }
+        });
+      }
 
       // Handle timeout
       let timeoutId: NodeJS.Timeout | undefined;
       if (this.config.timeout) {
+        if (verbosity === 'verbose') {
+          console.log(`[Agent] Timeout set to ${this.config.timeout}ms`);
+        }
         timeoutId = setTimeout(() => {
+          if (verbosity === 'verbose') {
+            console.error(`[Agent] Process timed out after ${this.config.timeout}ms`);
+          }
           child.kill();
           reject(new Error(`Agent execution timed out after ${this.config.timeout}ms`));
         }, this.config.timeout);
       }
 
-      child.on('close', (code) => {
+      child.on('spawn', () => {
+        if (verbosity === 'verbose') {
+          console.log(`[Agent] Process spawned (PID: ${child.pid})`);
+        }
+      });
+
+      child.on('close', (code, signal) => {
         if (timeoutId) {
           clearTimeout(timeoutId);
+        }
+
+        if (verbosity === 'verbose') {
+          console.log(`\n[Agent] Process closed with code ${code}${signal ? ` (signal: ${signal})` : ''}`);
         }
 
         if (code === 0) {
           resolve(stdout);
         } else {
-          reject(new Error(`Agent execution failed with code ${code}:\n${stderr || stdout}`));
+          const errorMsg = `Agent execution failed with code ${code}:\n${stderr || stdout}`;
+          if (verbosity === 'verbose') {
+            console.error(`[Agent Error] ${errorMsg}`);
+          }
+          reject(new Error(errorMsg));
         }
       });
 
@@ -422,7 +515,12 @@ export class AgentCommand implements ICommand {
         if (timeoutId) {
           clearTimeout(timeoutId);
         }
-        reject(new Error(`Failed to execute agent: ${error.message}`));
+        
+        const errorMsg = `Failed to execute agent: ${error.message}`;
+        if (verbosity === 'verbose') {
+          console.error(`[Agent Error] ${errorMsg}`);
+        }
+        reject(new Error(errorMsg));
       });
     });
   }

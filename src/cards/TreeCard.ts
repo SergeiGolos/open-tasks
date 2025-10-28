@@ -4,19 +4,18 @@ import { getBoxenOptions } from './CardStyleUtils.js';
 
 /**
  * TreeCard - displays hierarchical data as a tree structure
+ * Cards are always SUMMARY level by specification
  */
 export class TreeCard implements ICardBuilder {
   name: string;
-  verbosity?: VerbosityLevel;
+  type: string = 'TreeCard';
 
   constructor(
     private title: string,
     private root: TreeNode,
-    private style: CardStyle = 'default',
-    verbosity?: VerbosityLevel
+    private style: CardStyle = 'default'
   ) {
     this.name = `TreeCard:${title}`;
-    this.verbosity = verbosity;
   }
 
   build(): string {
