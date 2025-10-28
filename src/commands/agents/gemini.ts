@@ -1,4 +1,5 @@
 import { IAgentConfig } from './base.js';
+import { BaseAgentConfigBuilder } from './BaseAgentConfigBuilder.js';
 
 /**
  * Gemini-specific model options
@@ -89,8 +90,10 @@ export class GeminiConfig implements IAgentConfig {
 /**
  * Builder for Gemini configuration
  */
-export class GeminiConfigBuilder {
-  private config: GeminiConfig = new GeminiConfig();
+export class GeminiConfigBuilder extends BaseAgentConfigBuilder<GeminiConfig> {
+  constructor() {
+    super(new GeminiConfig());
+  }
 
   withModel(model: GeminiModel): this {
     this.config.model = model;
@@ -99,11 +102,6 @@ export class GeminiConfigBuilder {
 
   withContextFiles(...files: string[]): this {
     this.config.contextFiles = [...(this.config.contextFiles || []), ...files];
-    return this;
-  }
-
-  inDirectory(dir: string): this {
-    this.config.workingDirectory = dir;
     return this;
   }
 
@@ -122,22 +120,8 @@ export class GeminiConfigBuilder {
     return this;
   }
 
-  withTimeout(ms: number): this {
-    this.config.timeout = ms;
-    return this;
-  }
-
   enableSearch(): this {
     this.config.enableSearch = true;
     return this;
-  }
-
-  withDryRun(): this {
-    this.config.dryRun = true;
-    return this;
-  }
-
-  build(): GeminiConfig {
-    return this.config;
   }
 }

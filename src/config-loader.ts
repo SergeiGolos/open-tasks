@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
+import { AgentTool } from './commands/agent.js';
 
 /**
  * Default configuration
@@ -47,4 +48,62 @@ export async function loadConfig(cwd: string): Promise<Record<string, any>> {
  */
 export function getDefaultConfig(): Record<string, any> {
   return { ...DEFAULT_CONFIG };
+}
+
+/**
+ * Get default agent from configuration
+ */
+export function getDefaultAgent(config: Record<string, any>): string {
+  if (config.agents && Array.isArray(config.agents) && config.agents.length > 0) {
+    return config.agents[0].name;
+  }
+  return 'gemini-default';
+}
+
+/**
+ * Get agent configuration from config
+ */
+export function getAgentConfig(config: Record<string, any>, agentName: string): any {
+  if (!config.agents || !Array.isArray(config.agents)) {
+    return null;
+  }
+
+  const agentDef = config.agents.find((a: any) => a.name === agentName);
+  if (!agentDef) {
+    return null;
+  }
+
+  // Map agent type to AgentTool enum
+  const toolMap: Record<string, AgentTool> = {
+    'gemini': AgentTool.GEMINI,
+    'claude': AgentTool.CLAUDE,
+    'copilot': AgentTool.COPILOT,
+    'aider': AgentTool.AIDER,
+    'qwen': AgentTool.QWEN,
+    'llm': AgentTool.LLM,
+  };
+
+  const tool = toolMap[agentDef.type];
+  if (!tool) {
+    return null;
+  }
+
+  return {
+    tool,
+    model: agentDef.config?.model,
+    timeout: agentDef.timeout || 300000,
+    nonInteractive: true,
+    allowAllTools: agentDef.config?.allowAllTools !== false,
+    ...agentDef.config,
+  };
+}
+
+/**
+ * List available agents from configuration
+ */
+export function listAvailableAgents(config: Record<string, any>): string[] {
+  if (!config.agents || !Array.isArray(config.agents)) {
+    return [];
+  }
+  return config.agents.map((a: any) => a.name);
 }

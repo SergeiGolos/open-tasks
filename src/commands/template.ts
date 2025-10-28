@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { ICommand, IFlow, StringRef, ICardBuilder, IRefDecorator } from '../types.js';
+import { resolvePath } from '../utils.js';
 
 /**
  * TemplateCommand - Processes templates with token replacement
@@ -39,9 +40,7 @@ export class TemplateCommand implements ICommand {
     if (typeof this.source === 'string') {
       // It's a string - could be a template string or a filename
       // Try to read as file first, if it fails, treat as template string
-      const absolutePath = path.isAbsolute(this.source)
-        ? this.source
-        : path.join(context.cwd, this.source);
+      const absolutePath = resolvePath(this.source, context.cwd);
 
       try {
         await fs.access(absolutePath);

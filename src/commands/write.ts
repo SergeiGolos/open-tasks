@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import fse from 'fs-extra';
 import { ICommand, IFlow, StringRef, ICardBuilder, IRefDecorator } from '../types.js';
+import { resolvePath } from '../utils.js';
 
 /**
  * WriteCommand - Writes content from a StringRef to a file
@@ -39,9 +40,7 @@ export class WriteCommand implements ICommand {
     }
 
     // Resolve file path relative to cwd
-    const absolutePath = path.isAbsolute(this.fileName)
-      ? this.fileName
-      : path.join(context.cwd, this.fileName);
+    const absolutePath = resolvePath(this.fileName, context.cwd);
 
     // Ensure directory exists
     await fse.ensureDir(path.dirname(absolutePath));

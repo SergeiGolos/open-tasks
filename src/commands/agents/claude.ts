@@ -1,4 +1,5 @@
 import { IAgentConfig } from './base.js';
+import { BaseAgentConfigBuilder } from './BaseAgentConfigBuilder.js';
 
 /**
  * Claude-specific model options
@@ -94,8 +95,10 @@ export class ClaudeConfig implements IAgentConfig {
 /**
  * Builder for Claude configuration
  */
-export class ClaudeConfigBuilder {
-  private config: ClaudeConfig = new ClaudeConfig();
+export class ClaudeConfigBuilder extends BaseAgentConfigBuilder<ClaudeConfig> {
+  constructor() {
+    super(new ClaudeConfig());
+  }
 
   withModel(model: ClaudeModel): this {
     this.config.model = model;
@@ -104,11 +107,6 @@ export class ClaudeConfigBuilder {
 
   allowingAllTools(): this {
     this.config.allowAllTools = true;
-    return this;
-  }
-
-  inDirectory(dir: string): this {
-    this.config.workingDirectory = dir;
     return this;
   }
 
@@ -127,22 +125,8 @@ export class ClaudeConfigBuilder {
     return this;
   }
 
-  withTimeout(ms: number): this {
-    this.config.timeout = ms;
-    return this;
-  }
-
   withExtendedThinking(): this {
     this.config.extendedThinking = true;
     return this;
-  }
-
-  withDryRun(): this {
-    this.config.dryRun = true;
-    return this;
-  }
-
-  build(): ClaudeConfig {
-    return this.config;
   }
 }

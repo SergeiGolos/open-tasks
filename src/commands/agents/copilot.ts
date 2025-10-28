@@ -1,4 +1,5 @@
 import { IAgentConfig } from './base.js';
+import { BaseAgentConfigBuilder } from './BaseAgentConfigBuilder.js';
 
 /**
  * GitHub Copilot model options
@@ -56,8 +57,10 @@ export class CopilotConfig implements IAgentConfig {
 /**
  * Builder for Copilot configuration
  */
-export class CopilotConfigBuilder {
-  private config: CopilotConfig = new CopilotConfig();
+export class CopilotConfigBuilder extends BaseAgentConfigBuilder<CopilotConfig> {
+  constructor() {
+    super(new CopilotConfig());
+  }
 
   withModel(model: CopilotModel): this {
     this.config.model = model;
@@ -69,27 +72,8 @@ export class CopilotConfigBuilder {
     return this;
   }
 
-  inDirectory(dir: string): this {
-    this.config.workingDirectory = dir;
-    return this;
-  }
-
-  withTimeout(ms: number): this {
-    this.config.timeout = ms;
-    return this;
-  }
-
   withAgentsFile(): this {
     this.config.useAgentsFile = true;
     return this;
-  }
-
-  withDryRun(): this {
-    this.config.dryRun = true;
-    return this;
-  }
-
-  build(): CopilotConfig {
-    return this.config;
   }
 }

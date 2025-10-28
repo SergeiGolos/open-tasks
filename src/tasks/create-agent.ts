@@ -8,7 +8,7 @@ import { SetCommand } from '../commands/set.js';
 import { AgentCommand, AgentTool } from '../commands/agent.js';
 import { WriteCommand } from '../commands/write.js';
 import { JoinCommand } from '../commands/join.js';
-import { getWikiPath } from '../utils.js';
+import { getDefaultAgent, getAgentConfig, listAvailableAgents } from '../config-loader.js';
 
 /**
  * CreateAgent command - scaffolds a new agent task using AI-assisted workflow
@@ -30,7 +30,7 @@ export default class CreateAgentCommand implements ITaskHandler {
     const cliAgentIndex = args.indexOf('--cli-agent');
     let cliAgentName = cliAgentIndex !== -1 && args[cliAgentIndex + 1] 
       ? args[cliAgentIndex + 1] 
-      : this.getDefaultAgent(context.config);
+      : getDefaultAgent(context.config);
 
     // Get task name from args or prompt
     let taskName: string;
@@ -96,12 +96,12 @@ export default class CreateAgentCommand implements ITaskHandler {
     const promptRefs = await flow.run(new SetCommand(planningPrompt, 'planning-prompt'));
 
     // Step 4: Get agent configuration
-    const agentConfig = this.getAgentConfig(context.config, cliAgentName);
+    const agentConfig = getAgentConfig(context.config, cliAgentName);
     
     if (!agentConfig) {
       throw new Error(
         `Agent "${cliAgentName}" not found in configuration. ` +
-        `Available agents: ${this.listAvailableAgents(context.config).join(', ')}`
+        `Available agents: ${listAvailableAgents(context.config).join(', ')}`
       );
     }
 
@@ -214,95 +214,6 @@ export default class CreateAgentCommand implements ITaskHandler {
         `Failed to create agent task: ${error.message}\n\n` +
         `Make sure the agent "${cliAgentName}" is properly configured and available.`
       );
-    }
-  }
-
-  /**
-   * Get default agent from configuration
-   */
-  private getDefaultAgent(config: Record<string, any>): string {
-    if (config.agents && Array.isArray(config.agents) && config.agents.length > 0) {
-      return config.agents[0].name;
-    }
-    return 'gemini-default';
-  }
-
-  /**
-   * Get agent configuration from config
-   */
-  private getAgentConfig(config: Record<string, any>, agentName: string): any {
-    if (!config.agents || !Array.isArray(config.agents)) {
-      return null;
-    }
-
-    const agentDef = config.agents.find((a: any) => a.name === agentName);
-    if (!agentDef) {
-      return null;
-    }
-
-    // Map agent type to AgentTool enum
-    const toolMap: Record<string, AgentTool> = {
-      'gemini': AgentTool.GEMINI,
-      'claude': AgentTool.CLAUDE,
-      'copilot': AgentTool.COPILOT,
-      'aider': AgentTool.AIDER,
-      'qwen': AgentTool.QWEN,
-      'llm': AgentTool.LLM,
-    };
-
-    const tool = toolMap[agentDef.type];
-    if (!tool) {
-      return null;
-    }
-
-    return {
-      tool,
-      model: agentDef.config?.model,
-      timeout: agentDef.timeout || 300000,
-      nonInteractive: true,
-      allowAllTools: agentDef.config?.allowAllTools !== false,
-      ...agentDef.config,
-    };
-  }
-
-  /**
-   * List available agents from configuration
-   */
-  private listAvailableAgents(config: Record<string, any>): string[] {
-    if (!config.agents || !Array.isArray(config.agents)) {
-      return [];
-    }
-    return config.agents.map((a: any) => a.name);
-  }
-
-  /**
-   * Load wiki documentation files
-   */
-  private async loadWikiDocs(): Promise<string> {
-    const wikiFiles = [
-      'Building-Custom-Tasks.md',
-      'Core-Commands.md',
-      'Example-Tasks.md',
-    ];
-
-    try {
-      const contents = await Promise.all(
-        wikiFiles.map(async (file) => {
-          try {
-            const filePath = getWikiPath(file);
-            const content = await fs.readFile(filePath, 'utf-8');
-            return `# Reference: ${file}\n\n${content}`;
-          } catch (error) {
-            console.warn(`Warning: Could not load wiki file ${file}`);
-            return '';
-          }
-        })
-      );
-
-      return contents.filter(c => c).join('\n\n---\n\n');
-    } catch (error) {
-      console.warn('Warning: Could not load wiki documentation');
-      return '';
     }
   }
 

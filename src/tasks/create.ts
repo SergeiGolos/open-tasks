@@ -204,8 +204,11 @@ export default class ${this.toPascalCase(name)}Command {
     description: string,
     typescript: boolean
   ): string {
-    if (typescript) {
-      return `/**
+    const typeAnnotations = typescript;
+    const t = (type: string) => typeAnnotations ? `: ${type}` : '';
+    const privateKeyword = typeAnnotations ? 'private ' : '';
+    
+    return `/**
  * ${description}
  * 
  * This demo shows how to compose workflows using IFlow commands.
@@ -220,45 +223,40 @@ export default class ${this.toPascalCase(name)}Command {
 
 // ===== TokenDecorator - Adds a token to a reference =====
 class TokenDecorator {
-  token: string;
-
-  constructor(token: string) {
+  constructor(${privateKeyword}token${t('string')}) ${typeAnnotations ? '{}' : `{
     this.token = token;
-  }
-  
-  decorate(ref: any): any {
+  }`}
+  ${!typeAnnotations ? '\n' : ''}
+  decorate(ref${t('any')})${t('any')} {
     return { ...ref, token: this.token };
   }
 }
 
 // ===== Step 1 & 2: SetCommand - Store values in workflow context =====
 class SetCommand {
-  value: any;
-  token?: string;
-
-  constructor(value: any, token?: string) {
+  constructor(${privateKeyword}value${t('any')}, ${privateKeyword}token${t('string')}) ${typeAnnotations ? '{}' : `{
     this.value = value;
     this.token = token;
-  }
-
-  async execute(context: any, args: any[]): Promise<[any, any[]][]> {
+  }`}
+  ${!typeAnnotations ? '\n' : ''}
+  async execute(context${t('any')}, args${t('any[]')})${t('Promise<[any, any[]][]>')} {
     // Return tuple of [value, decorators[]]
-    const decorators: any[] = this.token ? [new TokenDecorator(this.token)] : [];
+    const decorators${t('any[]')} = this.token ? [new TokenDecorator(this.token)] : [];
     return [[this.value, decorators]];
   }
 }
 
 // ===== Step 3: ReplaceCommand - Replace placeholders in template =====
 class ReplaceCommand {
-  templateRef: any;
-  replacements: Record<string, string>;
-
-  constructor(templateRef: any, replacements: Record<string, string>) {
+  constructor(
+    ${privateKeyword}templateRef${t('any')},
+    ${privateKeyword}replacements${t('Record<string, string>')}
+  ) ${typeAnnotations ? '{}' : `{
     this.templateRef = templateRef;
     this.replacements = replacements;
-  }
-
-  async execute(context: any, args: any[]): Promise<[any, any[]][]> {
+  }`}
+  ${!typeAnnotations ? '\n' : ''}
+  async execute(context${t('any')}, args${t('any[]')})${t('Promise<[any, any[]][]>')} {
     const template = await context.get(this.templateRef);
     if (!template) {
       throw new Error(\`Template not found: \${this.templateRef.token}\`);
@@ -277,15 +275,12 @@ class ReplaceCommand {
 
 // ===== Step 4: DisplayCardCommand - Show result as formatted card =====
 class DisplayCardCommand {
-  valueRef: any;
-  metadata: any;
-
-  constructor(valueRef: any, metadata: any = {}) {
+  constructor(${privateKeyword}valueRef${t('any')}, ${privateKeyword}metadata${t('any')} = {}) ${typeAnnotations ? '{}' : `{
     this.valueRef = valueRef;
     this.metadata = metadata;
-  }
-
-  async execute(context: any, args: any[], cardBuilder?: any): Promise<[any, any[]][]> {
+  }`}
+  ${!typeAnnotations ? '\n' : ''}
+  async execute(context${t('any')}, args${t('any[]')}, cardBuilder${t('any')})${t('Promise<[any, any[]][]>')} {
     const value = await context.get(this.valueRef);
     if (!value) {
       throw new Error(\`Value not found: \${this.valueRef.token}\`);
@@ -306,7 +301,7 @@ class DisplayCardCommand {
       console.log('');
     }
 
-    // Return empty tuple (this command doesn't store anything, just displays)
+    // Return${typeAnnotations ? ' empty' : ''} tuple${typeAnnotations ? ' (this command doesn\'t store anything, just displays)' : ''}
     return [];
   }
 }
@@ -321,7 +316,7 @@ export default class ${this.toPascalCase(name)}Command {
     'open-tasks ${name} "Bob" --token greeting',
   ];
 
-  async execute(args: string[], context: any): Promise<any> {
+  async execute(args${t('string[]')}, context${t('any')})${t('Promise<any>')} {
     const flow = context.workflowContext;
     const userName = args[0] || 'World';
 
@@ -363,155 +358,6 @@ export default class ${this.toPascalCase(name)}Command {
   }
 }
 `;
-    } else {
-      return `/**
- * ${description}
- * 
- * This demo shows how to compose workflows using IFlow commands.
- * Each step is a single-responsibility command that can be reused.
- * 
- * Workflow steps:
- * 1. SetCommand - Store template in memory
- * 2. SetCommand - Store user name in memory  
- * 3. ReplaceCommand - Replace placeholders in template
- * 4. Custom command - Display result as a card
- */
-
-// ===== TokenDecorator - Adds a token to a reference =====
-class TokenDecorator {
-  constructor(token) {
-    this.token = token;
-  }
-  
-  decorate(ref) {
-    return { ...ref, token: this.token };
-  }
-}
-
-// ===== Step 1 & 2: SetCommand - Store values in workflow context =====
-class SetCommand {
-  constructor(value, token) {
-    this.value = value;
-    this.token = token;
-  }
-
-  async execute(context, args) {
-    // Return tuple of [value, decorators[]]
-    const decorators = this.token ? [new TokenDecorator(this.token)] : [];
-    return [[this.value, decorators]];
-  }
-}
-
-// ===== Step 3: ReplaceCommand - Replace placeholders in template =====
-class ReplaceCommand {
-  constructor(templateRef, replacements) {
-    this.templateRef = templateRef;
-    this.replacements = replacements;
-  }
-
-  async execute(context, args) {
-    const template = await context.get(this.templateRef);
-    if (!template) {
-      throw new Error(\`Template not found: \${this.templateRef.token}\`);
-    }
-
-    let result = template;
-    for (const [key, value] of Object.entries(this.replacements)) {
-      const placeholder = '{{' + key + '}}';
-      result = result.replace(new RegExp(placeholder, 'g'), value);
-    }
-
-    // Return tuple of [value, decorators[]]
-    return [[result, []]];
-  }
-}
-
-// ===== Step 4: DisplayCardCommand - Show result as formatted card =====
-class DisplayCardCommand {
-  constructor(valueRef, metadata = {}) {
-    this.valueRef = valueRef;
-    this.metadata = metadata;
-  }
-
-  async execute(context, args, cardBuilder) {
-    const value = await context.get(this.valueRef);
-    if (!value) {
-      throw new Error(\`Value not found: \${this.valueRef.token}\`);
-    }
-
-    // Use the provided card builder or fall back to console
-    if (cardBuilder && typeof cardBuilder.build === 'function') {
-      console.log(cardBuilder.build());
-    } else {
-      // Simple formatted output
-      console.log('');
-      console.log('👋 Hello World Demo');
-      console.log('─'.repeat(50));
-      console.log(\`Template: \${this.metadata.template || 'N/A'}\`);
-      console.log(\`User Name: \${this.metadata.userName || 'N/A'}\`);
-      console.log(\`Result: \${value}\`);
-      console.log(\`Token: \${this.valueRef.token || 'none'}\`);
-      console.log('');
-    }
-
-    // Return tuple (this command doesn't store anything, just displays)
-    return [];
-  }
-}
-
-// ===== Main Command Handler =====
-export default class ${this.toPascalCase(name)}Command {
-  name = '${name}';
-  description = '${description}';
-  examples = [
-    'ot ${name}',
-    'open-tasks ${name} "Alice"',
-    'open-tasks ${name} "Bob" --token greeting',
-  ];
-
-  async execute(args, context) {
-    const flow = context.workflowContext;
-    const userName = args[0] || 'World';
-
-    context.outputSynk.write('Step 1: Storing template in memory...');
-    
-    // Step 1: Store template
-    const template = 'Hello, {{name}}! Welcome to Open Tasks CLI.';
-    const templateRefs = await flow.run(new SetCommand(template, 'template'));
-    const templateRef = templateRefs[0];
-
-    context.outputSynk.write('Step 2: Storing user name in memory...');
-    
-    // Step 2: Store user name
-    const nameRefs = await flow.run(new SetCommand(userName, 'userName'));
-    
-    context.outputSynk.write('Step 3: Replacing placeholders...');
-    
-    // Step 3: Replace placeholders
-    const resultRefs = await flow.run(
-      new ReplaceCommand(templateRef, { name: userName })
-    );
-    const resultRef = resultRefs[0];
-    resultRef.token = '${name}-result';
-
-    context.outputSynk.write('Step 4: Displaying result...');
-    
-    // Step 4: Display as card
-    await flow.run(
-      new DisplayCardCommand(resultRef, { template, userName })
-    );
-
-    // Return the final result reference
-    return {
-      id: resultRef.id,
-      content: await flow.get(resultRef),
-      token: resultRef.token,
-      timestamp: resultRef.timestamp,
-    };
-  }
-}
-`;
-    }
   }
 
   private toPascalCase(str: string): string {
